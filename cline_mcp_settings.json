@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "weather": {
+      "command": "node",
+      "args": [
+        "--inspect=9229",
+        "D:\\workplace\\mcp-server\\src\\weather\\index.js"
+      ],
+      "cwd": "D:\\workplace\\mcp-server",
+      "timeout": 600,
+      "disabled": false
+    }
+  }
+}

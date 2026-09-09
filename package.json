@@ -1,0 +1,17 @@
+{
+  "name": "weather",
+  "type": "module",
+  "version": "1.0.0",
+  "description": "官方demo-天气服务器",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "zod": "^4.5.4"
+  }
+}
