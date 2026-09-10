@@ -2,6 +2,15 @@
 
 一个基于 Node.js 和 Model Context Protocol（MCP）的天气服务，通过 stdio 与 MCP 客户端通信。
 
+## 快速开始
+
+```bash
+npm install
+npm start
+```
+
+`npm start` 会启动 MCP 服务，不接收业务参数，也不会打开 HTTP 端口。实际使用时，推荐由 Cline 等 MCP 客户端负责启动和管理服务进程。
+
 ## 功能
 
 - `get-alerts`：查询美国指定州的天气预警。
@@ -48,9 +57,9 @@ node src/weather/index.js
       "command": "node",
       "args": [
         "--inspect=9229",
-        "D:\\workplace\\mcp-server\\src\\weather\\index.js"
+        "<项目绝对路径>\\src\\weather\\index.js"
       ],
-      "cwd": "D:\\workplace\\mcp-server",
+      "cwd": "<项目绝对路径>",
       "timeout": 600,
       "disabled": false
     }
@@ -58,21 +67,21 @@ node src/weather/index.js
 }
 ```
 
-使用其他电脑或目录时，请将 `args` 中的入口文件路径和 `cwd` 改为实际路径。Windows 路径在 JSON 中需要使用双反斜杠。
+请将示例中的 `<项目绝对路径>` 替换为实际项目路径。Windows 路径在 JSON 中需要使用双反斜杠。
 
 配置完成后，重启或重新加载 Cline，使 MCP 服务配置生效。配置中的 `--inspect=9229` 用于断点调试；如果不需要调试，可以删除该参数。
 
 ## VS Code 断点调试
 
-项目的 [.vscode/launch.json](.vscode/launch.json) 已配置 `Attach to Cline Weather MCP Server`，用于附加到监听 `9229` 端口的 Node.js 进程。
+项目的 [.vscode/launch.json](.vscode/launch.json) 已配置 `Attach to Cline Weather MCP Server`，用于附加到监听 `9229` 端口的 Node.js 进程。该配置只负责附加调试，不负责启动 MCP 服务。
 
 调试步骤：
 
 1. 先通过 Cline 配置启动 MCP 服务，或在终端执行：
 
-   ```bash
-   node --inspect=9229 src/weather/index.js
-   ```
+  ```bash
+  node --inspect=9229 src/weather/index.js
+  ```
 
 2. 在 VS Code 左侧打开“运行和调试”。
 3. 在配置下拉列表中选择 `Attach to Cline Weather MCP Server`。
@@ -126,5 +135,5 @@ src/weather/index.js       MCP 服务入口
 cline_mcp_settings.json    Cline 配置示例
 .vscode/launch.json        VS Code 断点调试配置
 package.json               依赖和 npm 脚本
-README.md                  项目说明
+REDEME.md                  项目说明
 ```
