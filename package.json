@@ -5,6 +5,7 @@
   "description": "官方demo-天气服务器",
   "main": "index.js",
   "scripts": {
+    "start": "node src/weather/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
