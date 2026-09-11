@@ -1,14 +1,14 @@
-﻿# mcp-server — Project Conventions
+# mcp-server — 项目规范
 
-## Architecture
-- MCP server using `@modelcontextprotocol/sdk`
-- Stdio transport
-- Two tools: `get-alerts` (by US state code) and `get-forecast` (by lat/lon)
-- Data source: weather.gov NWS API
+## 架构
+- 基于 `@modelcontextprotocol/sdk` 的 MCP 服务端
+- Stdio 传输
+- 两个工具：`get-alerts`（按美国州代码）和 `get-forecast`（按经纬度）
+- 数据源：weather.gov NWS API
 
-## Conventions
-- All logs go to stderr (MCP protocol uses stdout for transport)
-- Tool input validated with Zod schemas
-- Server name: "weather", version: "1.0.0"
+## 规范
+- 所有日志输出到 stderr（MCP 协议使用 stdout 进行传输）
+- 工具输入使用 Zod schema 校验
+- 服务名称："weather"，版本："1.0.0"
 
-## Owner: 老陈 (for API & integration work)
+## 负责人：老陈（API 和集成开发）
