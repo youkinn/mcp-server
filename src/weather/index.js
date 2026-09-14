@@ -49,7 +49,7 @@ function formatAlert(feature) {
 }
 
 server.registerTool("get-alerts", {
-  description: "获取某个州的天气预警",
+  description: "获取美国某个州的当前天气预警（数据源：美国国家气象局 NWS）。仅覆盖美国境内，state 必须是美国两字母州代码；非美国地区不要调用本工具。",
   inputSchema: {
     state: z.string().length(2).describe("两字母州代码(如 CA, NY)"),
   },
@@ -81,7 +81,7 @@ server.registerTool("get-alerts", {
 });
 
 server.registerTool("get-forecast", {
-  description: "获取某个位置的天气预报",
+  description: "获取美国境内某个经纬度位置的天气预报（数据源：美国国家气象局 NWS）。仅覆盖美国境内；非美国地区（如中国北京）不要调用本工具，应直接告知用户仅支持美国天气，不要编造数据。",
   inputSchema: {
     latitude: z.number().min(-90).max(90).describe("位置的纬度"),
     longitude: z.number().min(-180).max(180).describe("位置的经度"),
