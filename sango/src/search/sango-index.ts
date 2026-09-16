@@ -50,18 +50,36 @@ export class SangoIndex {
   vecCount = 0;
   vecScheme = VEC_SCHEME_MODEL; // 缺省按模型向量处理（query 无法本地编码时退化为 BM25）
 
-  /** 加载语料（段级）并构建倒排索引，随后按段数加载离线向量。 */
+  /** 加载语料（段级）并构建倒排索引，随后按段数加载离线向量。
+   * 语料缺失 / 读取 / JSON 解析失败时抛错终止启动；向量加载失败仅告警并降级为纯 BM25。 */
   load(): void {
     if (!existsSync(CORPUS_DIR)) {
-      console.error(`[sango] corpus 目录不存在: ${CORPUS_DIR}`);
-      return;
+      const msg = `[sango] corpus 目录不存在：${CORPUS_DIR}（无语料无法检索，终止启动）`;
+      console.error(msg);
+      throw new Error(msg);
     }
     const files = readdirSync(CORPUS_DIR)
       .filter((f) => /^\d{3}\.json$/.test(f))
       .sort();
     let di = 0;
     for (const f of files) {
-      const ch: Chapter = JSON.parse(readFileSync(path.join(CORPUS_DIR, f), 'utf8'));
+      const filePath = path.join(CORPUS_DIR, f);
+      let raw: string;
+      try {
+        raw = readFileSync(filePath, 'utf8');
+      } catch (e) {
+        const msg = `[sango] corpus 章节文件读取失败：${filePath}（${(e as Error).message}），终止启动`;
+        console.error(msg);
+        throw new Error(msg);
+      }
+      let ch: Chapter;
+      try {
+        ch = JSON.parse(raw) as Chapter;
+      } catch (e) {
+        const msg = `[sango] corpus 章节 JSON 解析失败：${filePath}（${(e as Error).message}），终止启动`;
+        console.error(msg);
+        throw new Error(msg);
+      }
       for (const seg of ch.segments) {
         const tokens = tokenize(seg.text);
         const tf = new Map<string, number>();
@@ -86,6 +104,11 @@ export class SangoIndex {
       }
     }
     this.n = this.docs.length;
+    if (this.n === 0) {
+      const msg = `[sango] corpus 未加载到任何段落：${CORPUS_DIR}（无语料无法检索，终止启动）`;
+      console.error(msg);
+      throw new Error(msg);
+    }
     this.avgLen = this.n > 0 ? this.docs.reduce((s, d) => s + d.len, 0) / this.n : 0;
     this.loadVectors(this.n);
   }
@@ -95,27 +118,42 @@ export class SangoIndex {
    * 与 scripts/build_vectors.py 的写出格式一致）。count 与语料段数不一致时忽略向量，仅用 BM25。
    */
   private loadVectors(expectedCount: number): void {
-    if (!existsSync(VECTORS_FILE)) {
-      console.error(`[sango] vectors 缺失（${VECTORS_FILE}），本次仅用 BM25`);
+    let buf: Buffer;
+    try {
+      buf = readFileSync(VECTORS_FILE);
+    } catch (e) {
+      console.error(`[sango] vectors 读取失败：${VECTORS_FILE}（${(e as Error).message}），忽略向量，本次仅用 BM25`);
       return;
     }
-    const buf = readFileSync(VECTORS_FILE);
-    if (buf.length < 16 || buf.toString('utf8', 0, 4) !== 'SNGV') {
-      console.error('[sango] vectors 头非法，忽略向量');
-      return;
+    try {
+      if (buf.length < 16 || buf.toString('utf8', 0, 4) !== 'SNGV') {
+        console.error(`[sango] vectors 文件头非法：${VECTORS_FILE}，忽略向量，本次仅用 BM25`);
+        return;
+      }
+      const dim = buf.readUInt32LE(4);
+      const count = buf.readUInt32LE(8);
+      const scheme = buf.readUInt32LE(12);
+      if (count !== expectedCount) {
+        console.error(`[sango] vectors 数量 ${count} 与 corpus 段数 ${expectedCount} 不一致，忽略向量，本次仅用 BM25`);
+        return;
+      }
+      this.vecDim = dim;
+      this.vecCount = count;
+      this.vecScheme = scheme;
+      this.vec = new Float32Array(buf.buffer, buf.byteOffset + 16, dim * count);
+      if (scheme === VEC_SCHEME_HASH) {
+        console.error(`[sango] vectors 已加载：${count} x dim=${dim} scheme=hash`);
+      } else {
+        // scheme=model（BGE-M3 预留）：运行时无模型编码，退化为纯 BM25
+        console.error(`[sango] vectors scheme=model（BGE-M3 预留）且运行时无模型编码，本次仅用 BM25`);
+      }
+    } catch (e) {
+      console.error(`[sango] vectors 解析失败：${VECTORS_FILE}（${(e as Error).message}），忽略向量，本次仅用 BM25`);
+      this.vecDim = 0;
+      this.vecCount = 0;
+      this.vecScheme = VEC_SCHEME_MODEL;
+      this.vec = new Float32Array(0);
     }
-    const dim = buf.readUInt32LE(4);
-    const count = buf.readUInt32LE(8);
-    const scheme = buf.readUInt32LE(12);
-    if (count !== expectedCount) {
-      console.error(`[sango] vectors 数量 ${count} 与 corpus 段数 ${expectedCount} 不一致，忽略向量`);
-      return;
-    }
-    this.vecDim = dim;
-    this.vecCount = count;
-    this.vecScheme = scheme;
-    this.vec = new Float32Array(buf.buffer, buf.byteOffset + 16, dim * count);
-    console.error(`[sango] vectors 已加载：${count} x dim=${dim} scheme=${scheme === VEC_SCHEME_HASH ? 'hash' : 'model'}`);
   }
 
   /** 确定性哈希 query 向量；仅 scheme=hash 时可用，否则返回 null（退化为纯 BM25）。 */

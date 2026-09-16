@@ -12,9 +12,13 @@ export interface CorpusSegment {
 
 /** 章回：对应 data/corpus/<source>/NNN.json 的结构。 */
 export interface Chapter {
+  /** 语料来源标识（sanguo-yanyi 毛本 / sanguozhi 预留）。 */
   source: string;
+  /** 回目序号。 */
   chapter: number;
+  /** 回目标题。 */
   title: string;
+  /** 该回全部段落。 */
   segments: CorpusSegment[];
 }
 
