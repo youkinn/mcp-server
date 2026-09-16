@@ -6,16 +6,20 @@
  *
  * 日志只写 stderr；stdout 走 MCP 协议（stdio）。
  */
+import { createRequire } from 'node:module';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
 import { NO_HIT_TEXT, SangoIndex } from './search/sango-index.js';
 
+const require = createRequire(import.meta.url);
+const { version } = require('../package.json') as { version: string };
+
 const index = new SangoIndex();
 index.load();
 console.error(`[sango] corpus 已加载：${index.n} 段`);
 
-const server = new McpServer({ name: 'sango', version: '1.0.0' });
+const server = new McpServer({ name: 'sango', version });
 
 server.registerTool(
   'sango_novel_search',
@@ -38,5 +42,13 @@ server.registerTool(
   },
 );
 
-const transport = new StdioServerTransport();
-await server.connect(transport);
+async function main() {
+  const transport = new StdioServerTransport();
+  await server.connect(transport);
+  console.error('[sango] MCP Server running on stdio');
+}
+
+main().catch((error) => {
+  console.error('Fatal error in main():', error);
+  process.exit(1);
+});

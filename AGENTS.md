@@ -19,3 +19,13 @@
 - 数据随所属 MCP 项目目录存放，线上只读；构建期产物（如离线向量）由构建脚本生成。
 
 ## 负责人：老陈（API 和集成开发）
+
+
+## 新增 / 维护 MCP 的代码规范（2026-09-16 负责人审查意见沉淀）
+
+- **版本号读 package.json**：`McpServer({ name, version })` 的 version 从各自 package.json 读取，禁止硬编码。
+- **入口异常捕获**：stdio 连接放 `main()` 并在 `.catch` 中 `console.error + process.exit(1)`（参考 weather 的 main 模式）。
+- **工具注册用 `registerTool`**：`server.tool()` 在 SDK 中已弃用（@deprecated），一律用 `server.registerTool(name, config, cb)`。
+- **代码分层**：入口只做装配（加载 → 注册 → 连接）；类 / 工具函数 / 公共类型拆分到独立文件（types / search / utils 等），避免单体文件；类型文件只放公共、被多处引用的类型。
+- **JSDoc 注释**：从业务角度适量编写（如「按 source 确定语料域」「无命中话术供模型兜底」）；难懂技术点（如哈希与构建脚本对齐）允许技术解释。
+
