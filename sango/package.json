@@ -1,0 +1,23 @@
+﻿{
+  "name": "mcp-sango",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "三国演义检索 MCP：sango_novel_search（feat-A004）",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "corpus": "python scripts/build_corpus.py",
+    "vectors": "python scripts/build_vectors.py",
+    "alias": "python scripts/build_alias.py"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "zod": "^4.5.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.6.0"
+  }
+}

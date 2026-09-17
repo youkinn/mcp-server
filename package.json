@@ -1,18 +1,16 @@
-{
-  "name": "weather",
-  "type": "module",
+﻿{
+  "name": "mcp-servers",
   "version": "1.0.0",
-  "description": "官方demo-天气服务器",
-  "main": "index.js",
+  "private": true,
+  "type": "module",
+  "description": "mcp-server 单仓容器：weather/ 与 sango/ 两个独立 MCP 子项目；根 node_modules 共享依赖，子项目独立构建、独立部署",
+  "workspaces": [
+    "weather",
+    "sango"
+  ],
   "scripts": {
-    "start": "node src/weather/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.30.0",
-    "zod": "^4.5.4"
+    "build:all": "npm --prefix sango run build",
+    "start:weather": "npm --prefix weather start",
+    "start:sango": "npm --prefix sango start"
   }
 }
