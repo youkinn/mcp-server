@@ -1,14 +1,24 @@
 ﻿{
-    "mcpServers":  {
-                       "weather":  {
-                                       "command":  "node",
-                                       "args":  [
-                                                    "--inspect=9229",
-                                                    "D:\\workplace\\mcp-server\\weather\\src\\index.js"
-                                                ],
-                                       "cwd":  "D:\\workplace\\mcp-server",
-                                       "timeout":  600,
-                                       "disabled":  false
-                                   }
-                   }
+  "mcpServers": {
+    "weather": {
+      "command": "node",
+      "args": [
+        "--inspect=9229",
+        "D:\\workplace\\mcp-server\\weather\\src\\index.js"
+      ],
+      "cwd": "D:\\workplace\\mcp-server",
+      "timeout": 600,
+      "disabled": false
+    },
+    "sango": {
+      "command": "node",
+      "args": [
+        "--inspect=9239",
+        "D:\\workplace\\mcp-server\\sango\\src\\index.ts"
+      ],
+      "cwd": "D:\\workplace\\mcp-server\\sango",
+      "timeout": 60,
+      "disabled": false
+    }
+  }
 }
