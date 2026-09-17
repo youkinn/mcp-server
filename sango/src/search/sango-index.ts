@@ -2,6 +2,7 @@
  * SangoIndex：sango_novel_search 的检索核心（BM25 + 离线向量混合召回）。
  *
  * - 语料：data/corpus/sanguo-yanyi/001.json .. 120.json（段级，与 Python 构建脚本同源）
+ * - 别名：data/alias.json（别名 → 人物 PID）；索引侧与 query 侧统一归一化到规范名
  * - 向量：data/vectors/sanguo-yanyi.bin（与 corpus 段级同序，离线只读）
  * - 检索不做 query 改写 / rerank / 专用向量库。
  */
@@ -16,6 +17,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = path.resolve(__dirname, '..', '..', 'data');
 const CORPUS_DIR = path.join(DATA_DIR, 'corpus', 'sanguo-yanyi');
 const VECTORS_FILE = path.join(DATA_DIR, 'vectors', 'sanguo-yanyi.bin');
+const ALIAS_FILE = path.join(DATA_DIR, 'alias.json');
 
 /** 无命中固定话术：检索无结果时返回，供模型走兜底回答。 */
 export const NO_HIT_TEXT = '未召回任何原文段落';
@@ -24,8 +26,10 @@ export const NO_HIT_TEXT = '未召回任何原文段落';
 const K1 = 1.5;
 const B = 0.75;
 const BM25_WEIGHT = 0.5;
-const VEC_WEIGHT = 0.5;
-const MIN_COSINE = 0.3; // 纯向量兜底时的最低余弦阈值
+// 当前离线向量为 scheme=hash 的确定性哈希向量，无语义（实测全库最高 cosine 0.2694 < MIN_COSINE），
+// 参与加权只会引入噪声：权重置 0，见 search() 中的 useVectors。
+const VEC_WEIGHT = 0;
+const MIN_COSINE = 0.3; // scheme=model 真向量兜底时的最低余弦阈值
 
 // 向量构建方案：与 build_vectors.py 写出的 scheme 字段对应
 const VEC_SCHEME_HASH = 0; // 0=确定性哈希向量（运行期可对 query 编码）
@@ -38,6 +42,11 @@ const TYPE_LABEL: Record<string, string> = {
   comment: '评注',
 };
 
+/** 正则元字符转义：与评测脚本 sango-recall-bench.mjs 的 escapeRe 逐字节一致。 */
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 export class SangoIndex {
   docs: Doc[] = [];
   postings = new Map<string, { doc: number; tf: number }[]>();
@@ -45,13 +54,22 @@ export class SangoIndex {
   avgLen = 0;
   n = 0;
 
+  /** 别名归一化：alias.json 的「别名 → PID」与「PID → 规范名」，以及别名 alternation 正则。 */
+  private pidOf = new Map<string, string>();
+  private canonOf = new Map<string, string>();
+  private aliasPattern: RegExp | null = null;
+
   vec: Float32Array = new Float32Array(0);
   vecDim = 0;
   vecCount = 0;
   vecScheme = VEC_SCHEME_MODEL; // 缺省按模型向量处理（query 无法本地编码时退化为 BM25）
 
   /** 加载语料（段级）并构建倒排索引，随后按段数加载离线向量。
-   * 语料缺失 / 读取 / JSON 解析失败时抛错终止启动；向量加载失败仅告警并降级为纯 BM25。 */
+   * 语料缺失 / 读取 / JSON 解析失败时抛错终止启动；向量加载失败仅告警并降级为纯 BM25；
+   * 别名加载失败仅告警并降级为「不做归一化」，不影响启动。
+   *
+   * 两遍构建：先用原始文本算段级 df → 据此为每个 PID 选定规范名 → 再按归一化文本建索引。
+   * docs[].text 始终保留原始文本（输出与评测答案正则都依赖原文），只归一化索引侧 token。 */
   load(): void {
     if (!existsSync(CORPUS_DIR)) {
       const msg = `[sango] corpus 目录不存在：${CORPUS_DIR}（无语料无法检索，终止启动）`;
@@ -61,7 +79,7 @@ export class SangoIndex {
     const files = readdirSync(CORPUS_DIR)
       .filter((f) => /^\d{3}\.json$/.test(f))
       .sort();
-    let di = 0;
+    const segs: Array<{ chapter: number; title: string; segIndex: number; segType: string; text: string }> = [];
     for (const f of files) {
       const filePath = path.join(CORPUS_DIR, f);
       let raw: string;
@@ -81,36 +99,92 @@ export class SangoIndex {
         throw new Error(msg);
       }
       for (const seg of ch.segments) {
-        const tokens = tokenize(seg.text);
-        const tf = new Map<string, number>();
-        for (const t of tokens) tf.set(t, (tf.get(t) ?? 0) + 1);
-        this.docs.push({
-          chapter: ch.chapter,
-          title: ch.title,
-          segIndex: seg.index,
-          segType: seg.type,
-          text: seg.text,
-          tokens,
-          tf,
-          len: tokens.length,
-        });
-        for (const [t, fq] of tf) {
-          this.df.set(t, (this.df.get(t) ?? 0) + 1);
-          const arr = this.postings.get(t) ?? [];
-          arr.push({ doc: di, tf: fq });
-          this.postings.set(t, arr);
-        }
-        di++;
+        segs.push({ chapter: ch.chapter, title: ch.title, segIndex: seg.index, segType: seg.type, text: seg.text });
       }
     }
-    this.n = this.docs.length;
+    this.n = segs.length;
     if (this.n === 0) {
       const msg = `[sango] corpus 未加载到任何段落：${CORPUS_DIR}（无语料无法检索，终止启动）`;
       console.error(msg);
       throw new Error(msg);
     }
-    this.avgLen = this.n > 0 ? this.docs.reduce((s, d) => s + d.len, 0) / this.n : 0;
+
+    // 规范名选取依据：原始（未归一化）文本的段级 df，必须与评测脚本口径一致。
+    const rawDf = new Map<string, number>();
+    for (const s of segs) {
+      for (const t of new Set(tokenize(s.text))) rawDf.set(t, (rawDf.get(t) ?? 0) + 1);
+    }
+    this.loadAliases(rawDf);
+
+    for (let di = 0; di < segs.length; di++) {
+      const s = segs[di];
+      const tokens = tokenize(this.normalize(s.text));
+      const tf = new Map<string, number>();
+      for (const t of tokens) tf.set(t, (tf.get(t) ?? 0) + 1);
+      this.docs.push({
+        chapter: s.chapter,
+        title: s.title,
+        segIndex: s.segIndex,
+        segType: s.segType,
+        text: s.text,
+        tokens,
+        tf,
+        len: tokens.length,
+      });
+      for (const [t, fq] of tf) {
+        this.df.set(t, (this.df.get(t) ?? 0) + 1);
+        const arr = this.postings.get(t) ?? [];
+        arr.push({ doc: di, tf: fq });
+        this.postings.set(t, arr);
+      }
+    }
+    this.avgLen = this.docs.reduce((s, d) => s + d.len, 0) / this.n;
     this.loadVectors(this.n);
+  }
+
+  /**
+   * 加载 alias.json（Record<别名, PID>），并按「原始语料段级 df 最大者」为每个 PID 选规范名
+   * （df 相同取 alias.json 文件顺序中先出现者）。加载失败 / 损坏仅告警，降级为不做归一化。
+   */
+  private loadAliases(rawDf: Map<string, number>): void {
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(readFileSync(ALIAS_FILE, 'utf8'));
+    } catch (e) {
+      console.error(`[sango] alias 加载失败：${ALIAS_FILE}（${(e as Error).message}），降级为不做别名归一化`);
+      return;
+    }
+    if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      console.error(`[sango] alias 内容非法（应为 Record<别名, PID>）：${ALIAS_FILE}，降级为不做别名归一化`);
+      return;
+    }
+    const entries = Object.entries(parsed as Record<string, unknown>).filter(
+      (e): e is [string, string] => e[0].length > 0 && typeof e[1] === 'string',
+    );
+    if (entries.length === 0) {
+      console.error(`[sango] alias 未解析出任何有效条目：${ALIAS_FILE}，降级为不做别名归一化`);
+      return;
+    }
+    const byPid = new Map<string, string[]>();
+    for (const [name, pid] of entries) {
+      this.pidOf.set(name, pid);
+      const names = byPid.get(pid) ?? [];
+      names.push(name);
+      byPid.set(pid, names);
+    }
+    for (const [pid, names] of byPid) {
+      // Array.sort 稳定：df 相同时保留 alias.json 文件顺序中最先出现者。
+      this.canonOf.set(pid, names.slice().sort((a, b) => (rawDf.get(b) ?? 0) - (rawDf.get(a) ?? 0))[0]);
+    }
+    const aliasNames = [...this.pidOf.keys()].sort((a, b) => b.length - a.length);
+    this.aliasPattern = new RegExp(aliasNames.map(escapeRegExp).join('|'), 'g');
+    console.error(`[sango] alias 已加载：${entries.length} 个别名 / ${byPid.size} 个 PID`);
+  }
+
+  /** 别名归一化：按长度降序的 alternation 正则全局替换为规范名（与评测脚本实现一致）。 */
+  private normalize(text: string): string {
+    if (!this.aliasPattern) return text;
+    return text.replace(this.aliasPattern, (m) => this.canonOf.get(this.pidOf.get(m) ?? '') ?? m);
   }
 
   /**
@@ -163,12 +237,16 @@ export class SangoIndex {
   }
 
   /**
-   * 混合召回：词法命中走 BM25 + 向量余弦加权，词法未命中走纯向量兜底
+   * 混合召回：词法命中走 BM25（+ 真向量余弦加权），词法未命中走真向量兜底
    * （低于 MIN_COSINE 判为无命中）。无命中返回固定话术 NO_HIT_TEXT，由模型侧走兜底。
+   *
+   * 仅 scheme=model 的真向量参与检索：scheme=hash 的哈希向量无语义，完全不参与加权也不参与兜底，
+   * 此时退化为纯 BM25；纯 BM25 且词法无命中时直接返回 NO_HIT_TEXT。
    */
   search(query: string, limit: number): string {
     if (this.n === 0) return NO_HIT_TEXT;
-    const qTokens = tokenize(query);
+    // query 与语料侧同口径归一化后再分词（alias.json 缺失时 normalize 为恒等）。
+    const qTokens = tokenize(this.normalize(query));
 
     // ---- BM25 打分 ----
     const bm25 = new Float64Array(this.n);
@@ -185,9 +263,12 @@ export class SangoIndex {
       }
     }
 
-    // ---- 向量余弦 ----
-    const qVec = this.embedHashQuery(query);
-    const cosine = qVec && this.vec.length > 0 ? this.cosineAll(qVec) : null;
+    // ---- 向量余弦（仅 scheme=model 真向量；scheme=hash 无语义，直接不参与）----
+    // 注意：scheme=model 目前无运行期模型编码器，embedHashQuery 返回 null，故本次实际退化为纯 BM25；
+    // 二期换真向量 bin 并接上模型编码器后，此处无需再改即可生效。
+    const useVectors = this.vecScheme === VEC_SCHEME_MODEL && this.vec.length > 0;
+    const qVec = useVectors ? this.embedHashQuery(this.normalize(query)) : null;
+    const cosine = qVec ? this.cosineAll(qVec) : null;
 
     // ---- 归一化 BM25（仅对命中集合）----
     const bm25Norm = new Float64Array(this.n);
@@ -216,7 +297,7 @@ export class SangoIndex {
         combined.push({ doc: d, score: BM25_WEIGHT * b + VEC_WEIGHT * v });
       }
     } else {
-      // 纯向量兜底
+      // 纯向量兜底（仅真向量可用时；scheme=hash 无语义，纯 BM25 无词法命中即判无命中）
       if (!cosine) return NO_HIT_TEXT;
       let best = -Infinity;
       for (let d = 0; d < this.n; d++) if (cosine[d] > best) best = cosine[d];
