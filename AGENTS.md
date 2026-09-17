@@ -1,4 +1,4 @@
-﻿# mcp-server — 项目规范
+# mcp-server — 项目规范
 
 > 团队级规则见 `dev-docs/AGENTS.md`；本文件只列本项目特有约束。架构决策（单仓多 MCP / 独立构建部署 / TypeScript）见 `dev-docs/docs/mcp-server-architecture.md`。
 
