@@ -8,9 +8,9 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { Chapter, Doc, SearchHit } from '../types.js';
-import { embedTokensByHash } from '../utils/hash.js';
-import { tokenize } from '../utils/text.js';
+import type { Chapter, Doc, SearchHit } from '../types.ts';
+import { embedTokensByHash } from '../utils/hash.ts';
+import { tokenize } from '../utils/text.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = path.resolve(__dirname, '..', '..', 'data');
@@ -229,7 +229,9 @@ export class SangoIndex {
     if (combined.length === 0) return NO_HIT_TEXT;
     combined.sort((a, b) => b.score - a.score);
     const hits = combined.slice(0, Math.min(limit, combined.length));
-    return hits.map((h) => this.formatDoc(this.docs[h.doc])).join('\n\n');
+    return hits.map((h) => {
+      return this.formatDoc(this.docs[h.doc], h.score)
+    } ).join('\n\n');
   }
 
   private cosineAll(qVec: Float32Array): Float64Array {
@@ -260,8 +262,8 @@ export class SangoIndex {
     return idx.slice(0, k);
   }
 
-  private formatDoc(d: Doc): string {
+  private formatDoc(d: Doc, score: number): string {
     const label = TYPE_LABEL[d.segType] ?? d.segType;
-    return `【出处】第${d.chapter}回 ${d.title} · 段${d.segIndex}（${label}）\n${d.text}`;
+    return `【出处】第${d.chapter}回 ${d.title} · 段${d.segIndex}（${label}）\n${d.text}\n 分数:${score.toFixed(4)}`;
   }
 }

@@ -8,7 +8,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const serverPath = path.resolve(__dirname, '..', 'dist', 'index.js');
+const serverPath = path.resolve(__dirname, '..', 'src', 'index.ts');
 
 const child = spawn(process.execPath, [serverPath], {
   stdio: ['pipe', 'pipe', 'pipe'],

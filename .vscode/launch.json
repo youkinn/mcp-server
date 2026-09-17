@@ -3,9 +3,48 @@
   "configurations": [
     {
       "name": "Attach to Cline Weather MCP Server",
+      // 手工启动（仓库根目录）：node --inspect=9229 weather/src/index.js
       "type": "node",
       "request": "attach",
       "port": 9229,
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      // 直接以调试模式启动 sango：用于调试启动装配（SangoIndex.load / registerTool / connect）。
+      // Node 22.18+ 默认启用 TS 类型剥离，可直接跑 src/index.ts，无需编译产物。
+      "name": "Debug Sango MCP Server (launch)",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/sango/src/index.ts",
+      "cwd": "${workspaceFolder}/sango",
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      // 手工启动 + 首行断点：在仓库根目录执行 npm --prefix sango run debug
+      // （npm 会把 cwd 切到 sango/，实际命令 = node --inspect-brk=9240 src/index.ts）
+      // 相对路径基准是 sango/：写成 src/sango/index.ts 会 MODULE_NOT_FOUND——
+      // --inspect-brk 在入口模块解析之前就暂停，所以「能附加、能进断点」，
+      // 但一按继续进程就报错退出，表现为「调试会话过几秒自己断开」。
+      // 进程暂停在第一行等调试器，然后选本配置附加。用于调试启动期（SangoIndex.load / 语料与向量加载降级）。
+      // 只调启动期也可直接用 "Debug Sango MCP Server (launch)"，无需手工启进程。
+      "name": "Attach to Sango (inspect-brk 9240)",
+      "type": "node",
+      "request": "attach",
+      "port": 9240,
+      "cwd": "${workspaceFolder}/sango",
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      // 端到端验证：verify_mcp.js 会 spawn sango 服务子进程，
+      // autoAttachChildProcesses 让子进程也被附加，断点可命中工具处理链路。
+      "name": "Verify Sango MCP (client + server)",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/sango/scripts/verify_mcp.js",
+      "cwd": "${workspaceFolder}/sango",
+      "console": "integratedTerminal",
+      "autoAttachChildProcesses": true,
       "skipFiles": ["<node_internals>/**"]
     }
   ]

@@ -10,8 +10,8 @@
 import { createRequire } from 'node:module';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { SangoIndex } from './search/sango-index.js';
-import { registerSangoNovelSearch } from './tools/sango-novel-search.js';
+import { SangoIndex } from './search/sango-index.ts';
+import { registerSangoNovelSearch } from './tools/sango-novel-search.ts';
 
 const require = createRequire(import.meta.url);
 const { version } = require('../package.json') as { version: string };

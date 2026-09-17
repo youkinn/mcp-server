@@ -5,7 +5,7 @@
  */
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import { NO_HIT_TEXT, SangoIndex } from '../search/sango-index.js';
+import { NO_HIT_TEXT, SangoIndex } from '../search/sango-index.ts';
 
 /**
  * 注册 sango_novel_search：BM25 + 离线向量混合召回，按相关度降序返回原文段落。
