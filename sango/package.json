@@ -11,10 +11,13 @@
     "debug": "node --inspect-brk=9240 src/index.ts",
     "corpus": "python scripts/build_corpus.py",
     "vectors": "python scripts/build_vectors.py",
-    "alias": "python scripts/build_alias.py"
+    "alias": "python scripts/build_alias.py",
+    "parity": "node scripts/verify-embed-parity.mjs"
   },
   "dependencies": {
+    "@huggingface/tokenizers": "^0.2.0",
     "@modelcontextprotocol/sdk": "^1.30.0",
+    "onnxruntime-node": "^1.30.0",
     "zod": "^4.5.4"
   },
   "devDependencies": {
