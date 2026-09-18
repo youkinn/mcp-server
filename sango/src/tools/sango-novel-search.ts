@@ -37,7 +37,7 @@ export function registerSangoNovelSearch(
         throw new Error(`不支持的 source：${source}，本期仅支持 sanguo-yanyi`);
       }
       // 上限按契约截断而非报错（超出即入参校验失败不符合「超出按 20 截断，不报错」）
-      const entries = index.search(query, Math.min(limit, MAX_LIMIT));
+      const entries = await index.search(query, Math.min(limit, MAX_LIMIT));
       if (entries.length === 0) {
         return { content: [{ type: 'text' as const, text: NO_HIT_TEXT }] };
       }

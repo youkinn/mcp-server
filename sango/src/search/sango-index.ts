@@ -11,8 +11,8 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { embedQuery } from '../embed/bge-m3-encoder.ts';
 import type { Chapter, CorpusChunk, Doc, SearchEntry, SearchHit } from '../types.ts';
-import { embedTokensByHash } from '../utils/hash.ts';
 import { tokenize } from '../utils/text.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -25,11 +25,13 @@ export const NO_HIT_TEXT = '未召回任何原文段落';
 const K1 = 1.5;
 const B = 0.75;
 const BM25_WEIGHT = 0.5;
-// 向量权重：离线向量已于 feat-A004 重建为 scheme=model 的 BGE-M3 真向量（2344 x 1024），
-// 但**运行期 query 编码尚未接线**（Step 2，见 sango-recall-quality.md §4.6 分步计划）——
-// search() 目前仍走 embedHashQuery 返回 null，实际退化为纯 BM25。接线前保持权重 0，
-// 避免「真向量 + 假 query 向量」的半接线状态引入噪声。
-const VEC_WEIGHT = 0;
+// 向量权重：运行期 query 编码已接线（Step 2，见 sango-recall-quality.md §4.6），
+// 离线向量为 scheme=model 的 BGE-M3 真向量（2344 x 1024），query 与语料同空间。
+// 取值按 chunk 级实测择优（24 例基准 + 29 例口语改写集 + 31 例精确子串精度集）：
+// 0.5~2.0 为平台期，@1/@3/@5 均不低于纯 BM25 基线（19/24 · 20/24 · 21/24），
+// 主案例由 #2 升到 #1，精确子串检索无回归；取平台期居中值 1.0，避免贴边抖动。
+// 若后续加权出现回归，回退 0 只保留「词法无命中 → 向量兜底」路径。
+const VEC_WEIGHT = 1;
 const MIN_COSINE = 0.3; // Step 4 待按真向量分布重定（现值为哈希向量时代的死路值，见 §4.6）
 
 // 向量构建方案：与 build_vectors.py 写出的 scheme 字段对应
@@ -234,8 +236,8 @@ export class SangoIndex {
       if (scheme === VEC_SCHEME_HASH) {
         console.error(`[sango] vectors 已加载：${count} x dim=${dim} scheme=hash`);
       } else {
-        // scheme=model（BGE-M3 预留）：运行时无模型编码，退化为纯 BM25
-        console.error(`[sango] vectors scheme=model（BGE-M3 预留）且运行时无模型编码，本次仅用 BM25`);
+        // scheme=model（BGE-M3）：query 侧由 embed/bge-m3-encoder.ts 运行期编码，首次检索懒加载权重
+        console.error(`[sango] vectors 已加载：${count} x dim=${dim} scheme=model（BGE-M3，query 侧运行期编码）`);
       }
     } catch (e) {
       console.error(`[sango] vectors 解析失败：${this.vectorsFile}（${(e as Error).message}），忽略向量，本次仅用 BM25`);
@@ -246,12 +248,6 @@ export class SangoIndex {
     }
   }
 
-  /** 确定性哈希 query 向量；仅 scheme=hash 时可用，否则返回 null（退化为纯 BM25）。 */
-  private embedHashQuery(query: string): Float32Array | null {
-    if (this.vecScheme !== VEC_SCHEME_HASH || this.vecDim === 0) return null;
-    return embedTokensByHash(tokenize(query), this.vecDim);
-  }
-
   /**
    * 混合召回：词法命中走 BM25（+ 真向量余弦加权），词法未命中走真向量兜底
    * （低于 MIN_COSINE 判为无命中）。按相关度降序返回最多 limit 条结构化条目；
@@ -259,11 +255,14 @@ export class SangoIndex {
    *
    * 仅 scheme=model 的真向量参与检索：scheme=hash 的哈希向量无语义，完全不参与加权也不参与兜底，
    * 此时退化为纯 BM25；纯 BM25 且词法无命中时直接判无命中。
+   *
+   * 异步：scheme=model 时需运行期编码 query（BGE-M3 ONNX 推理，见 embed/bge-m3-encoder.ts）。
    */
-  search(query: string, limit: number): SearchEntry[] {
+  async search(query: string, limit: number): Promise<SearchEntry[]> {
     if (this.n === 0) return [];
     // query 与语料侧同口径归一化后再分词（alias.json 缺失时 normalize 为恒等）。
-    const qTokens = tokenize(this.normalize(query));
+    const normalized = this.normalize(query);
+    const qTokens = tokenize(normalized);
 
     // ---- BM25 打分 ----
     const bm25 = new Float64Array(this.n);
@@ -281,11 +280,10 @@ export class SangoIndex {
     }
 
     // ---- 向量余弦（仅 scheme=model 真向量；scheme=hash 无语义，直接不参与）----
-    // 注意：scheme=model 的离线向量已就位（BGE-M3），但运行期 query 编码尚未接线
-    // （src/embed/bge-m3-encoder.ts 已具备 embedQuery，接线属 Step 2），embedHashQuery 返回 null，
-    // 故本次实际退化为纯 BM25；接上 embedQuery 后此处无需再改即可生效。
+    // query 侧与离线语料同空间编码：embedQuery 懒加载 BGE-M3 ONNX 单例（首次较慢）。
+    // 权重缺失 / 推理失败时返回 null（并写 stderr 告警），此处退化为纯 BM25，不抛异常（A6）。
     const useVectors = this.vecScheme === VEC_SCHEME_MODEL && this.vec.length > 0;
-    const qVec = useVectors ? this.embedHashQuery(this.normalize(query)) : null;
+    const qVec = useVectors ? await embedQuery(normalized) : null;
     const cosine = qVec ? this.cosineAll(qVec) : null;
 
     // ---- 归一化 BM25（仅对命中集合）----

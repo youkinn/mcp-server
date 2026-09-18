@@ -56,9 +56,9 @@ test('① 语料按 chunks[] 加载：chunk 数与回级字段（chapter / title
   assert.equal(doc.segTo, 5);
 });
 
-test('② 出参条目字段与接口文档逐字一致：id / text / chapter / title / type / segFrom / segTo / quoteBalanced / quotes', () => {
+test('② 出参条目字段与接口文档逐字一致：id / text / chapter / title / type / segFrom / segTo / quoteBalanced / quotes', async () => {
   const index = loadFixtureIndex();
-  const entries = index.search('关羽', 5);
+  const entries = await index.search('关羽', 5);
   assert.ok(entries.length > 0);
   for (const entry of entries) {
     assert.deepEqual(
@@ -68,9 +68,9 @@ test('② 出参条目字段与接口文档逐字一致：id / text / chapter / 
   }
 });
 
-test('③ 条目文本内无出处头、无回目、无段号、无类型、无分数（文本与元数据分离）', () => {
+test('③ 条目文本内无出处头、无回目、无段号、无类型、无分数（文本与元数据分离）', async () => {
   const index = loadFixtureIndex();
-  const entries = index.search('关羽', 5);
+  const entries = await index.search('关羽', 5);
   assert.ok(entries.length > 0);
   for (const entry of entries) {
     assert.ok(!entry.text.includes('【出处】'), `不应含出处头：${entry.text}`);
@@ -83,17 +83,17 @@ test('③ 条目文本内无出处头、无回目、无段号、无类型、无�
   }
 });
 
-test('④ 按相关度降序返回，limit 生效', () => {
+test('④ 按相关度降序返回，limit 生效', async () => {
   const index = loadFixtureIndex();
-  const all = index.search('关羽', 5);
+  const all = await index.search('关羽', 5);
   assert.equal(all.length, 2, '第 73 回中 2 个 chunk 命中「关羽」（云长经别名归一化命中）');
   assert.equal(all[0].id, 'sanguo-yanyi:0073:c0001', '相关度更高者在前');
-  assert.equal(index.search('关羽', 1).length, 1);
+  assert.equal((await index.search('关羽', 1)).length, 1);
 });
 
-test('⑤ quotes[] 字段（qid / text / offset / speaker）与契约一致，offset 指向 text 内开引号', () => {
+test('⑤ quotes[] 字段（qid / text / offset / speaker）与契约一致，offset 指向 text 内开引号', async () => {
   const index = loadFixtureIndex();
-  const entry = index.search('瑾曰', 1)[0];
+  const entry = (await index.search('瑾曰', 1))[0];
   assert.equal(entry.id, 'sanguo-yanyi:0073:c0002');
   assert.deepEqual(entry.quotes.map((q) => q.qid), ['Q1', 'Q2']);
   assert.deepEqual(entry.quotes.map((q) => q.offset), [4, 30]);
@@ -108,9 +108,9 @@ test('⑤ quotes[] 字段（qid / text / offset / speaker）与契约一致，of
   }
 });
 
-test('⑥ 跨段 chunk：segFrom != segTo，type / quoteBalanced / quotes 原样承载', () => {
+test('⑥ 跨段 chunk：segFrom != segTo，type / quoteBalanced / quotes 原样承载', async () => {
   const index = loadFixtureIndex();
-  const entry = index.search('赤壁楼船', 1)[0];
+  const entry = (await index.search('赤壁楼船', 1))[0];
   assert.equal(entry.id, 'sanguo-yanyi:0073:c0003');
   assert.equal(entry.segFrom, 6);
   assert.equal(entry.segTo, 8);
@@ -119,10 +119,10 @@ test('⑥ 跨段 chunk：segFrom != segTo，type / quoteBalanced / quotes 原样
   assert.deepEqual(entry.quotes, []);
 });
 
-test('⑦ 无命中：检索层返回空数组，由工具层转固定话术「未召回任何原文段落」', () => {
+test('⑦ 无命中：检索层返回空数组，由工具层转固定话术「未召回任何原文段落」', async () => {
   const index = loadFixtureIndex();
   // 夹具语料中不存在的字（词法零命中，且无真向量兜底）→ 无命中
-  assert.deepEqual(index.search('鹅鹅鹅曲项向天歌', 5), []);
+  assert.deepEqual(await index.search('鹅鹅鹅曲项向天歌', 5), []);
   assert.equal(NO_HIT_TEXT, '未召回任何原文段落');
 });
 
@@ -151,10 +151,10 @@ test('⑨ 非法 source：sanguozhi（枚举内但本期未开放）报错，消
   );
 });
 
-test('⑩ chapter / title 随每条条目展开：跨回召回时逐条对应，source 不在条目级重复', () => {
+test('⑩ chapter / title 随每条条目展开：跨回召回时逐条对应，source 不在条目级重复', async () => {
   const index = loadFixtureIndex();
   // 「曹操」在第 1 回与第 73 回均有 chunk → 单次召回跨回，出处必须逐条对应渲染
-  const entries = index.search('曹操', 5);
+  const entries = await index.search('曹操', 5);
   assert.deepEqual(entries.map((e) => e.chapter).sort(), [1, 73], '召回应跨回（第 1 回与第 73 回）');
   for (const entry of entries) {
     assert.ok(entry.title.length > 0, '每条条目都应带自己的回目');
@@ -173,5 +173,5 @@ test('⑪ limit 超出上限按 20 截断、不报错（契约「输入」表：
   const result = await callTool({ source: 'sanguo-yanyi', query: '关羽', limit: 999 });
   const entries = JSON.parse(result.content[0].text) as Array<Record<string, unknown>>;
   assert.ok(Array.isArray(entries));
-  assert.equal(entries.length, index.search('关羽', 20).length);
+  assert.equal(entries.length, (await index.search('关羽', 20)).length);
 });

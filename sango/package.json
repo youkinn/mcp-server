@@ -12,7 +12,8 @@
     "corpus": "py -3 scripts/build_corpus.py",
     "vectors": "py -3 scripts/build_vectors.py",
     "alias": "py -3 scripts/build_alias.py",
-    "parity": "node scripts/verify-embed-parity.mjs"
+    "parity": "node scripts/verify-embed-parity.mjs",
+    "fallback": "node scripts/verify-vector-fallback.mjs"
   },
   "dependencies": {
     "@huggingface/tokenizers": "^0.2.0",
