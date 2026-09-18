@@ -25,10 +25,12 @@ export const NO_HIT_TEXT = '未召回任何原文段落';
 const K1 = 1.5;
 const B = 0.75;
 const BM25_WEIGHT = 0.5;
-// 当前离线向量为 scheme=hash 的确定性哈希向量，无语义（实测全库最高 cosine 0.2694 < MIN_COSINE），
-// 参与加权只会引入噪声：权重置 0，见 search() 中的 useVectors。
+// 向量权重：离线向量已于 feat-A004 重建为 scheme=model 的 BGE-M3 真向量（2344 x 1024），
+// 但**运行期 query 编码尚未接线**（Step 2，见 sango-recall-quality.md §4.6 分步计划）——
+// search() 目前仍走 embedHashQuery 返回 null，实际退化为纯 BM25。接线前保持权重 0，
+// 避免「真向量 + 假 query 向量」的半接线状态引入噪声。
 const VEC_WEIGHT = 0;
-const MIN_COSINE = 0.3; // scheme=model 真向量兜底时的最低余弦阈值
+const MIN_COSINE = 0.3; // Step 4 待按真向量分布重定（现值为哈希向量时代的死路值，见 §4.6）
 
 // 向量构建方案：与 build_vectors.py 写出的 scheme 字段对应
 const VEC_SCHEME_HASH = 0; // 0=确定性哈希向量（运行期可对 query 编码）
@@ -279,8 +281,9 @@ export class SangoIndex {
     }
 
     // ---- 向量余弦（仅 scheme=model 真向量；scheme=hash 无语义，直接不参与）----
-    // 注意：scheme=model 目前无运行期模型编码器，embedHashQuery 返回 null，故本次实际退化为纯 BM25；
-    // 二期换真向量 bin 并接上模型编码器后，此处无需再改即可生效。
+    // 注意：scheme=model 的离线向量已就位（BGE-M3），但运行期 query 编码尚未接线
+    // （src/embed/bge-m3-encoder.ts 已具备 embedQuery，接线属 Step 2），embedHashQuery 返回 null，
+    // 故本次实际退化为纯 BM25；接上 embedQuery 后此处无需再改即可生效。
     const useVectors = this.vecScheme === VEC_SCHEME_MODEL && this.vec.length > 0;
     const qVec = useVectors ? this.embedHashQuery(this.normalize(query)) : null;
     const cosine = qVec ? this.cosineAll(qVec) : null;
