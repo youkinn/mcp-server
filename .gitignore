@@ -24,6 +24,10 @@ pnpm-debug.log*
 *.sln
 *.sw?
 
+# Python 构建期缓存
+__pycache__/
+*.pyc
+
 # project guidance
 !CLAUDE.md
 
