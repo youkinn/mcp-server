@@ -9,9 +9,9 @@
     "build": "tsc --noEmit",
     "start": "node src/index.ts",
     "debug": "node --inspect-brk=9240 src/index.ts",
-    "corpus": "python scripts/build_corpus.py",
-    "vectors": "python scripts/build_vectors.py",
-    "alias": "python scripts/build_alias.py",
+    "corpus": "py -3 scripts/build_corpus.py",
+    "vectors": "py -3 scripts/build_vectors.py",
+    "alias": "py -3 scripts/build_alias.py",
     "parity": "node scripts/verify-embed-parity.mjs"
   },
   "dependencies": {
