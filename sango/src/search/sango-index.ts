@@ -1,23 +1,22 @@
 /**
  * SangoIndex：sango_novel_search 的检索核心（BM25 + 离线向量混合召回）。
  *
- * - 语料：data/corpus/sanguo-yanyi/001.json .. 120.json（段级，与 Python 构建脚本同源）
+ * - 语料：data/corpus/sanguo-yanyi/001.json .. 120.json（chunk 级 schema v2，与 Python 构建脚本同源）
  * - 别名：data/alias.json（别名 → 人物 PID）；索引侧与 query 侧统一归一化到规范名
- * - 向量：data/vectors/sanguo-yanyi.bin（与 corpus 段级同序，离线只读）
+ * - 向量：data/vectors/sanguo-yanyi.bin（与 corpus chunks[] 同序，离线只读）
+ * - 出参：结构化条目数组（SearchEntry，回级 chapter / title 随条目逐条展开）
+ *   文本内不含出处 / 回目 / 段号 / 类型 / 分数
  * - 检索不做 query 改写 / rerank / 专用向量库。
  */
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { Chapter, Doc, SearchHit } from '../types.ts';
+import type { Chapter, CorpusChunk, Doc, SearchEntry, SearchHit } from '../types.ts';
 import { embedTokensByHash } from '../utils/hash.ts';
 import { tokenize } from '../utils/text.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DATA_DIR = path.resolve(__dirname, '..', '..', 'data');
-const CORPUS_DIR = path.join(DATA_DIR, 'corpus', 'sanguo-yanyi');
-const VECTORS_FILE = path.join(DATA_DIR, 'vectors', 'sanguo-yanyi.bin');
-const ALIAS_FILE = path.join(DATA_DIR, 'alias.json');
+const DEFAULT_DATA_DIR = path.resolve(__dirname, '..', '..', 'data');
 
 /** 无命中固定话术：检索无结果时返回，供模型走兜底回答。 */
 export const NO_HIT_TEXT = '未召回任何原文段落';
@@ -35,19 +34,23 @@ const MIN_COSINE = 0.3; // scheme=model 真向量兜底时的最低余弦阈值
 const VEC_SCHEME_HASH = 0; // 0=确定性哈希向量（运行期可对 query 编码）
 const VEC_SCHEME_MODEL = 1; // 1=BGE-M3 等模型向量（运行期需模型编码）
 
-/** 段类型 → 中文展示标签。 */
-const TYPE_LABEL: Record<string, string> = {
-  narration: '叙述',
-  verse: '诗词',
-  comment: '评注',
-};
-
 /** 正则元字符转义：与评测脚本 sango-recall-bench.mjs 的 escapeRe 逐字节一致。 */
 function escapeRegExp(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 export class SangoIndex {
+  private readonly corpusDir: string;
+  private readonly vectorsFile: string;
+  private readonly aliasFile: string;
+
+  /** dataDir 仅用于夹具测试注入语料目录；生产用默认 data/ 目录。 */
+  constructor(dataDir: string = DEFAULT_DATA_DIR) {
+    this.corpusDir = path.join(dataDir, 'corpus', 'sanguo-yanyi');
+    this.vectorsFile = path.join(dataDir, 'vectors', 'sanguo-yanyi.bin');
+    this.aliasFile = path.join(dataDir, 'alias.json');
+  }
+
   docs: Doc[] = [];
   postings = new Map<string, { doc: number; tf: number }[]>();
   df = new Map<string, number>();
@@ -64,24 +67,25 @@ export class SangoIndex {
   vecCount = 0;
   vecScheme = VEC_SCHEME_MODEL; // 缺省按模型向量处理（query 无法本地编码时退化为 BM25）
 
-  /** 加载语料（段级）并构建倒排索引，随后按段数加载离线向量。
+  /** 加载语料（chunk 级 schema v2）并构建倒排索引，随后按 chunk 数加载离线向量。
    * 语料缺失 / 读取 / JSON 解析失败时抛错终止启动；向量加载失败仅告警并降级为纯 BM25；
    * 别名加载失败仅告警并降级为「不做归一化」，不影响启动。
    *
-   * 两遍构建：先用原始文本算段级 df → 据此为每个 PID 选定规范名 → 再按归一化文本建索引。
-   * docs[].text 始终保留原始文本（输出与评测答案正则都依赖原文），只归一化索引侧 token。 */
+   * 两遍构建：先用原始文本算 chunk 级 df → 据此为每个 PID 选定规范名 → 再按归一化文本建索引。
+   * docs[].text 始终保留原始文本（出参与评测答案正则都依赖原文），只归一化索引侧 token。 */
   load(): void {
-    if (!existsSync(CORPUS_DIR)) {
-      const msg = `[sango] corpus 目录不存在：${CORPUS_DIR}（无语料无法检索，终止启动）`;
+    if (!existsSync(this.corpusDir)) {
+      const msg = `[sango] corpus 目录不存在：${this.corpusDir}（无语料无法检索，终止启动）`;
       console.error(msg);
       throw new Error(msg);
     }
-    const files = readdirSync(CORPUS_DIR)
+    const files = readdirSync(this.corpusDir)
       .filter((f) => /^\d{3}\.json$/.test(f))
       .sort();
-    const segs: Array<{ chapter: number; title: string; segIndex: number; segType: string; text: string }> = [];
+    // 回级字段（chapter / title）随 chunk 一起带上，供服务端按 id 回溯渲染出处。
+    const chunks: Array<{ chapter: number; title: string; chunk: CorpusChunk }> = [];
     for (const f of files) {
-      const filePath = path.join(CORPUS_DIR, f);
+      const filePath = path.join(this.corpusDir, f);
       let raw: string;
       try {
         raw = readFileSync(filePath, 'utf8');
@@ -98,35 +102,45 @@ export class SangoIndex {
         console.error(msg);
         throw new Error(msg);
       }
-      for (const seg of ch.segments) {
-        segs.push({ chapter: ch.chapter, title: ch.title, segIndex: seg.index, segType: seg.type, text: seg.text });
+      // 语料必须为 schema v2（chunks[]）；旧格式（segments[]）属未重建，明确报错而非静默降级。
+      if (!Array.isArray(ch.chunks)) {
+        const msg = `[sango] corpus 格式非法（应为 schema v2 的 chunks[]）：${filePath}，终止启动`;
+        console.error(msg);
+        throw new Error(msg);
+      }
+      for (const chunk of ch.chunks) {
+        chunks.push({ chapter: ch.chapter, title: ch.title, chunk });
       }
     }
-    this.n = segs.length;
+    this.n = chunks.length;
     if (this.n === 0) {
-      const msg = `[sango] corpus 未加载到任何段落：${CORPUS_DIR}（无语料无法检索，终止启动）`;
+      const msg = `[sango] corpus 未加载到任何 chunk：${this.corpusDir}（无语料无法检索，终止启动）`;
       console.error(msg);
       throw new Error(msg);
     }
 
-    // 规范名选取依据：原始（未归一化）文本的段级 df，必须与评测脚本口径一致。
+    // 规范名选取依据：原始（未归一化）文本的 chunk 级 df，必须与评测脚本口径一致。
     const rawDf = new Map<string, number>();
-    for (const s of segs) {
-      for (const t of new Set(tokenize(s.text))) rawDf.set(t, (rawDf.get(t) ?? 0) + 1);
+    for (const c of chunks) {
+      for (const t of new Set(tokenize(c.chunk.text))) rawDf.set(t, (rawDf.get(t) ?? 0) + 1);
     }
     this.loadAliases(rawDf);
 
-    for (let di = 0; di < segs.length; di++) {
-      const s = segs[di];
-      const tokens = tokenize(this.normalize(s.text));
+    for (let di = 0; di < chunks.length; di++) {
+      const { chapter, title, chunk } = chunks[di];
+      const tokens = tokenize(this.normalize(chunk.text));
       const tf = new Map<string, number>();
       for (const t of tokens) tf.set(t, (tf.get(t) ?? 0) + 1);
       this.docs.push({
-        chapter: s.chapter,
-        title: s.title,
-        segIndex: s.segIndex,
-        segType: s.segType,
-        text: s.text,
+        chunkId: chunk.id,
+        chapter,
+        title,
+        type: chunk.type,
+        segFrom: chunk.segFrom,
+        segTo: chunk.segTo,
+        quoteBalanced: chunk.quoteBalanced,
+        quotes: chunk.quotes,
+        text: chunk.text,
         tokens,
         tf,
         len: tokens.length,
@@ -143,26 +157,26 @@ export class SangoIndex {
   }
 
   /**
-   * 加载 alias.json（Record<别名, PID>），并按「原始语料段级 df 最大者」为每个 PID 选规范名
+   * 加载 alias.json（Record<别名, PID>），并按「原始语料 chunk 级 df 最大者」为每个 PID 选规范名
    * （df 相同取 alias.json 文件顺序中先出现者）。加载失败 / 损坏仅告警，降级为不做归一化。
    */
   private loadAliases(rawDf: Map<string, number>): void {
     let parsed: unknown;
     try {
-      parsed = JSON.parse(readFileSync(ALIAS_FILE, 'utf8'));
+      parsed = JSON.parse(readFileSync(this.aliasFile, 'utf8'));
     } catch (e) {
-      console.error(`[sango] alias 加载失败：${ALIAS_FILE}（${(e as Error).message}），降级为不做别名归一化`);
+      console.error(`[sango] alias 加载失败：${this.aliasFile}（${(e as Error).message}），降级为不做别名归一化`);
       return;
     }
     if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
-      console.error(`[sango] alias 内容非法（应为 Record<别名, PID>）：${ALIAS_FILE}，降级为不做别名归一化`);
+      console.error(`[sango] alias 内容非法（应为 Record<别名, PID>）：${this.aliasFile}，降级为不做别名归一化`);
       return;
     }
     const entries = Object.entries(parsed as Record<string, unknown>).filter(
       (e): e is [string, string] => e[0].length > 0 && typeof e[1] === 'string',
     );
     if (entries.length === 0) {
-      console.error(`[sango] alias 未解析出任何有效条目：${ALIAS_FILE}，降级为不做别名归一化`);
+      console.error(`[sango] alias 未解析出任何有效条目：${this.aliasFile}，降级为不做别名归一化`);
       return;
     }
     const byPid = new Map<string, string[]>();
@@ -189,26 +203,26 @@ export class SangoIndex {
 
   /**
    * 读取离线向量文件（magic 'SNGV' + dim/count/scheme 各 4 字节 LE，随后为 float32 矩阵，
-   * 与 scripts/build_vectors.py 的写出格式一致）。count 与语料段数不一致时忽略向量，仅用 BM25。
+   * 与 scripts/build_vectors.py 的写出格式一致）。count 与语料 chunk 数不一致时忽略向量，仅用 BM25。
    */
   private loadVectors(expectedCount: number): void {
     let buf: Buffer;
     try {
-      buf = readFileSync(VECTORS_FILE);
+      buf = readFileSync(this.vectorsFile);
     } catch (e) {
-      console.error(`[sango] vectors 读取失败：${VECTORS_FILE}（${(e as Error).message}），忽略向量，本次仅用 BM25`);
+      console.error(`[sango] vectors 读取失败：${this.vectorsFile}（${(e as Error).message}），忽略向量，本次仅用 BM25`);
       return;
     }
     try {
       if (buf.length < 16 || buf.toString('utf8', 0, 4) !== 'SNGV') {
-        console.error(`[sango] vectors 文件头非法：${VECTORS_FILE}，忽略向量，本次仅用 BM25`);
+        console.error(`[sango] vectors 文件头非法：${this.vectorsFile}，忽略向量，本次仅用 BM25`);
         return;
       }
       const dim = buf.readUInt32LE(4);
       const count = buf.readUInt32LE(8);
       const scheme = buf.readUInt32LE(12);
       if (count !== expectedCount) {
-        console.error(`[sango] vectors 数量 ${count} 与 corpus 段数 ${expectedCount} 不一致，忽略向量，本次仅用 BM25`);
+        console.error(`[sango] vectors 数量 ${count} 与 corpus chunk 数 ${expectedCount} 不一致，忽略向量，本次仅用 BM25`);
         return;
       }
       this.vecDim = dim;
@@ -222,7 +236,7 @@ export class SangoIndex {
         console.error(`[sango] vectors scheme=model（BGE-M3 预留）且运行时无模型编码，本次仅用 BM25`);
       }
     } catch (e) {
-      console.error(`[sango] vectors 解析失败：${VECTORS_FILE}（${(e as Error).message}），忽略向量，本次仅用 BM25`);
+      console.error(`[sango] vectors 解析失败：${this.vectorsFile}（${(e as Error).message}），忽略向量，本次仅用 BM25`);
       this.vecDim = 0;
       this.vecCount = 0;
       this.vecScheme = VEC_SCHEME_MODEL;
@@ -238,13 +252,14 @@ export class SangoIndex {
 
   /**
    * 混合召回：词法命中走 BM25（+ 真向量余弦加权），词法未命中走真向量兜底
-   * （低于 MIN_COSINE 判为无命中）。无命中返回固定话术 NO_HIT_TEXT，由模型侧走兜底。
+   * （低于 MIN_COSINE 判为无命中）。按相关度降序返回最多 limit 条结构化条目；
+   * 无命中返回空数组，由工具层转成 NO_HIT_TEXT 话术供模型走兜底。
    *
    * 仅 scheme=model 的真向量参与检索：scheme=hash 的哈希向量无语义，完全不参与加权也不参与兜底，
-   * 此时退化为纯 BM25；纯 BM25 且词法无命中时直接返回 NO_HIT_TEXT。
+   * 此时退化为纯 BM25；纯 BM25 且词法无命中时直接判无命中。
    */
-  search(query: string, limit: number): string {
-    if (this.n === 0) return NO_HIT_TEXT;
+  search(query: string, limit: number): SearchEntry[] {
+    if (this.n === 0) return [];
     // query 与语料侧同口径归一化后再分词（alias.json 缺失时 normalize 为恒等）。
     const qTokens = tokenize(this.normalize(query));
 
@@ -298,21 +313,39 @@ export class SangoIndex {
       }
     } else {
       // 纯向量兜底（仅真向量可用时；scheme=hash 无语义，纯 BM25 无词法命中即判无命中）
-      if (!cosine) return NO_HIT_TEXT;
+      if (!cosine) return [];
       let best = -Infinity;
       for (let d = 0; d < this.n; d++) if (cosine[d] > best) best = cosine[d];
-      if (best < MIN_COSINE) return NO_HIT_TEXT;
+      if (best < MIN_COSINE) return [];
       for (const d of this.topKByCosine(cosine, Math.max(limit, 20))) {
         combined.push({ doc: d, score: (cosine[d] + 1) / 2 });
       }
     }
 
-    if (combined.length === 0) return NO_HIT_TEXT;
+    if (combined.length === 0) return [];
     combined.sort((a, b) => b.score - a.score);
     const hits = combined.slice(0, Math.min(limit, combined.length));
-    return hits.map((h) => {
-      return this.formatDoc(this.docs[h.doc], h.score)
-    } ).join('\n\n');
+    return hits.map((h) => this.toEntry(this.docs[h.doc]));
+  }
+
+  /**
+   * 索引文档 → 出参条目：只保留契约字段（`id` / `text` / `chapter` / `title` / `type` /
+   * `segFrom` / `segTo` / `quoteBalanced` / `quotes`），丢弃索引内部结构（tokens / tf / len）；
+   * `chapter` / `title` 随条目逐条展开（召回可跨回，编排侧只能逐条渲染出处，且跨进程读不到语料目录）。
+   * 文本不做任何拼接。
+   */
+  private toEntry(d: Doc): SearchEntry {
+    return {
+      id: d.chunkId,
+      text: d.text,
+      chapter: d.chapter,
+      title: d.title,
+      type: d.type,
+      segFrom: d.segFrom,
+      segTo: d.segTo,
+      quoteBalanced: d.quoteBalanced,
+      quotes: d.quotes,
+    };
   }
 
   private cosineAll(qVec: Float32Array): Float64Array {
@@ -341,10 +374,5 @@ export class SangoIndex {
     const idx = Array.from({ length: this.n }, (_, i) => i);
     idx.sort((a, b) => cosine[b] - cosine[a]);
     return idx.slice(0, k);
-  }
-
-  private formatDoc(d: Doc, score: number): string {
-    const label = TYPE_LABEL[d.segType] ?? d.segType;
-    return `【出处】第${d.chapter}回 ${d.title} · 段${d.segIndex}（${label}）\n${d.text}\n 分数:${score.toFixed(4)}`;
   }
 }

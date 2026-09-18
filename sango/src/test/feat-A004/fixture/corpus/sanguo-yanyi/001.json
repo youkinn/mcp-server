@@ -1,0 +1,16 @@
+{
+  "source": "sanguo-yanyi",
+  "chapter": 1,
+  "title": "宴桃园豪杰三结义 斩黄巾英雄首立功",
+  "chunks": [
+    {
+      "id": "sanguo-yanyi:0001:c0001",
+      "text": "曹操字孟德，小字阿瞒。曹操少有才名，曹操任侠放荡。",
+      "type": "narration",
+      "segFrom": 4,
+      "segTo": 4,
+      "quoteBalanced": true,
+      "quotes": []
+    }
+  ]
+}

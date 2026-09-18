@@ -3,7 +3,7 @@
  *
  * 装配层：加载检索索引 → 注册唯一工具 sango_novel_search → 连接 stdio。
  * 工具定义与处理逻辑见 tools/sango-novel-search.ts；检索核心见 search/sango-index.ts。
- * 工具名 / 参数 / 输出格式保持既有契约。
+ * 工具名 / 参数不变；出参为结构化条目数组（feat-A004 契约，见接口文档「输出（命中）」）。
  *
  * 日志只写 stderr；stdout 走 MCP 协议（stdio）。
  */
@@ -22,7 +22,7 @@ const server = new McpServer({ name: 'sango', version });
 
 async function main() {
   index.load();
-  console.error(`[sango] corpus 已加载：${index.n} 段`);
+  console.error(`[sango] corpus 已加载：${index.n} chunk`);
   registerSangoNovelSearch(server.registerTool.bind(server), index);
   const transport = new StdioServerTransport();
   await server.connect(transport);
