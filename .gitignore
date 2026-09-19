@@ -24,5 +24,12 @@ pnpm-debug.log*
 *.sln
 *.sw?
 
+# Python 构建期缓存
+__pycache__/
+*.pyc
+
 # project guidance
 !CLAUDE.md
+
+# 离线模型权重（BGE-M3 ~2.1GB，部署侧下发，不入库）
+sango/data/models/
