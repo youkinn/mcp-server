@@ -4,6 +4,10 @@
  * 夹具语料 fixture/corpus/sanguo-yanyi/*.json 为 schema v2（chunks[]），字段口径与接口文档
  * 「输出（命中）」及 docs/sango-corpus-spec.md §5 逐字一致；用夹具而非真实语料，是因为磁盘上的
  * 真实语料此刻仍是旧格式（segments[]），待语料重建（C5）后再补跑端到端验证。
+ * 夹具另含 corpus/tags/event.json：c0001/c0002 打「人物之死-关羽之死」（c0002 另带
+ * 「政治事件-关羽托孤」供遗言类问法测试），c0003 打「人物之死-魏延之死|政治事件-关羽入川」
+ * （他人死亡标签 + 提及关羽，验证强命中按人名词典而非文档粒度匹配）。
+ * 意图分类见 search/intent.ts。
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -11,6 +15,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { NO_HIT_TEXT, SangoIndex } from '../../search/sango-index.ts';
+import { matchDeathIntent } from '../../search/intent.ts';
 import { registerSangoNovelSearch } from '../../tools/sango-novel-search.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -86,7 +91,7 @@ test('③ 条目文本内无出处头、无回目、无段号、无类型、无�
 test('④ 按相关度降序返回，limit 生效', async () => {
   const index = loadFixtureIndex();
   const all = await index.search('关羽', 5);
-  assert.equal(all.length, 2, '第 73 回中 2 个 chunk 命中「关羽」（云长经别名归一化命中）');
+  assert.equal(all.length, 3, '第 73 回中词法命中 2 个 chunk（云长经别名归一化）+ 标签路命中 1 个（关羽入川）');
   assert.equal(all[0].id, 'sanguo-yanyi:0073:c0001', '相关度更高者在前');
   assert.equal((await index.search('关羽', 1)).length, 1);
 });
@@ -174,4 +179,62 @@ test('⑪ limit 超出上限按 20 截断、不报错（契约「输入」表：
   const entries = JSON.parse(result.content[0].text) as Array<Record<string, unknown>>;
   assert.ok(Array.isArray(entries));
   assert.equal(entries.length, (await index.search('关羽', 20)).length);
+});
+
+test('⑫ 死亡意图分类：主流问法归并到正确子类，非死亡问法返回 null', () => {
+  assert.equal(matchDeathIntent('华雄是怎么死的'), 'death_manner');
+  assert.equal(matchDeathIntent('华雄的死因是什么'), 'death_manner');
+  assert.equal(matchDeathIntent('华雄之死'), 'death_manner');
+  assert.equal(matchDeathIntent('华雄被谁杀的'), 'death_agent');
+  assert.equal(matchDeathIntent('吕布是谁斩的'), 'death_agent');
+  assert.equal(matchDeathIntent('赵云死在哪里'), 'death_place');
+  assert.equal(matchDeathIntent('关羽是什么时候死的'), 'death_time');
+  assert.equal(matchDeathIntent('吕布死了吗？'), 'death_confirm');
+  assert.equal(matchDeathIntent('周瑜死后谁接任大都督'), 'death_aftermath');
+  assert.equal(matchDeathIntent('关羽死后怎样'), 'death_aftermath');
+  assert.equal(matchDeathIntent('刘备死时对诸葛亮说了什么'), 'death_last_words');
+  assert.equal(matchDeathIntent('白帝城托孤'), 'death_last_words');
+  assert.equal(matchDeathIntent('关羽的遗言是什么'), 'death_last_words');
+  assert.equal(matchDeathIntent('今天天气如何'), null);
+  assert.equal(matchDeathIntent('赤壁之战'), null);
+  assert.equal(matchDeathIntent('关羽镇守荆州'), null);
+});
+
+test('⑬ 死亡意图强命中：死亡类问法命中死亡标签 chunk 置顶，非死亡问法排序不变', async () => {
+  const index = loadFixtureIndex();
+  const death = await index.search('关羽是怎么死的', 5);
+  assert.ok(death.length >= 2);
+  assert.deepEqual(
+    death.slice(0, 2).map((e) => e.id),
+    ['sanguo-yanyi:0073:c0001', 'sanguo-yanyi:0073:c0002'],
+    '关羽死亡标签 chunk 置顶且按文档序（死因类取靠前段）',
+  );
+  assert.ok(
+    !death.slice(0, 2).some((e) => e.id === 'sanguo-yanyi:0073:c0003'),
+    '他人死亡标签（人物之死-魏延之死）不得混入关羽死亡强命中',
+  );
+  assert.equal(death[0].id, (await index.search('关羽', 5))[0].id, '死因类强命中不改变非死亡问法的首选（同为 c0001）');
+});
+
+test('⑭ 事后类问法同名死亡标签多 chunk：按文档序取靠后段优先（死因段在前、追述/续事段在后）', async () => {
+  const index = loadFixtureIndex();
+  const entries = await index.search('关羽死后怎样', 5);
+  assert.ok(entries.length > 0);
+  assert.equal(entries[0].id, 'sanguo-yanyi:0073:c0002', '「死后怎样」应优先返回 c0002（更靠后的续事段）');
+});
+
+test('⑮ 死亡强命中按人名词典匹配：他人死亡标签（魏延之死）不劫持关羽问法，反之亦然', async () => {
+  const index = loadFixtureIndex();
+  const wei = await index.search('魏延怎么死的', 3);
+  assert.equal(wei[0].id, 'sanguo-yanyi:0073:c0003', '魏延死亡问法应命中魏延之死标签 chunk');
+  const guan = await index.search('关羽是怎么死的', 3);
+  assert.ok(!guan.slice(0, 2).some((e) => e.id === 'sanguo-yanyi:0073:c0003'), '关羽问法不应命中魏延之死 chunk');
+});
+
+test('⑯ 临终遗言类问法：优先命中该人物的托孤/遗言标签段，无遗言段时退回死亡段', async () => {
+  const index = loadFixtureIndex();
+  const guan = await index.search('关羽临终说了什么', 3);
+  assert.equal(guan[0].id, 'sanguo-yanyi:0073:c0002', '遗言问法应命中「关羽托孤」段（c0002）而非纯死亡段（c0001）');
+  const wei = await index.search('魏延临终说了什么', 3);
+  assert.equal(wei[0].id, 'sanguo-yanyi:0073:c0003', '无遗言标签的人物退回死亡段（魏延之死）');
 });

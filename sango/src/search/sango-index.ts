@@ -6,14 +6,16 @@
  * - 向量：data/vectors/sanguo-yanyi.bin（与 corpus chunks[] 同序，离线只读）
  * - 出参：结构化条目数组（SearchEntry，回级 chapter / title 随条目逐条展开）
  *   文本内不含出处 / 回目 / 段号 / 类型 / 分数
- * - 检索不做 query 改写 / rerank / 专用向量库。
+ * - 多路召回（词法 + 向量 + 标签）合并重排：BGE-M3*0.6 + BM25*0.3 + 标签*0.1（2026-09-19 定参，需求变更覆盖原「不做 rerank」）。
+ * - 不做 query 改写 / 专用向量库。
  */
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { embedQuery } from '../embed/bge-m3-encoder.ts';
-import type { Chapter, CorpusChunk, Doc, SearchEntry, SearchHit } from '../types.ts';
+import type { Chapter, CorpusChunk, DeathIntent, Doc, SearchEntry, SearchHit } from '../types.ts';
 import { tokenize } from '../utils/text.ts';
+import { matchDeathIntent } from './intent.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_DATA_DIR = path.resolve(__dirname, '..', '..', 'data');
@@ -24,15 +26,20 @@ export const NO_HIT_TEXT = '未召回任何原文段落';
 // BM25 参数（k1/b 为经典取值）与混合权重
 const K1 = 1.5;
 const B = 0.75;
-const BM25_WEIGHT = 0.5;
-// 向量权重：运行期 query 编码已接线（Step 2，见 sango-recall-quality.md §4.6），
-// 离线向量为 scheme=model 的 BGE-M3 真向量（2344 x 1024），query 与语料同空间。
-// 取值按 chunk 级实测择优（24 例基准 + 29 例口语改写集 + 31 例精确子串精度集）：
-// 0.5~2.0 为平台期，@1/@3/@5 均不低于纯 BM25 基线（19/24 · 20/24 · 21/24），
-// 主案例由 #2 升到 #1，精确子串检索无回归；取平台期居中值 1.0，避免贴边抖动。
-// 若后续加权出现回归，回退 0 只保留「词法无命中 → 向量兜底」路径。
-const VEC_WEIGHT = 1;
+// 重排权重（2026-09-19 定参）：BGE-M3*0.6 + BM25*0.3 + 标签*0.1；语义:词法 = 0.6:0.3 与旧 1:0.5 同比例。
+const BM25_WEIGHT = 0.3;
+const TAG_WEIGHT = 0.1;
+// 向量权重（2026-09-19 定参：BGE-M3*0.6 + BM25*0.3 + 标签*0.1）：
+// 离线向量为 scheme=model 的 BGE-M3 真向量（2344 x 1024），query 与语料同空间；
+// 语义:词法配比 0.6:0.3 与 Step 2 实测平台期 1:0.5 同比例；标签(TAG)只做第三路召回分量。
+// 10 例复刻（dev-docs/test/sango-tag-route-audit.mjs）与该配比逐条一致：无回归、无增益，
+// 结论见 sango-recall-quality.md §14（扁平 0.1 标签分量提不动排名，需定向/query 扩展才有增益）。
+const VEC_WEIGHT = 0.6;
 const MIN_COSINE = 0.3; // Step 4 待按真向量分布重定（现值为哈希向量时代的死路值，见 §4.6）
+
+// 遗言类标签关键词：标签文本含这些词即视为某人的临终嘱托/遗诏段（数据口径：0085:c0008-0011
+// 刘备托孤、0029:c0014 孙策托孤、0040:c0005 刘表托孤）。
+const LAST_WORDS_TAG = /(托孤|遗诏|遗令|遗言|遗嘱|遗书|遗表|临终)/;
 
 // 向量构建方案：与 build_vectors.py 写出的 scheme 字段对应
 const VEC_SCHEME_HASH = 0; // 0=确定性哈希向量（运行期可对 query 编码）
@@ -47,12 +54,14 @@ export class SangoIndex {
   private readonly corpusDir: string;
   private readonly vectorsFile: string;
   private readonly aliasFile: string;
+  private readonly tagsDir: string;
 
   /** dataDir 仅用于夹具测试注入语料目录；生产用默认 data/ 目录。 */
   constructor(dataDir: string = DEFAULT_DATA_DIR) {
     this.corpusDir = path.join(dataDir, 'corpus', 'sanguo-yanyi');
     this.vectorsFile = path.join(dataDir, 'vectors', 'sanguo-yanyi.bin');
     this.aliasFile = path.join(dataDir, 'alias.json');
+    this.tagsDir = path.join(dataDir, 'corpus', 'tags');
   }
 
   docs: Doc[] = [];
@@ -70,6 +79,23 @@ export class SangoIndex {
   vecDim = 0;
   vecCount = 0;
   vecScheme = VEC_SCHEME_MODEL; // 缺省按模型向量处理（query 无法本地编码时退化为 BM25）
+
+  /** 标签表（tags/*.json：chunkId → 标签文本，多标签以 | 分隔），仅用于多路召回第三路（TAG 分量）。 */
+  private tagsByDoc: string[] = [];
+  private tagPostings = new Map<string, number[]>();
+  /**
+   * 死亡标签人名词典（标签「人物之死-XXX之死」中的 XXX，归一化后）→ 该人死亡 chunk 下标。
+   * 死亡意图强命中必须按人匹配，不能只按「文档带死亡标签」匹配：
+   * 同一 chunk 可同时含他人死亡标签与目标人名（如「陶谦之死|刘备领徐州」），会误伤他人死亡段。
+   */
+  private deathByPerson = new Map<string, number[]>();
+  /**
+   * 遗言段人名词典（归一化标签文本含遗言类关键词且出现死亡人名的 chunk → 该人名）：
+   * 临终遗言/托孤类问法命中用（如「刘备托孤」段先于「刘备之死」段，答案在托孤段）。
+   */
+  private deathSpeechByPerson = new Map<string, number[]>();
+  /** chunkId → 文档下标：标签键校验与死键跳过。 */
+  private docIndexOf = new Map<string, number>();
 
   /** 加载语料（chunk 级 schema v2）并构建倒排索引，随后按 chunk 数加载离线向量。
    * 语料缺失 / 读取 / JSON 解析失败时抛错终止启动；向量加载失败仅告警并降级为纯 BM25；
@@ -149,6 +175,7 @@ export class SangoIndex {
         tf,
         len: tokens.length,
       });
+      this.docIndexOf.set(chunk.id, di);
       for (const [t, fq] of tf) {
         this.df.set(t, (this.df.get(t) ?? 0) + 1);
         const arr = this.postings.get(t) ?? [];
@@ -158,6 +185,75 @@ export class SangoIndex {
     }
     this.avgLen = this.docs.reduce((s, d) => s + d.len, 0) / this.n;
     this.loadVectors(this.n);
+    this.loadTags();
+  }
+
+  /**
+   * 加载标签表（data/corpus/tags/{duel,event,story}.json：chunkId → 标签文本，多标签以 | 分隔），
+   * 建「标签 token → 文档」倒排供第三路召回。标签文本与 query 侧同口径归一化到规范名
+   * （loadAliases 在前），保证「刘备之死」标签与「玄德怎么死的」问法互相命中。
+   * 加载失败 / 内容非法仅告警并降级为「无标签路由」，不影响启动；死键（chunkId 不在语料）跳过。
+   * 标签只进 TAG 分量，不改 chunk / 向量。
+   */
+  private loadTags(): void {
+    for (const file of ['duel.json', 'event.json', 'story.json']) {
+      const tagFile = path.join(this.tagsDir, file);
+      if (!existsSync(tagFile)) continue;
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(readFileSync(tagFile, 'utf8'));
+      } catch (e) {
+        console.error(`[sango] 标签加载失败：${tagFile}（${(e as Error).message}），降级为无标签路由`);
+        continue;
+      }
+      if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
+        console.error(`[sango] 标签内容非法（应为 Record<chunkId, 标签文本>）：${tagFile}，降级为无标签路由`);
+        continue;
+      }
+      for (const [chunkId, value] of Object.entries(parsed as Record<string, unknown>)) {
+        if (typeof value !== 'string' || value.length === 0) continue;
+        const di = this.docIndexOf.get(chunkId);
+        if (di === undefined) continue; // 死键：键不在语料，跳过
+        this.tagsByDoc[di] = this.tagsByDoc[di] ? `${this.tagsByDoc[di]}|${value}` : value;
+      }
+    }
+    let taggedCount = 0;
+    for (let di = 0; di < this.n; di++) {
+      const text = this.tagsByDoc[di];
+      if (!text) continue;
+      taggedCount++;
+      const normText = this.normalize(text);
+      for (const tag of normText.split('|')) {
+        if (tag.startsWith('人物之死-')) {
+          let person = tag.slice('人物之死-'.length);
+          if (person.endsWith('之死')) person = person.slice(0, -2);
+          const arr = this.deathByPerson.get(person) ?? [];
+          arr.push(di);
+          this.deathByPerson.set(person, arr);
+        }
+      }
+      for (const t of new Set(tokenize(normText))) {
+        const arr = this.tagPostings.get(t) ?? [];
+        arr.push(di);
+        this.tagPostings.set(t, arr);
+      }
+    }
+    // 遗言段人名词典（第二遍）：标签文本含遗言类关键词且出现死亡人名的 chunk 归到该人名。
+    // 必须单独一遍：第一遍结束时 deathByPerson 才收齐——0085:c0008-0010 的托孤段本身没打死亡标签。
+    for (let di = 0; di < this.n; di++) {
+      const text = this.tagsByDoc[di];
+      if (!text) continue;
+      const normText = this.normalize(text);
+      if (!LAST_WORDS_TAG.test(normText)) continue;
+      for (const person of this.deathByPerson.keys()) {
+        if (normText.includes(person)) {
+          const arr = this.deathSpeechByPerson.get(person) ?? [];
+          arr.push(di);
+          this.deathSpeechByPerson.set(person, arr);
+        }
+      }
+    }
+    console.error(`[sango] 标签已加载：${taggedCount}/${this.n} chunk 有标签（${this.tagPostings.size} 个标签 token）`);
   }
 
   /**
@@ -256,6 +352,12 @@ export class SangoIndex {
    * 仅 scheme=model 的真向量参与检索：scheme=hash 的哈希向量无语义，完全不参与加权也不参与兜底，
    * 此时退化为纯 BM25；纯 BM25 且词法无命中时直接判无命中。
    *
+   * 死亡类问法（怎么死的/被谁杀/死了吗…，见 search/intent.ts）按归一化人名匹配死亡标签人名词典
+   * （「人物之死-XXX之死」），命中 chunk 在排序阶段置顶为高置信候选（分数仍为 [0,1] 的三路加权，
+   * 不加分）；该人物死亡多 chunk 时，死因/凶手/地点/时间/确认类问法取靠前段（死因段），
+   * 事后类取靠后段（追述/续事段）。临终遗言/托孤类问法优先命中该人物的托孤/遗诏段
+   * （deathSpeechByPerson，如 0085:c0009-0010 白帝城托孤），无遗言段时退回死亡段。
+   *
    * 异步：scheme=model 时需运行期编码 query（BGE-M3 ONNX 推理，见 embed/bge-m3-encoder.ts）。
    */
   async search(query: string, limit: number): Promise<SearchEntry[]> {
@@ -300,17 +402,45 @@ export class SangoIndex {
       }
     }
 
-    // ---- 混合候选集 ----
+    // ---- 标签路由（第三路召回）：query 与标签文本同口径分词求交，命中 chunk 进候选集 ----
+    const tagHits = new Set<number>();
+    if (this.tagPostings.size > 0) {
+      for (const t of qTokens) {
+        if (t.length < 2) continue; // 单字词元（死/之/战…）误命中面太广，标签路由只认双字词元（人名/事件名）
+        const posts = this.tagPostings.get(t);
+        if (!posts) continue;
+        for (const d of posts) tagHits.add(d);
+      }
+    }
+
+    // ---- 死亡意图强命中（不新增召回）：死亡类问法 + 归一化 query 含死亡人名 → 该人相关 chunk 置顶 ----
+    const deathIntent: DeathIntent | null = matchDeathIntent(query);
+    const deathHits = new Set<number>();
+    if (deathIntent && this.deathByPerson.size > 0) {
+      for (const [person, docs] of this.deathByPerson) {
+        if (!normalized.includes(person)) continue;
+        // 临终遗言类问法优先取该人物遗言段（托孤/遗诏…），无遗言段时退回死亡段，保证行为不劣化。
+        const picked =
+          deathIntent === 'death_last_words'
+            ? (this.deathSpeechByPerson.get(person) ?? docs)
+            : docs;
+        for (const d of picked) deathHits.add(d);
+      }
+    }
+
+    // ---- 多路候选合并 + 重排（BGE-M3*0.6 + BM25*0.3 + TAG*0.1）----
     const combined: SearchHit[] = [];
-    if (lexicalHits.size > 0) {
+    if (lexicalHits.size > 0 || tagHits.size > 0) {
       const cands = new Set(lexicalHits);
       if (cosine) {
         for (const d of this.topKByCosine(cosine, 50)) cands.add(d);
       }
+      for (const d of tagHits) cands.add(d);
       for (const d of cands) {
         const b = bm25Norm[d];
         const v = cosine ? Math.max(0, (cosine[d] + 1) / 2) : 0;
-        combined.push({ doc: d, score: BM25_WEIGHT * b + VEC_WEIGHT * v });
+        const t = tagHits.has(d) ? 1 : 0;
+        combined.push({ doc: d, score: BM25_WEIGHT * b + VEC_WEIGHT * v + TAG_WEIGHT * t });
       }
     } else {
       // 纯向量兜底（仅真向量可用时；scheme=hash 无语义，纯 BM25 无词法命中即判无命中）
@@ -324,7 +454,20 @@ export class SangoIndex {
     }
 
     if (combined.length === 0) return [];
-    combined.sort((a, b) => b.score - a.score);
+    // 死亡强命中不改分数（三路加权恒在 [0,1]），改为排序两级：死亡命中组整体置顶，组内按意图选段
+    // （死因/凶手/地点/时间/确认类取靠前段，事后类取靠后段，遗言类不打段序按加权分），
+    // 其余候选仍按加权分降序。
+    const segPick: 'earlier' | 'later' | 'none' =
+      deathIntent === 'death_aftermath' ? 'later' : deathIntent === 'death_last_words' ? 'none' : 'earlier';
+    combined.sort((a, b) => {
+      const ad = deathHits.has(a.doc) ? 1 : 0;
+      const bd = deathHits.has(b.doc) ? 1 : 0;
+      if (ad !== bd) return bd - ad;
+      if (ad === 1 && deathHits.size > 1 && a.doc !== b.doc && segPick !== 'none') {
+        return segPick === 'later' ? b.doc - a.doc : a.doc - b.doc;
+      }
+      return b.score - a.score;
+    });
     const hits = combined.slice(0, Math.min(limit, combined.length));
     return hits.map((h) => this.toEntry(this.docs[h.doc]));
   }

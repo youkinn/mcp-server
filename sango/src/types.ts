@@ -83,3 +83,24 @@ export interface SearchHit {
   doc: number;
   score: number;
 }
+
+/**
+ * 死亡类提问意图：把「XXX之死」标签对应的用户问法归并为有限子类，
+ * 供检索侧对命中「人物之死-XXX之死」标签的 chunk 做强命中置顶（见 search/intent.ts、SangoIndex.search）。
+ * 子类按问题角度区分：同一死亡事件的不同问法，答案所在 chunk 可能不同（如死因段 vs 死后续事段）。
+ */
+export type DeathIntent =
+  /** 死因/方式：怎么死的、死因、因何而死。 */
+  | 'death_manner'
+  /** 凶手/经过：被谁杀、死于谁手。 */
+  | 'death_agent'
+  /** 地点：死在哪、丧命何处。 */
+  | 'death_place'
+  /** 时间：何时死的。 */
+  | 'death_time'
+  /** 有无死亡：死了吗、死没死。 */
+  | 'death_confirm'
+  /** 临终遗言/托孤：死前说了什么、遗言、托孤（答案常在死因段之前的托孤/遗诏段）。 */
+  | 'death_last_words'
+  /** 死后之事：死后怎样、谁接任（答案常在死因段之后的追述/续事段）。 */
+  | 'death_aftermath';

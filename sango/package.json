@@ -1,19 +1,21 @@
-﻿{
+{
   "name": "mcp-sango",
   "version": "1.0.0",
   "private": true,
   "type": "module",
   "description": "三国演义检索 MCP：sango_novel_search（feat-A004）",
-  "main": "src/index.ts",
+  "main": "dist/index.js",
   "scripts": {
-    "build": "tsc --noEmit",
-    "start": "node src/index.ts",
-    "debug": "node --inspect-brk=9240 src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "debug": "node --inspect-brk=9240 dist/index.js",
+    "test": "node --test src/test/feat-A004/sango-index.test.ts",
     "corpus": "py -3 scripts/build_corpus.py",
     "vectors": "py -3 scripts/build_vectors.py",
     "alias": "py -3 scripts/build_alias.py",
     "parity": "node scripts/verify-embed-parity.mjs",
-    "fallback": "node scripts/verify-vector-fallback.mjs"
+    "fallback": "node scripts/verify-vector-fallback.mjs",
+    "stats": "node scripts/build_event_stats.js"
   },
   "dependencies": {
     "@huggingface/tokenizers": "^0.2.0",
