@@ -1,0 +1,22 @@
+{
+  "name": "mcp-fengyunsanguo",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "风云三国招募题库 MCP：fengyunsanguo_query / fengyunsanguo_quiz_command / fengyunsanguo_quiz_route（feat-A005）",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "test": "node --test src/test/feat-A005/fengyunsanguo-service.test.ts src/test/feat-A005/fengyunsanguo-tools.test.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "zod": "^4.5.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.6.0"
+  }
+}
+

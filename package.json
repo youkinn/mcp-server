@@ -1,16 +1,19 @@
-﻿{
+{
   "name": "mcp-servers",
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "mcp-server 单仓容器：weather/ 与 sango/ 两个独立 MCP 子项目；根 node_modules 共享依赖，子项目独立构建、独立部署",
+  "description": "mcp-server 单仓容器：weather/、sango/ 与 fengyunsanguo/ 三个独立 MCP 子项目；根 node_modules 共享依赖，子项目独立构建、独立部署",
   "workspaces": [
     "weather",
-    "sango"
+    "sango",
+    "fengyunsanguo"
   ],
   "scripts": {
-    "build:all": "npm --prefix sango run build",
+    "build:all": "npm --prefix sango run build && npm --prefix fengyunsanguo run build",
+    "build:fengyunsanguo": "npm --prefix fengyunsanguo run build",
     "start:weather": "npm --prefix weather start",
-    "start:sango": "npm --prefix sango start"
+    "start:sango": "npm --prefix sango start",
+    "start:fengyunsanguo": "npm --prefix fengyunsanguo start"
   }
 }
