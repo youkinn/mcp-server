@@ -19,6 +19,16 @@
       "cwd": "D:\\workplace\\mcp-server\\sango",
       "timeout": 60,
       "disabled": false
+    },
+    "fengyunsanguo": {
+      "command": "node",
+      "args": [
+        "--inspect=9249",
+        "D:\\workplace\\mcp-server\\fengyunsanguo\\src\\index.ts"
+      ],
+      "cwd": "D:\\workplace\\mcp-server\\fengyunsanguo",
+      "timeout": 60,
+      "disabled": false
     }
   }
 }
