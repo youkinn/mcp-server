@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { NO_HIT_TEXT, SangoIndex, enforceDiagnosticsBudget } from '../../search/sango-index.ts';
+import { NO_HIT_TEXT, SangoIndex, enforceDiagnosticsBudget, roundGap } from '../../search/sango-index.ts';
 import type { RetrievalDiagnostics } from '../../types.ts';
 import { registerSangoNovelSearch } from '../../tools/sango-novel-search.ts';
 
@@ -118,12 +118,16 @@ test('⑥ 候选分数表：字段齐全、按最终返回序、≤20 条、rank
   assert.ok(diagnostics);
   assert.ok(diagnostics.candidates.length <= 20);
   assert.ok(diagnostics.candidates.length > 0);
+  const round3 = (v: number) => Math.round(v * 1000) / 1000;
   diagnostics.candidates.forEach((c, i) => {
     assert.equal(c.rank, i + 1);
     assert.deepEqual(
       Object.keys(c).sort(),
-      ['bm25', 'chapter', 'chunkId', 'cited', 'cosine', 'finalScore', 'injected', 'labelHit', 'rank', 'sources', 'title'],
+      ['bm25', 'bm25Norm', 'chapter', 'chunkId', 'cited', 'cosine', 'finalScore', 'injected', 'labelHit', 'rank', 'sources', 'title'],
     );
+    // bug-00013：cosine / bm25Norm 全精度，finalScore 可由接口字段逐条复算
+    const recomputed = round3(0.3 * (c.bm25Norm ?? 0) + 0.6 * ((c.cosine ?? -1) + 1) / 2 + 0.1 * (c.labelHit ? 1 : 0));
+    assert.equal(recomputed, c.finalScore, 'rank' + c.rank + ' 复算恒等式成立');
   });
   assert.equal(diagnostics.candidates[0].chunkId, entries[0].id, '候选表 rank=1 对应出参首条');
   assert.equal(diagnostics.candidates[0].rank, 1);
@@ -170,6 +174,7 @@ test('⑨ 64KB 预算截断（硬约束 3）：超限诊断 truncated=true、tru
     chapter: 73,
     title: bigText,
     bm25: 12.34,
+    bm25Norm: 0.9,
     cosine: 0.812,
     labelHit: true,
     finalScore: 0.92,
@@ -251,4 +256,53 @@ test('⑫ 非法 source 照常抛错（诊断不影响既有错误路径）', as
     () => callTool({ source: 'sanguozhi', query: '关羽', limit: 5 }, { _meta: { traceId: 'trace-x' } }),
     /不支持的 source/,
   );
+});
+
+test('⑬ 分差精度（验收打回）：roundGap 6 位小数不吞小数，gapToTopN 用 6 位；其余分数仍 3 位', async () => {
+  const round3 = (v: number) => Math.round(v * 1000) / 1000;
+  assert.equal(round3(0.0004), 0, '旧 3 位口径：0.0004 → 0（本用例的修复点）');
+  assert.equal(roundGap(0.0004), 0.0004, '新 6 位口径：0.0004 原样保留，不再显示「差 0 分」');
+  assert.equal(roundGap(0.19), 0.19, '常规分差不因放宽位数而变形');
+
+  const index = loadFixtureIndex();
+  const r1 = await index.search('关羽', 1, { diagnostics: true });
+  assert.ok(r1.diagnostics);
+  assert.ok(r1.diagnostics.nextRank, 'limit=1 候选 3 条 → 有第 2 名');
+  assert.equal(r1.diagnostics.nextRank!.rank, 2);
+  const gap = r1.diagnostics.nextRank!.gapToTopN!;
+  assert.ok(gap >= 0, 'gapToTopN ≥ 0');
+  assert.equal(gap, roundGap(gap), 'gapToTopN 按 6 位小数口径产出');
+  for (const c of r1.diagnostics.candidates) {
+    assert.equal(c.finalScore, round3(c.finalScore), `rank${c.rank} finalScore 仍为 3 位小数口径`);
+  }
+});
+
+test('⑭ 复算恒等式（bug-00013）：cosine / bm25Norm 全精度、bm25Norm min-max 口径、降级 cosine 全 null', async () => {
+  const round3 = (v: number) => Math.round(v * 1000) / 1000;
+  const index = loadFixtureIndex();
+  const { diagnostics } = await index.search('关羽', 5, { diagnostics: true });
+  assert.ok(diagnostics);
+  assert.equal(diagnostics.env.degradedBm25Only, true, '夹具无向量 → 降级纯 BM25');
+  // 降级夹具：向量路不可用 → cosine 全 null，复算按向量项=0
+  for (const c of diagnostics.candidates) {
+    assert.equal(c.cosine, null, 'rank' + c.rank + ' 降级场景 cosine=null');
+    const recomputed = round3(0.3 * (c.bm25Norm ?? 0) + 0.6 * ((c.cosine ?? -1) + 1) / 2 + 0.1 * (c.labelHit ? 1 : 0));
+    assert.equal(recomputed, c.finalScore, 'rank' + c.rank + ' 降级按向量项=0 复算成立');
+  }
+  // bm25Norm：词法命中集合内 min-max 归一化（集合内应出现 1 与 0），全精度不 round3
+  const norms: number[] = [];
+  for (const c of diagnostics.candidates) {
+    if (c.bm25Norm !== null) norms.push(c.bm25Norm);
+  }
+  assert.ok(norms.length >= 2, '词法命中候选 ≥2 条均有 bm25Norm');
+  assert.ok(norms.includes(1), '词法命中集合 max → bm25Norm=1');
+  assert.ok(norms.includes(0), '词法命中集合 min → bm25Norm=0');
+  assert.ok(norms.every((v) => v >= 0 && v <= 1), 'bm25Norm 落在 [0,1]');
+  // 非词法命中（仅标签路命中）→ bm25Norm=null
+  const labelOnly = diagnostics.candidates.find((c) => c.sources.includes('label') && !c.sources.includes('lexical'));
+  if (labelOnly) {
+    assert.equal(labelOnly.bm25Norm, null, '非词法命中候选 bm25Norm=null');
+  }
+  // 注（bug-00013）：纯向量兜底路径（词法/标签均无命中、仅向量）已按统一公式计分（VEC_WEIGHT*(cosine+1)/2），
+  // finalScore 同样可由接口字段复算；夹具为降级无向量，该路径不被本套件触达（按公式统一、排序不变可证）。
 });

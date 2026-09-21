@@ -185,7 +185,9 @@ export interface RetrievalCandidateDiagnostics {
   title: string;
   /** BM25 分；词法未命中为 null。 */
   bm25: number | null;
-  /** 向量余弦相似度；向量路未命中 / 降级为 null。 */
+  /** BM25 归一化值（全精度，不 round3）；词法命中集合内 min-max；非词法命中为 null。 */
+  bm25Norm: number | null;
+  /** 向量余弦相似度（全量回传 / 全精度）；降级纯 BM25 为 null。 */
   cosine: number | null;
   /** 标签是否命中。 */
   labelHit: boolean;

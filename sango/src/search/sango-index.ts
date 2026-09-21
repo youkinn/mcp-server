@@ -60,9 +60,22 @@ function escapeRegExp(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-/** 保留 3 位小数的分数展示（诊断载荷瘦身，契约 §1.3 示例三位小数）。 */
+/**
+ * 保留 3 位小数的分数展示（诊断载荷瘦身，契约 §1.3 示例三位小数）。
+ * bug-00013：仅 bm25 / finalScore 维持 3 位小数；cosine / bm25Norm 全精度（供复算恒等式）。
+ */
 function round3(value: number): number {
   return Math.round(value * 1000) / 1000;
+}
+
+/**
+ * 保留 6 位小数的分差展示（契约 §1.3 `gapToTopN` 精度口径）：真实分差常 < 0.0005，
+ * 用 round3 会被四舍五入成 0（trace 60aa5476：rank10 final=0.651 / rank11 final=0.65 →
+ * 页面显示「差 0 分未进 top-N」）。故分差单独放宽到 6 位；bm25 / finalScore 维持 3 位小数，
+ * cosine / bm25Norm 全精度（bug-00013）。
+ */
+export function roundGap(value: number): number {
+  return Math.round(value * 1e6) / 1e6;
 }
 
 /** 候选分数表条数上限（契约 §1.3：candidates ≤ 20 条）。 */
@@ -76,6 +89,7 @@ interface DiagnosticsBuildContext {
   normalized: string;
   tokens: string[];
   bm25: Float64Array;
+  bm25Norm: Float64Array;
   lexicalHits: Set<number>;
   tagHits: Set<number>;
   deathIntent: DeathIntent | null;
@@ -542,7 +556,9 @@ export class SangoIndex {
       }
       vectorTop = this.topKByCosine(cosine, Math.max(limit, 20));
       for (const d of vectorTop) {
-        combined.push({ doc: d, score: (cosine[d] + 1) / 2 });
+        // bug-00013：纯向量兜底也按统一加权公式计分（0.6*cosine 映射），保证 finalScore 可由接口字段复算；
+        // 此路径余弦 > MIN_COSINE(0.3) > 0 → (cosine+1)/2 恒正，无需再套 max(0,·)。
+        combined.push({ doc: d, score: VEC_WEIGHT * ((cosine[d] + 1) / 2) });
       }
     }
 
@@ -579,6 +595,7 @@ export class SangoIndex {
               normalized,
               tokens: qTokens,
               bm25,
+              bm25Norm,
               lexicalHits,
               tagHits,
               deathIntent,
@@ -616,6 +633,7 @@ export class SangoIndex {
       normalized,
       tokens,
       bm25: new Float64Array(0),
+      bm25Norm: new Float64Array(0),
       lexicalHits: new Set(),
       tagHits: new Set(),
       deathIntent,
@@ -638,7 +656,7 @@ export class SangoIndex {
     const nextRank: RetrievalCandidateDiagnostics | null = nextHit
       ? {
           ...this.buildDiagnosticCandidate(nextHit, ctx.hits.length + 1, ctx, vectorTopSet),
-          gapToTopN: Math.max(0, round3(ctx.hits[ctx.hits.length - 1].score - nextHit.score)),
+          gapToTopN: Math.max(0, roundGap(ctx.hits[ctx.hits.length - 1].score - nextHit.score)),
         }
       : null;
     const combinedDocs = new Set(ctx.combined.map((h) => h.doc));
@@ -695,7 +713,8 @@ export class SangoIndex {
       chapter: doc.chapter,
       title: doc.title,
       bm25: ctx.lexicalHits.has(d) ? round3(ctx.bm25[d]) : null,
-      cosine: ctx.cosine && vectorTopSet.has(d) ? round3(ctx.cosine[d]) : null,
+      bm25Norm: ctx.lexicalHits.has(d) ? ctx.bm25Norm[d] : null,
+      cosine: ctx.cosine ? ctx.cosine[d] : null,
       labelHit: ctx.tagHits.has(d),
       finalScore: round3(h.score),
       sources,
