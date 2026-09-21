@@ -165,6 +165,8 @@ export class SangoIndex {
 
   /** 标签表（tags/*.json：chunkId → 标签文本，多标签以 | 分隔），仅用于多路召回第三路（TAG 分量）。 */
   private tagsByDoc: string[] = [];
+  /** 每个 doc 的标签原始文本数组（tagsByDoc[d] 按 | 拆分、trim、去空、保序），供诊断回传命中的标签文本。 */
+  private tagTextsByDoc: string[][] = [];
   private tagPostings = new Map<string, number[]>();
   /**
    * 死亡标签人名词典（标签「人物之死-XXX之死」中的 XXX，归一化后）→ 该人死亡 chunk 下标。
@@ -305,6 +307,11 @@ export class SangoIndex {
       const text = this.tagsByDoc[di];
       if (!text) continue;
       taggedCount++;
+      // 诊断用：保留标签原始文本（未归一化），供 hitLabels 回传可读标签（与倒排同一 `|` 拆分口径）。
+      this.tagTextsByDoc[di] = text
+        .split('|')
+        .map((tag) => tag.trim())
+        .filter((tag) => tag.length > 0);
       const normText = this.normalize(text);
       for (const tag of normText.split('|')) {
         if (tag.startsWith('人物之死-')) {
@@ -707,6 +714,23 @@ export class SangoIndex {
     if (ctx.lexicalHits.has(d)) sources.push('lexical');
     if (vectorTopSet.has(d)) sources.push('vector');
     if (ctx.tagHits.has(d)) sources.push('label');
+    // hitLabels：命中该 chunk 的标签原始文本（保序、去重）。判定口径与 tagPostings 构建 / tagHits 严格一致：
+    // 标签经同口径 normalize + tokenize，与 query 词元中长度 ≥ 2 的词元求交（单字词元不参与，同标签路由）。
+    const hitLabels: string[] = [];
+    if (ctx.tagHits.has(d)) {
+      const qTokens = new Set(ctx.tokens.filter((t) => t.length >= 2));
+      for (const tag of this.tagTextsByDoc[d] ?? []) {
+        const tagTokens = new Set(tokenize(this.normalize(tag)));
+        let hit = false;
+        for (const t of tagTokens) {
+          if (qTokens.has(t)) {
+            hit = true;
+            break;
+          }
+        }
+        if (hit && !hitLabels.includes(tag)) hitLabels.push(tag);
+      }
+    }
     return {
       rank,
       chunkId: doc.chunkId,
@@ -716,6 +740,7 @@ export class SangoIndex {
       bm25Norm: ctx.lexicalHits.has(d) ? ctx.bm25Norm[d] : null,
       cosine: ctx.cosine ? ctx.cosine[d] : null,
       labelHit: ctx.tagHits.has(d),
+      hitLabels,
       finalScore: round3(h.score),
       sources,
       injected: null,

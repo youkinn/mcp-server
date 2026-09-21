@@ -191,6 +191,8 @@ export interface RetrievalCandidateDiagnostics {
   cosine: number | null;
   /** 标签是否命中。 */
   labelHit: boolean;
+  /** 命中的标签表原始文本（`|` 拆分后的单个标签）；未命中为 []，与 `labelHit` 自洽（非空 ⟺ 命中）。 */
+  hitLabels: string[];
   /** 最终分（合并排序分）。 */
   finalScore: number;
   /** 命中来源子集：lexical / vector / label。 */
