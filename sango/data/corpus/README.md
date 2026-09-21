@@ -34,7 +34,7 @@
 }
 ```
 
-- 检索出参即上表 `chunks[]` 里的字段逐条展开（`id/text/chapter/title/type/segFrom/segTo/quoteBalanced/quotes`），章节元数据随条目携带，跨进程调用方无需读语料目录。
+- 检索出参即上表 `chunks[]` 里的字段逐条展开（`id/text/chapter/title/type/segFrom/segTo/quoteBalanced/quotes`），章节元数据随条目携带，跨进程调用方无需读语料目录。**唯一例外**：出参 `quotes[]` 只回 `{ offset, len }`（bug-00010 瘦身，引语文本由 `text` 切片还原），语料文件本身仍是 `{ qid, text, offset, speaker }`——语料与出参 schema 已分叉，见 `docs/sango-corpus-spec.md` §5。
 - 参数：TARGET 250 / CAP 400 / 重叠 0 / MIN 100；只在 `。！？；` 切分；同回内连续 narration 可跨段合并，verse·comment 段内独立成 chunk。
 - 非本 schema（例如仍是 `segments[]`）会在启动时**直接终止**：`corpus 格式非法（应为 schema v2 的 chunks[]）`。没有旧格式兼容层。
 
