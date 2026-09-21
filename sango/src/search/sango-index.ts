@@ -13,7 +13,17 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { embedQuery } from '../embed/bge-m3-encoder.ts';
-import type { Chapter, CorpusChunk, DeathIntent, Doc, SearchEntry, SearchHit } from '../types.ts';
+import type {
+  Chapter,
+  CorpusChunk,
+  DeathIntent,
+  Doc,
+  RetrievalCandidateDiagnostics,
+  RetrievalDiagnostics,
+  SearchEntry,
+  SearchHit,
+  SearchResult,
+} from '../types.ts';
 import { tokenize } from '../utils/text.ts';
 import { matchDeathIntent } from './intent.ts';
 
@@ -50,6 +60,79 @@ function escapeRegExp(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+/**
+ * 保留 3 位小数的分数展示（诊断载荷瘦身，契约 §1.3 示例三位小数）。
+ * bug-00013：仅 bm25 / finalScore 维持 3 位小数；cosine / bm25Norm 全精度（供复算恒等式）。
+ */
+function round3(value: number): number {
+  return Math.round(value * 1000) / 1000;
+}
+
+/**
+ * 保留 6 位小数的分差展示（契约 §1.3 `gapToTopN` 精度口径）：真实分差常 < 0.0005，
+ * 用 round3 会被四舍五入成 0（trace 60aa5476：rank10 final=0.651 / rank11 final=0.65 →
+ * 页面显示「差 0 分未进 top-N」）。故分差单独放宽到 6 位；bm25 / finalScore 维持 3 位小数，
+ * cosine / bm25Norm 全精度（bug-00013）。
+ */
+export function roundGap(value: number): number {
+  return Math.round(value * 1e6) / 1e6;
+}
+
+/** 候选分数表条数上限（契约 §1.3：candidates ≤ 20 条）。 */
+const MAX_DIAGNOSTIC_CANDIDATES = 20;
+/** 诊断 JSON 序列化后 UTF-8 字节数预算（硬约束 3：64 KB，远低于 stdio 10 MB 上限）。 */
+const DIAGNOSTICS_BUDGET_BYTES = 64 * 1024;
+
+/** feat-A009 诊断构建上下文：search 各中间量的引用（只读），供 buildDiagnostics 取数。 */
+interface DiagnosticsBuildContext {
+  raw: string;
+  normalized: string;
+  tokens: string[];
+  bm25: Float64Array;
+  bm25Norm: Float64Array;
+  lexicalHits: Set<number>;
+  tagHits: Set<number>;
+  deathIntent: DeathIntent | null;
+  deathHits: Set<number>;
+  combined: SearchHit[];
+  hits: SearchHit[];
+  cosine: Float64Array | null;
+  vectorTop: number[];
+}
+
+/**
+ * 64 KB 预算截断（硬约束 3）：按优先级从后往前丢——① candidates 尾部（保头部名次）② nextRank
+ * ③ deathIntent.chunkIds（保留 detected / pinned）；query / env / funnel 恒保留。
+ * 截断后 truncated=true、truncatedCount=被丢弃的候选条数；正常载荷远低于预算，不触发。
+ */
+export function enforceDiagnosticsBudget(diagnostics: RetrievalDiagnostics): RetrievalDiagnostics {
+  const fits = (d: RetrievalDiagnostics): boolean =>
+    Buffer.byteLength(JSON.stringify(d), 'utf8') <= DIAGNOSTICS_BUDGET_BYTES;
+  if (fits(diagnostics)) {
+    return diagnostics;
+  }
+  const total = diagnostics.candidates.length;
+  const truncatedBase: RetrievalDiagnostics = { ...diagnostics, truncated: true, truncatedCount: total };
+  for (let kept = total; kept > 0; kept--) {
+    const candidate: RetrievalDiagnostics = {
+      ...truncatedBase,
+      candidates: diagnostics.candidates.slice(0, kept),
+      truncatedCount: total - kept,
+    };
+    if (fits(candidate)) {
+      return candidate;
+    }
+  }
+  // candidates 全丢仍超限 → 丢 nextRank；仍超限 → 丢 deathIntent.chunkIds
+  let slim: RetrievalDiagnostics = { ...truncatedBase, candidates: [], truncatedCount: total };
+  if (!fits(slim)) {
+    slim = { ...slim, nextRank: null };
+  }
+  if (!fits(slim)) {
+    slim = { ...slim, deathIntent: { ...slim.deathIntent, chunkIds: [] } };
+  }
+  return slim;
+}
 export class SangoIndex {
   private readonly corpusDir: string;
   private readonly vectorsFile: string;
@@ -82,6 +165,8 @@ export class SangoIndex {
 
   /** 标签表（tags/*.json：chunkId → 标签文本，多标签以 | 分隔），仅用于多路召回第三路（TAG 分量）。 */
   private tagsByDoc: string[] = [];
+  /** 每个 doc 的标签原始文本数组（tagsByDoc[d] 按 | 拆分、trim、去空、保序），供诊断回传命中的标签文本。 */
+  private tagTextsByDoc: string[][] = [];
   private tagPostings = new Map<string, number[]>();
   /**
    * 死亡标签人名词典（标签「人物之死-XXX之死」中的 XXX，归一化后）→ 该人死亡 chunk 下标。
@@ -222,6 +307,11 @@ export class SangoIndex {
       const text = this.tagsByDoc[di];
       if (!text) continue;
       taggedCount++;
+      // 诊断用：保留标签原始文本（未归一化），供 hitLabels 回传可读标签（与倒排同一 `|` 拆分口径）。
+      this.tagTextsByDoc[di] = text
+        .split('|')
+        .map((tag) => tag.trim())
+        .filter((tag) => tag.length > 0);
       const normText = this.normalize(text);
       for (const tag of normText.split('|')) {
         if (tag.startsWith('人物之死-')) {
@@ -360,8 +450,13 @@ export class SangoIndex {
    *
    * 异步：scheme=model 时需运行期编码 query（BGE-M3 ONNX 推理，见 embed/bge-m3-encoder.ts）。
    */
-  async search(query: string, limit: number): Promise<SearchEntry[]> {
-    if (this.n === 0) return [];
+  async search(
+    query: string,
+    limit: number,
+    options?: { diagnostics?: boolean },
+  ): Promise<SearchResult> {
+    const wantDiag = options?.diagnostics === true;
+    if (this.n === 0) return { entries: [], diagnostics: null };
     // query 与语料侧同口径归一化后再分词（alias.json 缺失时 normalize 为恒等）。
     const normalized = this.normalize(query);
     const qTokens = tokenize(normalized);
@@ -430,10 +525,13 @@ export class SangoIndex {
 
     // ---- 多路候选合并 + 重排（BGE-M3*0.6 + BM25*0.3 + TAG*0.1）----
     const combined: SearchHit[] = [];
+    // 向量路 topK（复用为诊断 funnel.vectorTop50 的中间量，不重复计算）
+    let vectorTop: number[] = [];
     if (lexicalHits.size > 0 || tagHits.size > 0) {
       const cands = new Set(lexicalHits);
       if (cosine) {
-        for (const d of this.topKByCosine(cosine, 50)) cands.add(d);
+        vectorTop = this.topKByCosine(cosine, 50);
+        for (const d of vectorTop) cands.add(d);
       }
       for (const d of tagHits) cands.add(d);
       for (const d of cands) {
@@ -444,16 +542,41 @@ export class SangoIndex {
       }
     } else {
       // 纯向量兜底（仅真向量可用时；scheme=hash 无语义，纯 BM25 无词法命中即判无命中）
-      if (!cosine) return [];
+      if (!cosine) {
+        return {
+          entries: [],
+          diagnostics: wantDiag
+            ? this.safeDiagnostics(() => this.emptySearchDiagnostics(query, normalized, qTokens, null, deathIntent))
+            : null,
+        };
+      }
       let best = -Infinity;
       for (let d = 0; d < this.n; d++) if (cosine[d] > best) best = cosine[d];
-      if (best < MIN_COSINE) return [];
-      for (const d of this.topKByCosine(cosine, Math.max(limit, 20))) {
-        combined.push({ doc: d, score: (cosine[d] + 1) / 2 });
+      if (best < MIN_COSINE) {
+        // 向量存在但全部低于阈值 → 无命中；向量有效候选记 0（不做额外计算，mergedCandidates=0 已可读）
+        return {
+          entries: [],
+          diagnostics: wantDiag
+            ? this.safeDiagnostics(() => this.emptySearchDiagnostics(query, normalized, qTokens, cosine, deathIntent))
+            : null,
+        };
+      }
+      vectorTop = this.topKByCosine(cosine, Math.max(limit, 20));
+      for (const d of vectorTop) {
+        // bug-00013：纯向量兜底也按统一加权公式计分（0.6*cosine 映射），保证 finalScore 可由接口字段复算；
+        // 此路径余弦 > MIN_COSINE(0.3) > 0 → (cosine+1)/2 恒正，无需再套 max(0,·)。
+        combined.push({ doc: d, score: VEC_WEIGHT * ((cosine[d] + 1) / 2) });
       }
     }
 
-    if (combined.length === 0) return [];
+    if (combined.length === 0) {
+      return {
+        entries: [],
+        diagnostics: wantDiag
+          ? this.safeDiagnostics(() => this.emptySearchDiagnostics(query, normalized, qTokens, cosine, deathIntent))
+          : null,
+      };
+    }
     // 死亡强命中不改分数（三路加权恒在 [0,1]），改为排序两级：死亡命中组整体置顶，组内按意图选段
     // （死因/凶手/地点/时间/确认类取靠前段，事后类取靠后段，遗言类不打段序按加权分），
     // 其余候选仍按加权分降序。
@@ -469,9 +592,161 @@ export class SangoIndex {
       return b.score - a.score;
     });
     const hits = combined.slice(0, Math.min(limit, combined.length));
-    return hits.map((h) => this.toEntry(this.docs[h.doc]));
+    const entries = hits.map((h) => this.toEntry(this.docs[h.doc]));
+    return {
+      entries,
+      diagnostics: wantDiag
+        ? this.safeDiagnostics(() =>
+            this.buildDiagnostics({
+              raw: query,
+              normalized,
+              tokens: qTokens,
+              bm25,
+              bm25Norm,
+              lexicalHits,
+              tagHits,
+              deathIntent,
+              deathHits,
+              combined,
+              hits,
+              cosine,
+              vectorTop,
+            }),
+          )
+        : null,
+    };
   }
 
+  /** feat-A009：诊断构建统一 trySafe 包裹（旁路原则——产出失败不影响检索与 content）。 */
+  private safeDiagnostics(build: () => RetrievalDiagnostics): RetrievalDiagnostics | null {
+    try {
+      return enforceDiagnosticsBudget(build());
+    } catch (error) {
+      console.error('[sango] 检索诊断产出失败（旁路，不影响检索）:', error);
+      return null;
+    }
+  }
+
+  /** 空结果路径的最小诊断：funnel 全 0、candidates 空、nextRank null（仍可读环境与降级 / query 处理链）。 */
+  private emptySearchDiagnostics(
+    query: string,
+    normalized: string,
+    tokens: string[],
+    cosine: Float64Array | null,
+    deathIntent: DeathIntent | null,
+  ): RetrievalDiagnostics {
+    return this.buildDiagnostics({
+      raw: query,
+      normalized,
+      tokens,
+      bm25: new Float64Array(0),
+      bm25Norm: new Float64Array(0),
+      lexicalHits: new Set(),
+      tagHits: new Set(),
+      deathIntent,
+      deathHits: new Set(),
+      combined: [],
+      hits: [],
+      cosine,
+      vectorTop: [],
+    });
+  }
+
+  /** 从 search 各中间量组装诊断（契约 §1.3）；注入 / 被引用占位 null，由总台回填。 */
+  private buildDiagnostics(ctx: DiagnosticsBuildContext): RetrievalDiagnostics {
+    const degraded = ctx.cosine === null;
+    const vectorTopSet = new Set(ctx.vectorTop);
+    const candidates = ctx.combined
+      .slice(0, MAX_DIAGNOSTIC_CANDIDATES)
+      .map((h, i) => this.buildDiagnosticCandidate(h, i + 1, ctx, vectorTopSet));
+    const nextHit = ctx.combined[ctx.hits.length];
+    const nextRank: RetrievalCandidateDiagnostics | null = nextHit
+      ? {
+          ...this.buildDiagnosticCandidate(nextHit, ctx.hits.length + 1, ctx, vectorTopSet),
+          gapToTopN: Math.max(0, roundGap(ctx.hits[ctx.hits.length - 1].score - nextHit.score)),
+        }
+      : null;
+    const combinedDocs = new Set(ctx.combined.map((h) => h.doc));
+    const pinnedChunkIds = [...ctx.deathHits]
+      .filter((d) => combinedDocs.has(d))
+      .map((d) => this.docs[d].chunkId);
+    return {
+      truncated: false,
+      truncatedCount: 0,
+      query: { raw: ctx.raw, normalized: ctx.normalized, tokens: ctx.tokens },
+      env: {
+        vectorScheme: degraded ? null : this.vecScheme === VEC_SCHEME_MODEL ? 'bge-m3' : null,
+        degradedBm25Only: degraded,
+        corpusChunks: this.n,
+        aliasCount: this.pidOf.size,
+        vectorDim: degraded ? null : this.vecDim,
+      },
+      funnel: {
+        corpusChunks: this.n,
+        lexicalHits: ctx.lexicalHits.size,
+        vectorTop50: ctx.vectorTop.length,
+        labelHits: ctx.tagHits.size,
+        mergedCandidates: ctx.combined.length,
+        topN: ctx.hits.length,
+        injected: null,
+        cited: null,
+      },
+      candidates,
+      nextRank,
+      deathIntent: {
+        detected: ctx.deathIntent !== null,
+        pinned: pinnedChunkIds.length > 0,
+        chunkIds: pinnedChunkIds,
+      },
+    };
+  }
+
+  /** 单条候选诊断：chunkId + 回目 + 三路分 + 来源；注入 / 被引用占位 null。 */
+  private buildDiagnosticCandidate(
+    h: SearchHit,
+    rank: number,
+    ctx: DiagnosticsBuildContext,
+    vectorTopSet: Set<number>,
+  ): RetrievalCandidateDiagnostics {
+    const d = h.doc;
+    const doc = this.docs[d];
+    const sources: string[] = [];
+    if (ctx.lexicalHits.has(d)) sources.push('lexical');
+    if (vectorTopSet.has(d)) sources.push('vector');
+    if (ctx.tagHits.has(d)) sources.push('label');
+    // hitLabels：命中该 chunk 的标签原始文本（保序、去重）。判定口径与 tagPostings 构建 / tagHits 严格一致：
+    // 标签经同口径 normalize + tokenize，与 query 词元中长度 ≥ 2 的词元求交（单字词元不参与，同标签路由）。
+    const hitLabels: string[] = [];
+    if (ctx.tagHits.has(d)) {
+      const qTokens = new Set(ctx.tokens.filter((t) => t.length >= 2));
+      for (const tag of this.tagTextsByDoc[d] ?? []) {
+        const tagTokens = new Set(tokenize(this.normalize(tag)));
+        let hit = false;
+        for (const t of tagTokens) {
+          if (qTokens.has(t)) {
+            hit = true;
+            break;
+          }
+        }
+        if (hit && !hitLabels.includes(tag)) hitLabels.push(tag);
+      }
+    }
+    return {
+      rank,
+      chunkId: doc.chunkId,
+      chapter: doc.chapter,
+      title: doc.title,
+      bm25: ctx.lexicalHits.has(d) ? round3(ctx.bm25[d]) : null,
+      bm25Norm: ctx.lexicalHits.has(d) ? ctx.bm25Norm[d] : null,
+      cosine: ctx.cosine ? ctx.cosine[d] : null,
+      labelHit: ctx.tagHits.has(d),
+      hitLabels,
+      finalScore: round3(h.score),
+      sources,
+      injected: null,
+      cited: null,
+    };
+  }
   /**
    * 索引文档 → 出参条目：只保留契约字段（`id` / `text` / `chapter` / `title` / `type` /
    * `segFrom` / `segTo` / `quoteBalanced` / `quotes`），丢弃索引内部结构（tokens / tf / len）；
