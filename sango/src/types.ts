@@ -57,22 +57,43 @@ export interface Chapter {
  * 条目可来自不同回（top5 跨回是常态），编排侧只能逐条渲染出处；且 orchestrator 进程读不到
  * mcp-server 的语料目录，无法「按 id 回溯回文件」。故出参时随每条条目展开。
  * `source` 不在条目级重复（调用方入参已知）。
+ * `quotes` 不继承语料的 `Quote`，出参只回 `{ offset, len }`（见 `QuoteRef`，bug-00010）。
  */
-export interface SearchEntry extends CorpusChunk {
+export interface SearchEntry extends Omit<CorpusChunk, 'quotes'> {
   /** 回号（回级元数据随条目携带，供服务端渲染出处）。 */
   chapter: number;
   /** 回目（回级元数据随条目携带；出处只到回目）。 */
   title: string;
+  /** 引语引用表（只回定位信息，文本由条目 `text` 切片还原）；chunk 内无成对引语时为 []。 */
+  quotes: QuoteRef[];
+}
+
+/**
+ * `sango_novel_search` 出参的引语引用：**只回定位信息，不回引语文本**（bug-00010 契约瘦身）。
+ *
+ * 引语文本由调用方按切片口径从条目 `text` 还原（含两侧引号）：
+ * `text.slice(offset - 1, offset - 1 + len + 2) === "“" + 引语本体 + "”"`。
+ * 语料 JSON 仍是 `Quote`（`{ qid, text, offset, speaker }`，不重建），**出参与语料 schema 已分叉**，
+ * 故出参类型与语料类型分开定义。
+ */
+export interface QuoteRef {
+  /** 该引语在条目 `text` 中的起始偏移（开引号位置 + 1，即开引号的 1 基下标）。 */
+  offset: number;
+  /** 引语本体字数（不含两侧引号）。 */
+  len: number;
 }
 
 /**
  * 索引文档：加载后的 chunk 级检索单元。
  *
- * 除 `chunkId`（语料侧字段名为 `id`，出参按契约名 `id` 输出）外，其余检索单元字段继承自
- * `SearchEntry`，保证与契约同源。`tokens` / `tf` / `len` 为索引内部结构，不进条目。
+ * 除 `chunkId`（语料侧字段名为 `id`，出参按契约名 `id` 输出）与 `quotes`（索引内部按语料原样承载，
+ * 出参时才瘦身为 `QuoteRef`）外，其余检索单元字段继承自 `SearchEntry`，保证与契约同源。
+ * `tokens` / `tf` / `len` 为索引内部结构，不进条目。
  */
-export interface Doc extends Omit<SearchEntry, 'id'> {
+export interface Doc extends Omit<SearchEntry, 'id' | 'quotes'> {
   chunkId: string;
+  /** 语料侧引语冗余表（含 `qid` / `text` / `speaker`）；出参时经 `toEntry` 瘦身为 `QuoteRef`。 */
+  quotes: Quote[];
   tokens: string[];
   tf: Map<string, number>;
   len: number;

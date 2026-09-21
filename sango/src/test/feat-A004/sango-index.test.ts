@@ -96,20 +96,30 @@ test('④ 按相关度降序返回，limit 生效', async () => {
   assert.equal((await index.search('关羽', 1)).length, 1);
 });
 
-test('⑤ quotes[] 字段（qid / text / offset / speaker）与契约一致，offset 指向 text 内开引号', async () => {
+test('⑤ quotes[] 字段（offset / len）与契约一致，切片口径可从 text 还原引语', async () => {
   const index = loadFixtureIndex();
   const entry = (await index.search('瑾曰', 1))[0];
   assert.equal(entry.id, 'sanguo-yanyi:0073:c0002');
-  assert.deepEqual(entry.quotes.map((q) => q.qid), ['Q1', 'Q2']);
   assert.deepEqual(entry.quotes.map((q) => q.offset), [4, 30]);
-  assert.deepEqual(entry.quotes.map((q) => q.speaker), ['瑾', '云长']);
-  assert.equal(entry.quotes[0].text, '特来求结两家之好……请君侯思之。');
+  assert.deepEqual(entry.quotes.map((q) => q.len), [16, 12]);
+  assert.deepEqual(
+    entry.quotes.map((q) => Object.keys(q).sort()),
+    [['len', 'offset'], ['len', 'offset']],
+    '出参引语只回 offset / len（不含 qid / text / speaker）',
+  );
+  assert.deepEqual(
+    entry.quotes.map((q) => entry.text.slice(q.offset - 1, q.offset - 1 + q.len + 2)),
+    ['“特来求结两家之好……请君侯思之。”', '“吾虎女安肯嫁犬子乎！……”'],
+    'text.slice(offset - 1, offset - 1 + len + 2) 应等于 “引语本体”',
+  );
   for (const quote of entry.quotes) {
+    const sliced = entry.text.slice(quote.offset - 1, quote.offset - 1 + quote.len + 2);
     assert.equal(
-      entry.text.slice(quote.offset - 1, quote.offset - 1 + quote.text.length + 2),
-      `“${quote.text}”`,
-      'offset 应与开引号边界一致（offset-1 处即开引号）',
+      sliced.length,
+      quote.len + 2,
+      '切片长度应为引语本体字数 + 两侧引号',
     );
+    assert.ok(sliced.startsWith('“') && sliced.endsWith('”'), `切片应含成对引号：${sliced}`);
   }
 });
 
@@ -140,8 +150,8 @@ test('⑧ 工具出参：命中为 JSON 序列化条目数组，无命中为固�
   assert.equal(entries.length, 1);
   assert.equal(entries[0].id, 'sanguo-yanyi:0073:c0002');
   assert.deepEqual(entries[0].quotes, [
-    { qid: 'Q1', text: '特来求结两家之好……请君侯思之。', offset: 4, speaker: '瑾' },
-    { qid: 'Q2', text: '吾虎女安肯嫁犬子乎！……', offset: 30, speaker: '云长' },
+    { offset: 4, len: 16 },
+    { offset: 30, len: 12 },
   ]);
   const miss = await callTool({ source: 'sanguo-yanyi', query: '鹅鹅鹅曲项向天歌', limit: 5 });
   assert.equal(miss.content[0].text, NO_HIT_TEXT);

@@ -32,6 +32,8 @@
 
 **输出**：结构化条目数组（`id` / `text` / `type` / `segFrom` / `segTo` / `quoteBalanced` / `quotes[]`，含回级 `chapter` / `title` 展开），**不返回拼接文本块、不含出处头**；出处与引用由总台服务端渲染，段号为内部字段、不下发展示。
 
+> **`quotes[]` 出参形态（bug-00010，2026-09-21）**：出参只回 `{ offset, len }`（引语文本由 `text` 切片还原：`text.slice(offset - 1, offset - 1 + len + 2)` = `“` + 引语 + `”`）。语料 JSON 仍是 `{ qid, text, offset, speaker }`（不重建）——**出参与语料 schema 已分叉**，改契约须对账 `docs/sango-corpus-spec.md` §5 与 `mcp-orchestrator/api/feat-A004-sango-classics-rag.md`「输出（命中）」。
+
 ---
 
 ## 三、典型调用示例
