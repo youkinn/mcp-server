@@ -125,3 +125,109 @@ export type DeathIntent =
   | 'death_last_words'
   /** 死后之事：死后怎样、谁接任（答案常在死因段之后的追述/续事段）。 */
   | 'death_aftermath';
+
+/**
+ * 检索诊断：召回可解释载荷（feat-A009，契约 §1.3）。
+ * sango 在收到 tools/call params _meta.traceId 时产出，经 result._meta.diagnostics 回传；
+ * injected / cited 在产出阶段恒为 null 占位，由总台 agent 收尾回填后落库。
+ * 只放结构化小数据（不放 chunk 文本），64 KB 预算由 sango 侧截断保证。
+ */
+
+export interface RetrievalQueryDiagnostics {
+  /** 工具入参 query 原文。 */
+  raw: string;
+  /** alias 归一化后文本。 */
+  normalized: string;
+  /** 分词 tokens。 */
+  tokens: string[];
+}
+
+export interface RetrievalEnvDiagnostics {
+  /** 向量 scheme（BGE-M3 构建头 scheme=1）；向量未参与本次检索（降级）为 null。 */
+  vectorScheme: string | null;
+  /** true = 本次检索降级纯 BM25（向量缺失 / 编码失败，静默降级）。 */
+  degradedBm25Only: boolean;
+  /** 语料 chunk 总数。 */
+  corpusChunks: number;
+  /** alias 条数。 */
+  aliasCount: number;
+  /** 向量维度；降级为 null。 */
+  vectorDim: number | null;
+}
+
+export interface RetrievalFunnelDiagnostics {
+  /** 语料 chunk 数（漏斗起点，= env.corpusChunks）。 */
+  corpusChunks: number;
+  /** 词法命中数。 */
+  lexicalHits: number;
+  /** 向量路 top50 条数；降级为 0。 */
+  vectorTop50: number;
+  /** 标签命中数。 */
+  labelHits: number;
+  /** 合并去重后候选数。 */
+  mergedCandidates: number;
+  /** 最终返回条数（= 工具出参条数，≤ limit）。 */
+  topN: number;
+  /** 进注入视图条数；sango 产出阶段为 null，总台回填。 */
+  injected: number | null;
+  /** 被引用条数（去重后 chunk 计数）；同上。 */
+  cited: number | null;
+}
+
+export interface RetrievalCandidateDiagnostics {
+  /** 排名（1 起，按最终返回序）。 */
+  rank: number;
+  /** chunk 唯一 ID。 */
+  chunkId: string;
+  /** 回号。 */
+  chapter: number;
+  /** 回目。 */
+  title: string;
+  /** BM25 分；词法未命中为 null。 */
+  bm25: number | null;
+  /** 向量余弦相似度；向量路未命中 / 降级为 null。 */
+  cosine: number | null;
+  /** 标签是否命中。 */
+  labelHit: boolean;
+  /** 最终分（合并排序分）。 */
+  finalScore: number;
+  /** 命中来源子集：lexical / vector / label。 */
+  sources: string[];
+  /** 是否进注入视图；sango 占位 null，总台回填。 */
+  injected: boolean | null;
+  /** 是否被引用；同上。 */
+  cited: boolean | null;
+  /** 仅 nextRank：与 top-N 最后一名 finalScore 的分差，≥0。 */
+  gapToTopN?: number;
+}
+
+export interface RetrievalDeathIntentDiagnostics {
+  /** 是否判定死亡意图。 */
+  detected: boolean;
+  /** 是否触发置顶。 */
+  pinned: boolean;
+  /** 被置顶的候选 chunkId；未置顶为 []。 */
+  chunkIds: string[];
+}
+
+/** 检索诊断：召回漏斗 / 候选分数表 / query 处理链 / 环境与降级 / 死亡意图（契约 §1.3）。 */
+export interface RetrievalDiagnostics {
+  /** 64 KB 预算截断标记。 */
+  truncated: boolean;
+  /** 被丢弃的候选条数；未截断恒 0。 */
+  truncatedCount: number;
+  query: RetrievalQueryDiagnostics;
+  env: RetrievalEnvDiagnostics;
+  funnel: RetrievalFunnelDiagnostics;
+  /** 候选分数表，按最终返回序，≤20 条。 */
+  candidates: RetrievalCandidateDiagnostics[];
+  /** 第 N+1 名（未进 top-N）；候选不足为 null。 */
+  nextRank: RetrievalCandidateDiagnostics | null;
+  deathIntent: RetrievalDeathIntentDiagnostics;
+}
+
+/** feat-A009：search 统一返回 出参条目 + 检索诊断（诊断仅在请求时产出，否则为 null）。 */
+export interface SearchResult {
+  entries: SearchEntry[];
+  diagnostics: RetrievalDiagnostics | null;
+}

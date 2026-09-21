@@ -5,6 +5,7 @@
  */
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
+import type { RetrievalDiagnostics } from '../types.ts';
 import { NO_HIT_TEXT, SangoIndex } from '../search/sango-index.ts';
 
 /** limit 上限：超出按上限截断，不报错（契约「输入」表）。 */
@@ -30,19 +31,38 @@ export function registerSangoNovelSearch(
         limit: z.number().int().min(1).optional().default(5).describe(`返回条数，默认 5，最大 ${MAX_LIMIT}（超出按 ${MAX_LIMIT} 截断）`),
       }),
     },
-    async (args) => {
+    async (args, extra) => {
       const { source, query, limit } = args;
       // 按 source 确定语料域：sanguozhi 虽在枚举中预留，本期不可用于检索，按未支持处理（同非法 source 报错路径）。
       if (source !== 'sanguo-yanyi') {
         throw new Error(`不支持的 source：${source}，本期仅支持 sanguo-yanyi`);
       }
+      // feat-A009：仅收到 tools/call params._meta.traceId 时才产出诊断（协议允许未知 _meta 键）。
+      // extra 为 SDK RequestHandlerExtra，_meta 取自原始请求（SDK 1.30.0 已验）。
+      const traceId = (extra?._meta as { traceId?: unknown } | undefined)?.traceId;
+      const wantDiagnostics = typeof traceId === 'string' && traceId !== '';
       // 上限按契约截断而非报错（超出即入参校验失败不符合「超出按 20 截断，不报错」）
-      const entries = await index.search(query, Math.min(limit, MAX_LIMIT));
+      const { entries, diagnostics } = await index.search(query, Math.min(limit, MAX_LIMIT), {
+        diagnostics: wantDiagnostics,
+      });
       if (entries.length === 0) {
-        return { content: [{ type: 'text' as const, text: NO_HIT_TEXT }] };
+        return attachDiagnostics({ content: [{ type: 'text' as const, text: NO_HIT_TEXT }] }, diagnostics);
       }
       // 出参为结构化条目数组，JSON 序列化进 MCP 文本内容；条目文本内不含出处 / 回目 / 段号 / 类型 / 分数。
-      return { content: [{ type: 'text' as const, text: JSON.stringify(entries) }] };
+      return attachDiagnostics(
+        { content: [{ type: 'text' as const, text: JSON.stringify(entries) }] },
+        diagnostics,
+      );
     },
   );
+}
+/** feat-A009：有诊断时随 result._meta.diagnostics 回传（content 契约零改动；无诊断则不携带 _meta）。 */
+function attachDiagnostics(
+  result: { content: Array<{ type: 'text'; text: string }> },
+  diagnostics: RetrievalDiagnostics | null,
+): { content: Array<{ type: 'text'; text: string }>; _meta?: { diagnostics: RetrievalDiagnostics } } {
+  if (!diagnostics) {
+    return result;
+  }
+  return { ...result, _meta: { diagnostics } };
 }
