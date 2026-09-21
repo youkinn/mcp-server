@@ -476,7 +476,8 @@ export class SangoIndex {
    * 索引文档 → 出参条目：只保留契约字段（`id` / `text` / `chapter` / `title` / `type` /
    * `segFrom` / `segTo` / `quoteBalanced` / `quotes`），丢弃索引内部结构（tokens / tf / len）；
    * `chapter` / `title` 随条目逐条展开（召回可跨回，编排侧只能逐条渲染出处，且跨进程读不到语料目录）。
-   * 文本不做任何拼接。
+   * `quotes` 按 bug-00010 契约瘦身：只回 `{ offset, len }`，引语文本由调用方按
+   * `text.slice(offset - 1, offset - 1 + len + 2)` 还原（= “ + 引语本体 + ”）。文本不做任何拼接。
    */
   private toEntry(d: Doc): SearchEntry {
     return {
@@ -488,7 +489,7 @@ export class SangoIndex {
       segFrom: d.segFrom,
       segTo: d.segTo,
       quoteBalanced: d.quoteBalanced,
-      quotes: d.quotes,
+      quotes: d.quotes.map((q) => ({ offset: q.offset, len: q.text.length })),
     };
   }
 
