@@ -15,6 +15,7 @@ import { fileURLToPath } from 'node:url';
 import { embedQuery } from '../embed/bge-m3-encoder.ts';
 import type {
   Chapter,
+  ChapterPayload,
   CorpusChunk,
   DeathIntent,
   Doc,
@@ -794,5 +795,38 @@ export class SangoIndex {
     const idx = Array.from({ length: this.n }, (_, i) => i);
     idx.sort((a, b) => cosine[b] - cosine[a]);
     return idx.slice(0, k);
+  }
+
+  /**
+   * feat-A010：按回取整回原文（复用 load() 已加载语料，不新建索引、不改语料）。
+   * 回号合法但该回语料缺失时抛错（`第 N 回原文不存在`），由总台映射为 404。
+   * 相邻回目标题取自已加载回目（docs 按语料文件序展开，chapter/title 逐 doc 携带）。
+   */
+  getChapter(chapter: number): ChapterPayload {
+    const chapterDocs = this.docs.filter((d) => d.chapter === chapter);
+    if (chapterDocs.length === 0) {
+      throw new Error(`第 ${chapter} 回原文不存在`);
+    }
+    const title = chapterDocs[0].title;
+    return {
+      chapter,
+      title,
+      prev: this.adjacentChapter(chapter - 1),
+      next: this.adjacentChapter(chapter + 1),
+      chunks: chapterDocs.map((d) => ({
+        chunkId: d.chunkId,
+        text: d.text,
+        type: d.type,
+        segFrom: d.segFrom,
+        segTo: d.segTo,
+      })),
+    };
+  }
+
+  /** 相邻回目标题：越界（<1 / >120）或该回语料缺失 → null。 */
+  private adjacentChapter(chapter: number): { chapter: number; title: string } | null {
+    if (chapter < 1 || chapter > 120) return null;
+    const doc = this.docs.find((d) => d.chapter === chapter);
+    return doc ? { chapter, title: doc.title } : null;
   }
 }

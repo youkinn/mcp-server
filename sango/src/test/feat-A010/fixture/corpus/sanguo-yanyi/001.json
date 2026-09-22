@@ -1,0 +1,16 @@
+{
+  "source": "sanguo-yanyi",
+  "chapter": 1,
+  "title": "宴桃园豪杰三结义 斩黄巾英雄首立功",
+  "chunks": [
+    {
+      "id": "sanguo-yanyi:0001:c0001",
+      "text": "话说天下大势，分久必合，合久必分。",
+      "type": "narration",
+      "segFrom": 1,
+      "segTo": 1,
+      "quoteBalanced": true,
+      "quotes": []
+    }
+  ]
+}

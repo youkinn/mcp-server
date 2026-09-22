@@ -235,3 +235,32 @@ export interface SearchResult {
   entries: SearchEntry[];
   diagnostics: RetrievalDiagnostics | null;
 }
+
+/**
+ * `sango_novel_chapter` 出参（feat-A010）：整回原文 + 相邻回目。
+ * chunk 字段按契约名 `chunkId` 输出（语料 schema 字段名为 `id`，出参转换，见接口文档 §3.1）。
+ */
+export interface ChapterChunk {
+  /** chunk 唯一 ID（= 语料 `id`，`{source}:{回号4位补零}:c{回内序号4位补零}`）。 */
+  chunkId: string;
+  /** chunk 纯原文；不含出处 / 回目 / 段号 / 类型 / 分数。 */
+  text: string;
+  /** chunk 类型：叙述 / 诗赞 / 评注。 */
+  type: 'narration' | 'verse' | 'comment';
+  /** 起始段号（1 起）。 */
+  segFrom: number;
+  /** 结束段号；跨段 chunk 时 segFrom != segTo。 */
+  segTo: number;
+}
+
+/** `sango_novel_chapter` 出参整体：整回 + 相邻回目标题（供前端按钮显示，避免多拉一次全文）。 */
+export interface ChapterPayload {
+  chapter: number;
+  title: string;
+  /** 上一回 `{chapter, title}`；第 1 回 / 相邻回缺失为 null。 */
+  prev: { chapter: number; title: string } | null;
+  /** 下一回 `{chapter, title}`；第 120 回 / 相邻回缺失为 null。 */
+  next: { chapter: number; title: string } | null;
+  /** 本回全部 chunk（语料文件内顺序）。 */
+  chunks: ChapterChunk[];
+}

@@ -11,6 +11,7 @@ import { createRequire } from 'node:module';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { SangoIndex } from './search/sango-index.ts';
+import { registerSangoNovelChapter } from './tools/sango-novel-chapter.ts';
 import { registerSangoNovelSearch } from './tools/sango-novel-search.ts';
 
 const require = createRequire(import.meta.url);
@@ -24,6 +25,7 @@ async function main() {
   index.load();
   console.error(`[sango] corpus 已加载：${index.n} chunk`);
   registerSangoNovelSearch(server.registerTool.bind(server), index);
+  registerSangoNovelChapter(server.registerTool.bind(server), index);
   const transport = new StdioServerTransport();
   await server.connect(transport);
   console.error('[sango] MCP Server running on stdio');
