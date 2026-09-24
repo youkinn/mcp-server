@@ -9,7 +9,7 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/index.js",
     "debug": "node --inspect-brk=9240 dist/index.js",
-    "test": "node --test src/test/feat-A004/sango-index.test.ts src/test/feat-A009/sango-diagnostics.test.ts src/test/feat-A010/sango-chapter.test.ts",
+    "test": "node --test src/test/feat-A004/sango-index.test.ts src/test/feat-A009/sango-diagnostics.test.ts src/test/feat-A010/sango-chapter.test.ts src/test/feat-A013/sango-query-embed.test.ts",
     "corpus": "py -3 scripts/build_corpus.py",
     "vectors": "py -3 scripts/build_vectors.py",
     "alias": "py -3 scripts/build_alias.py",

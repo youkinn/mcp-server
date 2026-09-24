@@ -1,6 +1,6 @@
 /**
  * feat-A009 活文档：检索诊断（召回可解释）产出。
- * 覆盖：search 返回 { entries, diagnostics } / 未请求不产诊断 / 诊断结构齐全（query/env/funnel/candidates/
+ * 覆盖：search 返回 { entries, diagnostics } / 未请求不产诊断 / 诊断结构齐全（query/env/funnel/timing/candidates/
  * nextRank/deathIntent）/ 漏斗管道约束 / 降级环境 / 死亡意图置顶 / 64KB 预算截断 / 工具层 traceId 透传回传
  * result._meta.diagnostics（content 契约零改动）/ 旁路（产出失败不影响 content）/ 候选命中的标签文本
  * （hitLabels：与 labelHit 自洽、标签表成员、双字词元求交，另用真实语料 data/corpus 核对一次）。
@@ -98,7 +98,7 @@ test('② 请求诊断：结构字段齐全（truncated/truncatedCount/query/env
     Object.keys(diagnostics.deathIntent).sort(),
     ['chunkIds', 'detected', 'pinned'],
   );
-  assert.deepEqual(Object.keys(diagnostics).sort(), ['candidates', 'deathIntent', 'env', 'funnel', 'nextRank', 'query', 'truncated', 'truncatedCount'], '诊断顶层字段齐全');
+  assert.deepEqual(Object.keys(diagnostics).sort(), ['candidates', 'deathIntent', 'env', 'funnel', 'nextRank', 'query', 'timing', 'truncated', 'truncatedCount'], '诊断顶层字段齐全');
 });
 
 test('③ query 处理链：raw=入参、normalized=alias 归一化结果、tokens 非空（验收 9）', async () => {
@@ -236,6 +236,7 @@ test('⑨ 64KB 预算截断（硬约束 3）：超限诊断 truncated=true、tru
     query: { raw: 'q', normalized: 'q', tokens: ['q'] },
     env: { vectorScheme: null, degradedBm25Only: true, corpusChunks: 4, aliasCount: 5, vectorDim: null },
     funnel: { corpusChunks: 4, lexicalHits: 1, vectorTop50: 0, labelHits: 0, mergedCandidates: 1000, topN: 10, injected: null, cited: null },
+    timing: { bm25: 1.2, vector: 3.4, label: 0.5, merge: 2.1 },
     candidates: Array.from({ length: 1000 }, (_, i) => ({ ...candidate, rank: i + 1 })),
     nextRank: { ...candidate, rank: 11, gapToTopN: 0.1 },
     deathIntent: { detected: false, pinned: false, chunkIds: [] },
@@ -248,6 +249,7 @@ test('⑨ 64KB 预算截断（硬约束 3）：超限诊断 truncated=true、tru
   assert.ok(trimmed.candidates.length + trimmed.truncatedCount === 1000, 'truncatedCount=被丢弃候选条数');
   assert.doesNotThrow(() => JSON.parse(JSON.stringify(trimmed)), '截断后 JSON 合法');
   assert.ok(Buffer.byteLength(JSON.stringify(trimmed), 'utf8') <= 64 * 1024, '截断后 ≤ 64KB');
+  assert.deepEqual(trimmed.timing, overBudget.timing, '预算截断不丢 timing（检索耗时展示依赖）');
 
   const tiny: RetrievalDiagnostics = {
     truncated: false,
@@ -255,6 +257,7 @@ test('⑨ 64KB 预算截断（硬约束 3）：超限诊断 truncated=true、tru
     query: { raw: 'q', normalized: 'q', tokens: ['q'] },
     env: { vectorScheme: null, degradedBm25Only: true, corpusChunks: 4, aliasCount: 5, vectorDim: null },
     funnel: { corpusChunks: 4, lexicalHits: 1, vectorTop50: 0, labelHits: 0, mergedCandidates: 1, topN: 1, injected: null, cited: null },
+    timing: { bm25: 0.4, vector: null, label: 0.1, merge: 0.8 },
     candidates: [candidate],
     nextRank: null,
     deathIntent: { detected: false, pinned: false, chunkIds: [] },
@@ -262,6 +265,7 @@ test('⑨ 64KB 预算截断（硬约束 3）：超限诊断 truncated=true、tru
   const kept = enforceDiagnosticsBudget(tiny);
   assert.equal(kept.truncated, false, '未超限不截断');
   assert.equal(kept.truncatedCount, 0);
+  assert.deepEqual(kept.timing, tiny.timing, '未截断 timing 原样保留（含 vector null）');
 });
 
 test('⑩ 工具层：收到 traceId 才回传 result._meta.diagnostics；content 契约零改动（验收 11/12）', async () => {
@@ -418,4 +422,30 @@ test('⑮ hitLabels 真实语料核对（data/corpus）：自洽 / 表成员 / �
     if (c.labelHit) plainLabelHit++;
   }
   assert.ok(plainLabelHit > 0, 'query「白门楼」标签路有命中');
+});
+
+test('⑯ 分阶段耗时：正常检索（真向量可用）四段 timing 均为 ≥0 的有限数、键齐全', async () => {
+  const index = new SangoIndex(DATA_DIR);
+  index.load(); // 真实语料 + 真实向量（scheme=model）
+  const { entries, diagnostics } = await index.search('关羽', 5, { diagnostics: true });
+  assert.ok(entries.length > 0, '真实语料正常召回');
+  assert.ok(diagnostics);
+  const t = diagnostics.timing;
+  assert.deepEqual(Object.keys(t).sort(), ['bm25', 'label', 'merge', 'vector'], 'timing 键齐全');
+  for (const key of Object.keys(t) as Array<keyof typeof t>) {
+    const v = t[key];
+    assert.ok(typeof v === 'number' && Number.isFinite(v) && v >= 0, `timing.${key} 为该段实测耗时（毫秒）≥0 有限数（实际 ${String(v)}）`);
+  }
+});
+
+test('⑰ 分阶段耗时：向量降级路径（无向量文件，useVectors=false）vector=null，其余段正常计时', async () => {
+  const index = loadFixtureIndex();
+  const { diagnostics } = await index.search('关羽', 5, { diagnostics: true });
+  assert.ok(diagnostics);
+  assert.equal(diagnostics.env.degradedBm25Only, true, '夹具无向量 → 降级纯 BM25');
+  assert.equal(diagnostics.timing.vector, null, 'useVectors=false 降级 → vector null');
+  for (const key of ['bm25', 'label', 'merge'] as const) {
+    const v = diagnostics.timing[key];
+    assert.ok(typeof v === 'number' && Number.isFinite(v) && v >= 0, `timing.${key} ≥0（实际 ${String(v)}）`);
+  }
 });

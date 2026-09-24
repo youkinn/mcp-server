@@ -13,6 +13,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { SangoIndex } from './search/sango-index.ts';
 import { registerSangoNovelChapter } from './tools/sango-novel-chapter.ts';
 import { registerSangoNovelSearch } from './tools/sango-novel-search.ts';
+import { registerSangoQueryEmbed } from './tools/sango-query-embed.ts';
 
 const require = createRequire(import.meta.url);
 const { version } = require('../package.json') as { version: string };
@@ -26,6 +27,8 @@ async function main() {
   console.error(`[sango] corpus 已加载：${index.n} chunk`);
   registerSangoNovelSearch(server.registerTool.bind(server), index);
   registerSangoNovelChapter(server.registerTool.bind(server), index);
+  // feat-A013：内部工具 sango_query_embed（语义缓存判定用），不依赖 SangoIndex 实例（§1.7.1）
+  registerSangoQueryEmbed(server.registerTool.bind(server));
   const transport = new StdioServerTransport();
   await server.connect(transport);
   console.error('[sango] MCP Server running on stdio');
