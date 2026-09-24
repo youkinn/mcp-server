@@ -21,6 +21,7 @@ import type {
   Doc,
   RetrievalCandidateDiagnostics,
   RetrievalDiagnostics,
+  RetrievalDiagnosticsTiming,
   SearchEntry,
   SearchHit,
   SearchResult,
@@ -99,11 +100,14 @@ interface DiagnosticsBuildContext {
   hits: SearchHit[];
   cosine: Float64Array | null;
   vectorTop: number[];
+  /** feat-A013：分阶段耗时（search 内实测毫秒）。 */
+  timing: RetrievalDiagnosticsTiming;
 }
 
 /**
  * 64 KB 预算截断（硬约束 3）：按优先级从后往前丢——① candidates 尾部（保头部名次）② nextRank
- * ③ deathIntent.chunkIds（保留 detected / pinned）；query / env / funnel 恒保留。
+ * ③ deathIntent.chunkIds（保留 detected / pinned）；query / env / funnel / timing 恒保留
+ * （timing 是低位固定 4 字段，截断不丢——检索耗时展示依赖它）。
  * 截断后 truncated=true、truncatedCount=被丢弃的候选条数；正常载荷远低于预算，不触发。
  */
 export function enforceDiagnosticsBudget(diagnostics: RetrievalDiagnostics): RetrievalDiagnostics {
@@ -461,8 +465,12 @@ export class SangoIndex {
     // query 与语料侧同口径归一化后再分词（alias.json 缺失时 normalize 为恒等）。
     const normalized = this.normalize(query);
     const qTokens = tokenize(normalized);
+    // feat-A013：检索分阶段耗时（毫秒）。各段按「---- 阶段 ----」分界独立计时；
+    // 空结果早退路径下未执行的段保持 null（语义见 RetrievalDiagnosticsTiming）。
+    const timing: RetrievalDiagnosticsTiming = { bm25: null, vector: null, label: null, merge: null };
 
     // ---- BM25 打分 ----
+    const bm25T0 = performance.now();
     const bm25 = new Float64Array(this.n);
     const lexicalHits = new Set<number>();
     for (const t of qTokens) {
@@ -476,15 +484,21 @@ export class SangoIndex {
         lexicalHits.add(p.doc);
       }
     }
+    const bm25LoopMs = performance.now() - bm25T0;
 
     // ---- 向量余弦（仅 scheme=model 真向量；scheme=hash 无语义，直接不参与）----
     // query 侧与离线语料同空间编码：embedQuery 懒加载 BGE-M3 ONNX 单例（首次较慢）。
     // 权重缺失 / 推理失败时返回 null（并写 stderr 告警），此处退化为纯 BM25，不抛异常（A6）。
     const useVectors = this.vecScheme === VEC_SCHEME_MODEL && this.vec.length > 0;
+    const vectorT0 = performance.now();
     const qVec = useVectors ? await embedQuery(normalized) : null;
     const cosine = qVec ? this.cosineAll(qVec) : null;
+    // useVectors=false（scheme=hash / 无向量文件）→ 该段未执行：null；编码失败也计入耗时
+    // （实际等待时间，降级状态由 env.degradedBm25Only 表达）
+    timing.vector = useVectors ? performance.now() - vectorT0 : null;
 
-    // ---- 归一化 BM25（仅对命中集合）----
+    // ---- 归一化 BM25（仅对命中集合）----（归一化归入 BM25 段计时）
+    const bm25NormT0 = performance.now();
     const bm25Norm = new Float64Array(this.n);
     if (lexicalHits.size > 0) {
       let min = Infinity;
@@ -497,8 +511,10 @@ export class SangoIndex {
         bm25Norm[d] = max > min ? (bm25[d] - min) / (max - min) : 1;
       }
     }
+    timing.bm25 = bm25LoopMs + (performance.now() - bm25NormT0);
 
     // ---- 标签路由（第三路召回）：query 与标签文本同口径分词求交，命中 chunk 进候选集 ----
+    const labelT0 = performance.now();
     const tagHits = new Set<number>();
     if (this.tagPostings.size > 0) {
       for (const t of qTokens) {
@@ -508,6 +524,7 @@ export class SangoIndex {
         for (const d of posts) tagHits.add(d);
       }
     }
+    timing.label = performance.now() - labelT0;
 
     // ---- 死亡意图强命中（不新增召回）：死亡类问法 + 归一化 query 含死亡人名 → 该人相关 chunk 置顶 ----
     const deathIntent: DeathIntent | null = matchDeathIntent(query);
@@ -525,6 +542,7 @@ export class SangoIndex {
     }
 
     // ---- 多路候选合并 + 重排（BGE-M3*0.6 + BM25*0.3 + TAG*0.1）----
+    const mergeT0 = performance.now();
     const combined: SearchHit[] = [];
     // 向量路 topK（复用为诊断 funnel.vectorTop50 的中间量，不重复计算）
     let vectorTop: number[] = [];
@@ -547,7 +565,7 @@ export class SangoIndex {
         return {
           entries: [],
           diagnostics: wantDiag
-            ? this.safeDiagnostics(() => this.emptySearchDiagnostics(query, normalized, qTokens, null, deathIntent))
+            ? this.safeDiagnostics(() => this.emptySearchDiagnostics(query, normalized, qTokens, null, deathIntent, timing))
             : null,
         };
       }
@@ -558,7 +576,7 @@ export class SangoIndex {
         return {
           entries: [],
           diagnostics: wantDiag
-            ? this.safeDiagnostics(() => this.emptySearchDiagnostics(query, normalized, qTokens, cosine, deathIntent))
+            ? this.safeDiagnostics(() => this.emptySearchDiagnostics(query, normalized, qTokens, cosine, deathIntent, timing))
             : null,
         };
       }
@@ -574,7 +592,7 @@ export class SangoIndex {
       return {
         entries: [],
         diagnostics: wantDiag
-          ? this.safeDiagnostics(() => this.emptySearchDiagnostics(query, normalized, qTokens, cosine, deathIntent))
+          ? this.safeDiagnostics(() => this.emptySearchDiagnostics(query, normalized, qTokens, cosine, deathIntent, timing))
           : null,
       };
     }
@@ -593,6 +611,7 @@ export class SangoIndex {
       return b.score - a.score;
     });
     const hits = combined.slice(0, Math.min(limit, combined.length));
+    timing.merge = performance.now() - mergeT0;
     const entries = hits.map((h) => this.toEntry(this.docs[h.doc]));
     return {
       entries,
@@ -612,6 +631,7 @@ export class SangoIndex {
               hits,
               cosine,
               vectorTop,
+              timing,
             }),
           )
         : null,
@@ -635,6 +655,7 @@ export class SangoIndex {
     tokens: string[],
     cosine: Float64Array | null,
     deathIntent: DeathIntent | null,
+    timing: RetrievalDiagnosticsTiming,
   ): RetrievalDiagnostics {
     return this.buildDiagnostics({
       raw: query,
@@ -650,6 +671,7 @@ export class SangoIndex {
       hits: [],
       cosine,
       vectorTop: [],
+      timing,
     });
   }
 
@@ -692,6 +714,7 @@ export class SangoIndex {
         injected: null,
         cited: null,
       },
+      timing: { ...ctx.timing },
       candidates,
       nextRank,
       deathIntent: {
