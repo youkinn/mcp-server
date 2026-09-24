@@ -205,6 +205,16 @@ test('⑫ 死亡意图分类：主流问法归并到正确子类，非死亡问�
   assert.equal(matchDeathIntent('刘备死时对诸葛亮说了什么'), 'death_last_words');
   assert.equal(matchDeathIntent('白帝城托孤'), 'death_last_words');
   assert.equal(matchDeathIntent('关羽的遗言是什么'), 'death_last_words');
+  // death_age（死亡年龄）：问法须先归死亡年龄而非临终遗言（death_age 模式在 death_last_words 之前）
+  assert.equal(matchDeathIntent('刘备死的时候多少岁'), 'death_age');
+  assert.equal(matchDeathIntent('关羽死时几岁'), 'death_age');
+  assert.equal(matchDeathIntent('曹操享年多少'), 'death_age');
+  assert.equal(matchDeathIntent('周瑜卒年几何'), 'death_age');
+  assert.equal(matchDeathIntent('刘备去世时多大'), 'death_age');
+  assert.equal(matchDeathIntent('关羽活了多少岁'), 'death_age');
+  // death_age 顺序守卫：无年龄问法时不得抢占临终遗言类；非死亡问法不得误触发
+  assert.equal(matchDeathIntent('关羽死时说了什么'), 'death_last_words');
+  assert.equal(matchDeathIntent('诸葛亮出山时多少岁'), null);
   assert.equal(matchDeathIntent('今天天气如何'), null);
   assert.equal(matchDeathIntent('赤壁之战'), null);
   assert.equal(matchDeathIntent('关羽镇守荆州'), null);
@@ -287,4 +297,14 @@ test('⑱ 剥壳后 hitLabels 仍回读原始标签文本（含类型信息原�
     ['人物之死-关羽之死', '政治事件-关羽托孤'],
     'hitLabels 回读的是原始标签文本而非剥壳文本',
   );
+});
+
+test('⑲ 死亡年龄类问法（death_age）：死亡段与遗言/托孤段一并置顶，limit=10 内均可及', async () => {
+  const index = loadFixtureIndex();
+  // fixture 等价 0085:c0011（死亡段，人物之死-关羽之死）+ 0085:c0013（遗言/遗诏段，关羽托孤）：
+  // 问句「刘备死的时候多少岁」在真实语料中死亡段 0085:c0011 须进 top10，此处以夹具的关羽死亡段验证同口径。
+  const { entries } = await index.search('关羽死的时候多少岁', 10);
+  assert.equal(entries[0].id, 'sanguo-yanyi:0073:c0001', '死亡段 0073:c0001 置顶第一');
+  assert.equal(entries[1].id, 'sanguo-yanyi:0073:c0002', '遗言/托孤段 0073:c0002 同组置顶（年龄事实段与死亡段一并可及）');
+  assert.ok(entries.slice(0, 10).some((e) => e.id === 'sanguo-yanyi:0073:c0001'), 'limit=10 内死亡段可及');
 });

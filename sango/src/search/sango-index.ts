@@ -477,6 +477,8 @@ export class SangoIndex {
    * 不加分）；该人物死亡多 chunk 时，死因/凶手/地点/时间/确认类问法取靠前段（死因段），
    * 事后类取靠后段（追述/续事段）。临终遗言/托孤类问法优先命中该人物的托孤/遗诏段
    * （deathSpeechByPerson，如 0085:c0009-0010 白帝城托孤），无遗言段时退回死亡段。
+   * 死亡年龄类问法（死的时候多少岁/享年/卒年/去世时多大…）取靠前段，且死亡段与遗言/遗诏段一并置顶
+   * （年龄事实段常落在遗言/遗诏段）。
    *
    * 异步：scheme=model 时需运行期编码 query（BGE-M3 ONNX 推理，见 embed/bge-m3-encoder.ts）。
    */
@@ -557,11 +559,14 @@ export class SangoIndex {
     if (deathIntent && this.deathByPerson.size > 0) {
       for (const [person, docs] of this.deathByPerson) {
         if (!normalized.includes(person)) continue;
-        // 临终遗言类问法优先取该人物遗言段（托孤/遗诏…），无遗言段时退回死亡段，保证行为不劣化。
+        // 临终遗言类问法优先取该人物遗言段（托孤/遗诏…），无遗言段时退回死亡段，保证行为不劣化；
+        // 死亡年龄类问法取「死亡段 ∪ 遗言/遗诏段」一并置顶（年龄事实段常落在遗言/遗诏段）。
         const picked =
           deathIntent === 'death_last_words'
             ? (this.deathSpeechByPerson.get(person) ?? docs)
-            : docs;
+            : deathIntent === 'death_age'
+              ? [...new Set([...(this.deathSpeechByPerson.get(person) ?? []), ...docs])]
+              : docs;
         for (const d of picked) deathHits.add(d);
       }
     }
@@ -622,7 +627,7 @@ export class SangoIndex {
       };
     }
     // 死亡强命中不改分数（三路加权恒在 [0,1]），改为排序两级：死亡命中组整体置顶，组内按意图选段
-    // （死因/凶手/地点/时间/确认类取靠前段，事后类取靠后段，遗言类不打段序按加权分），
+    // （死因/凶手/地点/时间/年龄/确认类取靠前段，事后类取靠后段，遗言类不打段序按加权分），
     // 其余候选仍按加权分降序。
     const segPick: 'earlier' | 'later' | 'none' =
       deathIntent === 'death_aftermath' ? 'later' : deathIntent === 'death_last_words' ? 'none' : 'earlier';
