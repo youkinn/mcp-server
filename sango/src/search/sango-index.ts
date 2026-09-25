@@ -2,7 +2,8 @@
  * SangoIndex：sango_novel_search 的检索核心（BM25 + 离线向量混合召回）。
  *
  * - 语料：data/corpus/sanguo-yanyi/001.json .. 120.json（chunk 级 schema v2，与 Python 构建脚本同源）
- * - 别名：data/alias.json（别名 → 人物 PID）；索引侧与 query 侧统一归一化到规范名
+ * - 实体表：data/entity-table.json（改写键 → 规范形 + 片段侧素材，FEAT-A016 单表，alias.json 已退役）；
+ *   索引侧 / query 侧 / 标签侧统一归一化（模块 sango/src/normalize/entity-table.ts，检索与工具共用）
  * - 向量：data/vectors/sanguo-yanyi.bin（与 corpus chunks[] 同序，离线只读）
  * - 出参：结构化条目数组（SearchEntry，回级 chapter / title 随条目逐条展开）
  *   文本内不含出处 / 回目 / 段号 / 类型 / 分数
@@ -13,6 +14,12 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { embedQuery } from '../embed/bge-m3-encoder.ts';
+import {
+  fragmentKeyToCanon as entityFragmentKeyToCanon,
+  loadEntityTable,
+  normalize as entityNormalize,
+  rewriteKeyCount as entityRewriteKeyCount,
+} from '../normalize/entity-table.ts';
 import type {
   Chapter,
   ChapterPayload,
@@ -139,16 +146,16 @@ export function enforceDiagnosticsBudget(diagnostics: RetrievalDiagnostics): Ret
   return slim;
 }
 export class SangoIndex {
+  private readonly dataDir: string;
   private readonly corpusDir: string;
   private readonly vectorsFile: string;
-  private readonly aliasFile: string;
   private readonly tagsDir: string;
 
   /** dataDir 仅用于夹具测试注入语料目录；生产用默认 data/ 目录。 */
   constructor(dataDir: string = DEFAULT_DATA_DIR) {
+    this.dataDir = dataDir;
     this.corpusDir = path.join(dataDir, 'corpus', 'sanguo-yanyi');
     this.vectorsFile = path.join(dataDir, 'vectors', 'sanguo-yanyi.bin');
-    this.aliasFile = path.join(dataDir, 'alias.json');
     this.tagsDir = path.join(dataDir, 'corpus', 'tags');
   }
 
@@ -158,10 +165,8 @@ export class SangoIndex {
   avgLen = 0;
   n = 0;
 
-  /** 别名归一化：alias.json 的「别名 → PID」与「PID → 规范名」，以及别名 alternation 正则。 */
-  private pidOf = new Map<string, string>();
-  private canonOf = new Map<string, string>();
-  private aliasPattern: RegExp | null = null;
+  /** fragmentOnly 键 → 规范形（表设计 §6 / 接口 §2.3：索引侧双写扩展，加载时从实体表模块取快照）。 */
+  private fragmentKeyToCanon: ReadonlyMap<string, string> = new Map();
 
   vec: Float32Array = new Float32Array(0);
   vecDim = 0;
@@ -189,9 +194,10 @@ export class SangoIndex {
 
   /** 加载语料（chunk 级 schema v2）并构建倒排索引，随后按 chunk 数加载离线向量。
    * 语料缺失 / 读取 / JSON 解析失败时抛错终止启动；向量加载失败仅告警并降级为纯 BM25；
-   * 别名加载失败仅告警并降级为「不做归一化」，不影响启动。
+   * 实体表加载失败仅告警并降级为「不做归一化」（normalize 恒等），不影响启动（接口 §1.6）。
    *
-   * 两遍构建：先用原始文本算 chunk 级 df → 据此为每个 PID 选定规范名 → 再按归一化文本建索引。
+   * 一遍构建（FEAT-A016 §1.3 取消 df 选名）：规范形由表直接指定（canonical 列），对归一化文本直接建
+   * postings / df；fragmentOnly 片段侧素材在索引侧双写扩展（原文 token 保留、dl 不重算，接口 §2.3）。
    * docs[].text 始终保留原始文本（出参与评测答案正则都依赖原文），只归一化索引侧 token。 */
   load(): void {
     if (!existsSync(this.corpusDir)) {
@@ -239,18 +245,27 @@ export class SangoIndex {
       throw new Error(msg);
     }
 
-    // 规范名选取依据：原始（未归一化）文本的 chunk 级 df，必须与评测脚本口径一致。
-    const rawDf = new Map<string, number>();
-    for (const c of chunks) {
-      for (const t of new Set(tokenize(c.chunk.text))) rawDf.set(t, (rawDf.get(t) ?? 0) + 1);
-    }
-    this.loadAliases(rawDf);
+    // 实体表加载：成功则 rewriteKeys 替换生效（铲除两遍构建的 df 选名）；失败则 normalize 退化为恒等。
+    loadEntityTable(this.dataDir);
+    this.fragmentKeyToCanon = entityFragmentKeyToCanon();
 
     for (let di = 0; di < chunks.length; di++) {
       const { chapter, title, chunk } = chunks[di];
-      const tokens = tokenize(this.normalize(chunk.text));
+      const normText = entityNormalize(chunk.text);
+      const tokens = tokenize(normText);
       const tf = new Map<string, number>();
       for (const t of tokens) tf.set(t, (tf.get(t) ?? 0) + 1);
+      // fragmentOnly 双写扩展（接口 §2.3）：片段短语命中「处」逐一追加写入其规范形 token——
+      // tf 按命中处数计（如 0076:c0014「关公」x6 → 关羽 tf +6，等价于旧 alias 逐处折算的 tf 贡献）。
+      // 只增倒排条目；docs[].len 仍取原文 token 数（dl 不重算），双写引致的 df 略升为已知可接受偏差。
+      const len = tokens.length;
+      if (this.fragmentKeyToCanon.size > 0) {
+        for (const [fragment, canonical] of this.fragmentKeyToCanon) {
+          if (!normText.includes(fragment)) continue;
+          const count = normText.split(fragment).length - 1;
+          for (const t of new Set(tokenize(canonical))) tf.set(t, (tf.get(t) ?? 0) + count);
+        }
+      }
       this.docs.push({
         chunkId: chunk.id,
         chapter,
@@ -263,7 +278,7 @@ export class SangoIndex {
         text: chunk.text,
         tokens,
         tf,
-        len: tokens.length,
+        len,
       });
       this.docIndexOf.set(chunk.id, di);
       for (const [t, fq] of tf) {
@@ -280,8 +295,8 @@ export class SangoIndex {
 
   /**
    * 加载标签表（data/corpus/tags/{duel,event,story}.json：chunkId → 标签文本，多标签以 | 分隔），
-   * 建「标签 token → 文档」倒排供第三路召回。标签文本与 query 侧同口径归一化到规范名
-   * （loadAliases 在前），保证「刘备之死」标签与「玄德怎么死的」问法互相命中。
+   * 建「标签 token → 文档」倒排供第三路召回。标签文本与 query 侧同口径归一化（entity-table 在前），
+   * 保证「人物之死-关羽之死」标签与「云长怎么死的」问法互相命中。
    * 入倒排前按 stripTagType 剥离标签类型信息（feat-A014 索引剥壳），类型词不进候选面；
    * 死亡 / 遗言解析与 hitLabels 判定基于原始标签文本，剥壳不作用于这些路径。
    * 加载失败 / 内容非法仅告警并降级为「无标签路由」，不影响启动；死键（chunkId 不在语料）跳过。
@@ -320,7 +335,7 @@ export class SangoIndex {
         .map((tag) => tag.trim())
         .filter((tag) => tag.length > 0);
       // 死亡 / 遗言人名词典与 hitLabels 判定均基于原始标签文本（仅同口径归一化人名），剥壳不作用于这些路径。
-      const normTags = this.tagTextsByDoc[di].map((tag) => this.normalize(tag));
+      const normTags = this.multiHangTags(this.tagTextsByDoc[di].map((tag) => entityNormalize(tag)));
       for (const tag of normTags) {
         if (tag.startsWith('人物之死-')) {
           let person = tag.slice('人物之死-'.length);
@@ -343,7 +358,7 @@ export class SangoIndex {
     for (let di = 0; di < this.n; di++) {
       const text = this.tagsByDoc[di];
       if (!text) continue;
-      const normText = this.normalize(text);
+      const normText = entityNormalize(text);
       if (!LAST_WORDS_TAG.test(normText)) continue;
       for (const person of this.deathByPerson.keys()) {
         if (normText.includes(person)) {
@@ -377,48 +392,15 @@ export class SangoIndex {
   }
 
   /**
-   * 加载 alias.json（Record<别名, PID>），并按「原始语料 chunk 级 df 最大者」为每个 PID 选规范名
-   * （df 相同取 alias.json 文件顺序中先出现者）。加载失败 / 损坏仅告警，降级为不做归一化。
+   * 共享实体标签多挂的机制入口（接口 §2.4 / 表设计 §6 消费矩阵：标签侧）：
+   * 跨主条目词（fragmentOnly，如 文帝 / 陈留王 / 魏王）不进改写键，但按 referentVerdicts 的
+   * dist/topPid 做「共享实体标签多挂」——同一标签词挂在多个候选主条目上，经 tagPostings
+   * 第三路召回与原文直配双轨并行。
+   * 当前实现 = 恒等（标签内容清单交由标签建设轮细化，本契约只承诺机制入口与数据依据）；实现多挂时
+   * 在此返回「原始标签 + 多挂目标标签」并沿用先天 tagPostings 去重；hitLabels 仍以原始标签文本判定。
    */
-  private loadAliases(rawDf: Map<string, number>): void {
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(readFileSync(this.aliasFile, 'utf8'));
-    } catch (e) {
-      console.error(`[sango] alias 加载失败：${this.aliasFile}（${(e as Error).message}），降级为不做别名归一化`);
-      return;
-    }
-    if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
-      console.error(`[sango] alias 内容非法（应为 Record<别名, PID>）：${this.aliasFile}，降级为不做别名归一化`);
-      return;
-    }
-    const entries = Object.entries(parsed as Record<string, unknown>).filter(
-      (e): e is [string, string] => e[0].length > 0 && typeof e[1] === 'string',
-    );
-    if (entries.length === 0) {
-      console.error(`[sango] alias 未解析出任何有效条目：${this.aliasFile}，降级为不做别名归一化`);
-      return;
-    }
-    const byPid = new Map<string, string[]>();
-    for (const [name, pid] of entries) {
-      this.pidOf.set(name, pid);
-      const names = byPid.get(pid) ?? [];
-      names.push(name);
-      byPid.set(pid, names);
-    }
-    for (const [pid, names] of byPid) {
-      // Array.sort 稳定：df 相同时保留 alias.json 文件顺序中最先出现者。
-      this.canonOf.set(pid, names.slice().sort((a, b) => (rawDf.get(b) ?? 0) - (rawDf.get(a) ?? 0))[0]);
-    }
-    const aliasNames = [...this.pidOf.keys()].sort((a, b) => b.length - a.length);
-    this.aliasPattern = new RegExp(aliasNames.map(escapeRegExp).join('|'), 'g');
-    console.error(`[sango] alias 已加载：${entries.length} 个别名 / ${byPid.size} 个 PID`);
-  }
-
-  /** 别名归一化：按长度降序的 alternation 正则全局替换为规范名（与评测脚本实现一致）。 */
-  private normalize(text: string): string {
-    if (!this.aliasPattern) return text;
-    return text.replace(this.aliasPattern, (m) => this.canonOf.get(this.pidOf.get(m) ?? '') ?? m);
+  private multiHangTags(normTags: string[]): string[] {
+    return normTags;
   }
 
   /**
@@ -489,8 +471,9 @@ export class SangoIndex {
   ): Promise<SearchResult> {
     const wantDiag = options?.diagnostics === true;
     if (this.n === 0) return { entries: [], diagnostics: null };
-    // query 与语料侧同口径归一化后再分词（alias.json 缺失时 normalize 为恒等）。
-    const normalized = this.normalize(query);
+    // §2.2 硬约束（FEAT-A016）：query 改写必须在 embed 之前 —— normalized 恒为 embed 输入。
+    // query 与语料侧 / 标签侧同口径归一化（entity-table rewriteKeys 替换；表缺失时退化为恒等）。
+    const normalized = entityNormalize(query);
     const qTokens = tokenize(normalized);
     // feat-A013：检索分阶段耗时（毫秒）。各段按「---- 阶段 ----」分界独立计时；
     // 空结果早退路径下未执行的段保持 null（语义见 RetrievalDiagnosticsTiming）。
@@ -731,7 +714,7 @@ export class SangoIndex {
         vectorScheme: degraded ? null : this.vecScheme === VEC_SCHEME_MODEL ? 'bge-m3' : null,
         degradedBm25Only: degraded,
         corpusChunks: this.n,
-        aliasCount: this.pidOf.size,
+        aliasCount: entityRewriteKeyCount(),
         vectorDim: degraded ? null : this.vecDim,
       },
       funnel: {
@@ -770,11 +753,12 @@ export class SangoIndex {
     if (ctx.tagHits.has(d)) sources.push('label');
     // hitLabels：命中该 chunk 的标签原始文本（保序、去重）。判定口径与 tagPostings 构建 / tagHits 严格一致：
     // 标签经同口径 normalize + tokenize，与 query 词元中长度 ≥ 2 的词元求交（单字词元不参与，同标签路由）。
+    // 跨主条目词经共享实体标签多挂命中后，同一标签词可能出现在多个主条目标签命中里，判定仍以原始标签文本为准。
     const hitLabels: string[] = [];
     if (ctx.tagHits.has(d)) {
       const qTokens = new Set(ctx.tokens.filter((t) => t.length >= 2));
       for (const tag of this.tagTextsByDoc[d] ?? []) {
-        const tagTokens = new Set(tokenize(this.normalize(tag)));
+        const tagTokens = new Set(tokenize(entityNormalize(tag)));
         let hit = false;
         for (const t of tagTokens) {
           if (qTokens.has(t)) {

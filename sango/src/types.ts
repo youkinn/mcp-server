@@ -138,7 +138,7 @@ export type DeathIntent =
 export interface RetrievalQueryDiagnostics {
   /** 工具入参 query 原文。 */
   raw: string;
-  /** alias 归一化后文本。 */
+  /** entity-table rewriteKeys 替换后文本（人名与换说法同一口径；表加载失败时恒等）。 */
   normalized: string;
   /** 分词 tokens。 */
   tokens: string[];
@@ -151,7 +151,7 @@ export interface RetrievalEnvDiagnostics {
   degradedBm25Only: boolean;
   /** 语料 chunk 总数。 */
   corpusChunks: number;
-  /** alias 条数。 */
+  /** 表内 rewriteKeys 总数（含人物与非人物）；表加载失败为 0（接口 §5 env.aliasCount 新语义）。 */
   aliasCount: number;
   /** 向量维度；降级为 null。 */
   vectorDim: number | null;

@@ -1,0 +1,25 @@
+{
+  "meta": { "schemaVersion": 1, "normVersion": "5f0a1c2d", "generatedAt": "2026-09-26T00:00:00.000Z" },
+  "rows": [
+    {
+      "type": "人物",
+      "id": "P001",
+      "canonical": "曹操",
+      "aliases": ["孟德", "阿瞒"],
+      "rewriteKeys": ["孟德"],
+      "fragmentOnly": ["阿瞒"],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P002",
+      "canonical": "关羽",
+      "aliases": ["云长", "关公"],
+      "rewriteKeys": ["云长"],
+      "fragmentOnly": ["关公"],
+      "organGuard": null,
+      "note": "R2：关公 终审多主条目候选禁入改写键"
+    }
+  ],
+  "policy": { "bannedRewriteKeys": ["关公"], "ambiguityGuard": [] }
+}

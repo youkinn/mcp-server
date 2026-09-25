@@ -34,7 +34,8 @@ async function main() {
   }
   registerSangoNovelSearch(server.registerTool.bind(server), index);
   registerSangoNovelChapter(server.registerTool.bind(server), index);
-  // feat-A013：内部工具 sango_query_embed（语义缓存判定用），不依赖 SangoIndex 实例（§1.7.1）
+  // feat-A013：内部工具 sango_query_embed（语义缓存判定用），不依赖 SangoIndex 实例（§1.7.1）；
+  // FEAT-A016 §3.2：工具内部经 entity-table 单例 normalize（index.load() 已加载同表，口径同源）
   registerSangoQueryEmbed(server.registerTool.bind(server));
   const transport = new StdioServerTransport();
   await server.connect(transport);
