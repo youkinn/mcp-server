@@ -14,6 +14,7 @@ import { SangoIndex } from './search/sango-index.ts';
 import { registerSangoNovelChapter } from './tools/sango-novel-chapter.ts';
 import { registerSangoNovelSearch } from './tools/sango-novel-search.ts';
 import { registerSangoQueryEmbed } from './tools/sango-query-embed.ts';
+import { startBenchmarkServer } from './benchmark/server.ts';
 
 const require = createRequire(import.meta.url);
 const { version } = require('../package.json') as { version: string };
@@ -25,6 +26,12 @@ const server = new McpServer({ name: 'sango', version });
 async function main() {
   index.load();
   console.error(`[sango] corpus 已加载：${index.n} chunk`);
+  // story-A015-02：本地 dev 评测执行接口；仅当显式设置 SANGO_DEV_HTTP_PORT 时启动（生产 stdio 零影响）
+  const devPortRaw = process.env.SANGO_DEV_HTTP_PORT;
+  if (devPortRaw !== undefined && devPortRaw !== '') {
+    const port = Number(devPortRaw) || 8787;
+    startBenchmarkServer(index, { port });
+  }
   registerSangoNovelSearch(server.registerTool.bind(server), index);
   registerSangoNovelChapter(server.registerTool.bind(server), index);
   // feat-A013：内部工具 sango_query_embed（语义缓存判定用），不依赖 SangoIndex 实例（§1.7.1）
