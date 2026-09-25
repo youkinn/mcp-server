@@ -205,6 +205,16 @@ test('⑫ 死亡意图分类：主流问法归并到正确子类，非死亡问�
   assert.equal(matchDeathIntent('刘备死时对诸葛亮说了什么'), 'death_last_words');
   assert.equal(matchDeathIntent('白帝城托孤'), 'death_last_words');
   assert.equal(matchDeathIntent('关羽的遗言是什么'), 'death_last_words');
+  // death_age（死亡年龄）：问法须先归死亡年龄而非临终遗言（death_age 模式在 death_last_words 之前）
+  assert.equal(matchDeathIntent('刘备死的时候多少岁'), 'death_age');
+  assert.equal(matchDeathIntent('关羽死时几岁'), 'death_age');
+  assert.equal(matchDeathIntent('曹操享年多少'), 'death_age');
+  assert.equal(matchDeathIntent('周瑜卒年几何'), 'death_age');
+  assert.equal(matchDeathIntent('刘备去世时多大'), 'death_age');
+  assert.equal(matchDeathIntent('关羽活了多少岁'), 'death_age');
+  // death_age 顺序守卫：无年龄问法时不得抢占临终遗言类；非死亡问法不得误触发
+  assert.equal(matchDeathIntent('关羽死时说了什么'), 'death_last_words');
+  assert.equal(matchDeathIntent('诸葛亮出山时多少岁'), null);
   assert.equal(matchDeathIntent('今天天气如何'), null);
   assert.equal(matchDeathIntent('赤壁之战'), null);
   assert.equal(matchDeathIntent('关羽镇守荆州'), null);
@@ -247,4 +257,54 @@ test('⑯ 临终遗言类问法：优先命中该人物的托孤/遗言标签段
   assert.equal(guan[0].id, 'sanguo-yanyi:0073:c0002', '遗言问法应命中「关羽托孤」段（c0002）而非纯死亡段（c0001）');
   const { entries: wei } = await index.search('魏延临终说了什么', 3);
   assert.equal(wei[0].id, 'sanguo-yanyi:0073:c0003', '无遗言标签的人物退回死亡段（魏延之死）');
+});
+
+test('⑰ 索引剥壳（feat-A014）：tagPostings 只入库剥离类型信息后的文本（人物之死-关羽之死 → 关羽，政治事件-关羽托孤 → 关羽托孤）', () => {
+  const index = loadFixtureIndex();
+  // 直接读倒排结构（private 字段经类型断言访问，测试即剥壳验收的活文档）
+  const internals = index as unknown as {
+    tagPostings: Map<string, number[]>;
+    tagTextsByDoc: string[][];
+  };
+  // 类型信息 bigram 一律不进 tagPostings：人物 / 物之 / 之死 / 之生 / 登场 / 政治 / 治事 / 事件
+  const docOfTest = new Map(index.docs.map((d, i) => [d.chunkId, i]));
+  for (const bigram of ['人物', '物之', '之死', '之生', '登场', '政治', '治事', '事件']) {
+    assert.equal(internals.tagPostings.get(bigram) ?? 0, 0, `类型 bigram「${bigram}」不应进 tagPostings`);
+  }
+  // 剥壳后内容词元完整保留：纯人物名（关羽/魏延）、事件内容（托孤/入川）
+  for (const token of ['关羽', '魏延', '托孤', '入川']) {
+    assert.ok((internals.tagPostings.get(token) ?? []).length > 0, `剥壳后应保留内容词元「${token}」`);
+  }
+  // 「关羽」来自 c0001 关羽之死 / c0002 关羽之死+关羽托孤 / c0003 关羽入川 → 3 个文档
+  assert.equal(internals.tagPostings.get('关羽')?.length, 3, '剥壳后「关羽」应命中 3 个标签文档');
+  // 原始标签文本原样保留（hitLabels 回读基础，剥壳只作用于倒排）
+  const c0002 = docOfTest.get('sanguo-yanyi:0073:c0002') as number;
+  assert.deepEqual(
+    internals.tagTextsByDoc[c0002],
+    ['人物之死-关羽之死', '政治事件-关羽托孤'],
+    'tagTextsByDoc 保留原始标签文本（未剥壳）',
+  );
+});
+
+test('⑱ 剥壳后 hitLabels 仍回读原始标签文本（含类型信息原文），labelHit 标签路命中不因剥壳变化', async () => {
+  const index = loadFixtureIndex();
+  const { diagnostics } = await index.search('关羽', 5, { diagnostics: true });
+  const cand = diagnostics?.candidates.find((c: { chunkId: string }) => c.chunkId === 'sanguo-yanyi:0073:c0002');
+  assert.ok(cand, 'c0002 应在候选诊断中');
+  assert.equal(cand.labelHit, true, 'c0002 标签路命中（关羽托孤）');
+  assert.deepEqual(
+    cand.hitLabels,
+    ['人物之死-关羽之死', '政治事件-关羽托孤'],
+    'hitLabels 回读的是原始标签文本而非剥壳文本',
+  );
+});
+
+test('⑲ 死亡年龄类问法（death_age）：死亡段与遗言/托孤段一并置顶，limit=10 内均可及', async () => {
+  const index = loadFixtureIndex();
+  // fixture 等价 0085:c0011（死亡段，人物之死-关羽之死）+ 0085:c0013（遗言/遗诏段，关羽托孤）：
+  // 问句「刘备死的时候多少岁」在真实语料中死亡段 0085:c0011 须进 top10，此处以夹具的关羽死亡段验证同口径。
+  const { entries } = await index.search('关羽死的时候多少岁', 10);
+  assert.equal(entries[0].id, 'sanguo-yanyi:0073:c0001', '死亡段 0073:c0001 置顶第一');
+  assert.equal(entries[1].id, 'sanguo-yanyi:0073:c0002', '遗言/托孤段 0073:c0002 同组置顶（年龄事实段与死亡段一并可及）');
+  assert.ok(entries.slice(0, 10).some((e) => e.id === 'sanguo-yanyi:0073:c0001'), 'limit=10 内死亡段可及');
 });

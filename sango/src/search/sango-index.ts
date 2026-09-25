@@ -282,6 +282,8 @@ export class SangoIndex {
    * 加载标签表（data/corpus/tags/{duel,event,story}.json：chunkId → 标签文本，多标签以 | 分隔），
    * 建「标签 token → 文档」倒排供第三路召回。标签文本与 query 侧同口径归一化到规范名
    * （loadAliases 在前），保证「刘备之死」标签与「玄德怎么死的」问法互相命中。
+   * 入倒排前按 stripTagType 剥离标签类型信息（feat-A014 索引剥壳），类型词不进候选面；
+   * 死亡 / 遗言解析与 hitLabels 判定基于原始标签文本，剥壳不作用于这些路径。
    * 加载失败 / 内容非法仅告警并降级为「无标签路由」，不影响启动；死键（chunkId 不在语料）跳过。
    * 标签只进 TAG 分量，不改 chunk / 向量。
    */
@@ -317,8 +319,9 @@ export class SangoIndex {
         .split('|')
         .map((tag) => tag.trim())
         .filter((tag) => tag.length > 0);
-      const normText = this.normalize(text);
-      for (const tag of normText.split('|')) {
+      // 死亡 / 遗言人名词典与 hitLabels 判定均基于原始标签文本（仅同口径归一化人名），剥壳不作用于这些路径。
+      const normTags = this.tagTextsByDoc[di].map((tag) => this.normalize(tag));
+      for (const tag of normTags) {
         if (tag.startsWith('人物之死-')) {
           let person = tag.slice('人物之死-'.length);
           if (person.endsWith('之死')) person = person.slice(0, -2);
@@ -327,7 +330,9 @@ export class SangoIndex {
           this.deathByPerson.set(person, arr);
         }
       }
-      for (const t of new Set(tokenize(normText))) {
+      // 索引剥壳（feat-A014）：tagPostings 只入库剥离类型信息后的文本，类型词不再进第三路候选面。
+      const strippedTags = normTags.map((tag) => this.stripTagType(tag));
+      for (const t of new Set(tokenize(strippedTags.join('|')))) {
         const arr = this.tagPostings.get(t) ?? [];
         arr.push(di);
         this.tagPostings.set(t, arr);
@@ -349,6 +354,26 @@ export class SangoIndex {
       }
     }
     console.error(`[sango] 标签已加载：${taggedCount}/${this.n} chunk 有标签（${this.tagPostings.size} 个标签 token）`);
+  }
+
+  /**
+   * 索引剥壳（feat-A014）：剥离标签中的类型信息，返回仅供 tagPostings 入库的文本 ——
+   *   - 人物之生-XX登场 / 人物之死-XX之死 → XX（纯人物名）
+   *   - 武将单挑-A-B → A-B（保留对阵双方）
+   *   - event 其余类型前缀（战役- / 政治事件- / 谋略/计策- / 结盟/外交- / 典故事件-）剥离前缀、保留内容
+   *   - story 标签无类型前缀，原文即终型
+   * 死亡 / 登场语义由结构承载（deathByPerson 人名词典 / 事件内容），类型词（人物 / 物之 / 之生 /
+   * 之死 / 登场 等）不再进第三路候选面；原始标签文本仍由 tagTextsByDoc 保留供 hitLabels 回读。
+   * 入参为单个标签（| 拆分后）的归一化文本。
+   */
+  private stripTagType(normTag: string): string {
+    if (normTag.startsWith('人物之生-')) return normTag.slice('人物之生-'.length).replace(/登场$/, '');
+    if (normTag.startsWith('人物之死-')) return normTag.slice('人物之死-'.length).replace(/之死$/, '');
+    if (normTag.startsWith('武将单挑-')) return normTag.slice('武将单挑-'.length);
+    for (const prefix of ['战役-', '政治事件-', '谋略/计策-', '结盟/外交-', '典故事件-']) {
+      if (normTag.startsWith(prefix)) return normTag.slice(prefix.length);
+    }
+    return normTag;
   }
 
   /**
@@ -452,6 +477,8 @@ export class SangoIndex {
    * 不加分）；该人物死亡多 chunk 时，死因/凶手/地点/时间/确认类问法取靠前段（死因段），
    * 事后类取靠后段（追述/续事段）。临终遗言/托孤类问法优先命中该人物的托孤/遗诏段
    * （deathSpeechByPerson，如 0085:c0009-0010 白帝城托孤），无遗言段时退回死亡段。
+   * 死亡年龄类问法（死的时候多少岁/享年/卒年/去世时多大…）取靠前段，且死亡段与遗言/遗诏段一并置顶
+   * （年龄事实段常落在遗言/遗诏段）。
    *
    * 异步：scheme=model 时需运行期编码 query（BGE-M3 ONNX 推理，见 embed/bge-m3-encoder.ts）。
    */
@@ -532,11 +559,14 @@ export class SangoIndex {
     if (deathIntent && this.deathByPerson.size > 0) {
       for (const [person, docs] of this.deathByPerson) {
         if (!normalized.includes(person)) continue;
-        // 临终遗言类问法优先取该人物遗言段（托孤/遗诏…），无遗言段时退回死亡段，保证行为不劣化。
+        // 临终遗言类问法优先取该人物遗言段（托孤/遗诏…），无遗言段时退回死亡段，保证行为不劣化；
+        // 死亡年龄类问法取「死亡段 ∪ 遗言/遗诏段」一并置顶（年龄事实段常落在遗言/遗诏段）。
         const picked =
           deathIntent === 'death_last_words'
             ? (this.deathSpeechByPerson.get(person) ?? docs)
-            : docs;
+            : deathIntent === 'death_age'
+              ? [...new Set([...(this.deathSpeechByPerson.get(person) ?? []), ...docs])]
+              : docs;
         for (const d of picked) deathHits.add(d);
       }
     }
@@ -597,7 +627,7 @@ export class SangoIndex {
       };
     }
     // 死亡强命中不改分数（三路加权恒在 [0,1]），改为排序两级：死亡命中组整体置顶，组内按意图选段
-    // （死因/凶手/地点/时间/确认类取靠前段，事后类取靠后段，遗言类不打段序按加权分），
+    // （死因/凶手/地点/时间/年龄/确认类取靠前段，事后类取靠后段，遗言类不打段序按加权分），
     // 其余候选仍按加权分降序。
     const segPick: 'earlier' | 'later' | 'none' =
       deathIntent === 'death_aftermath' ? 'later' : deathIntent === 'death_last_words' ? 'none' : 'earlier';
