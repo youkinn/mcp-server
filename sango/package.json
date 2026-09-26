@@ -10,10 +10,10 @@
     "start": "node dist/index.js",
     "dev": "npm run build && set \"SANGO_DEV_HTTP_PORT=8787\" && node dist/index.js",
     "debug": "node --inspect-brk=9240 dist/index.js",
-    "test": "node --test src/test/feat-A004/sango-index.test.ts src/test/feat-A009/sango-diagnostics.test.ts src/test/feat-A010/sango-chapter.test.ts src/test/feat-A013/sango-query-embed.test.ts",
+    "test": "node --test src/test/feat-A004/sango-index.test.ts src/test/feat-A009/sango-diagnostics.test.ts src/test/feat-A010/sango-chapter.test.ts src/test/feat-A013/sango-query-embed.test.ts src/test/feat-A016/entity-table.test.ts",
     "corpus": "py -3 scripts/build_corpus.py",
     "vectors": "py -3 scripts/build_vectors.py",
-    "alias": "py -3 scripts/build_alias.py",
+    "entity-table": "node scripts/merge-entity-table.mjs",
     "parity": "node scripts/verify-embed-parity.mjs",
     "fallback": "node scripts/verify-vector-fallback.mjs",
     "stats": "node scripts/build_event_stats.js"

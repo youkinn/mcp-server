@@ -1,0 +1,7262 @@
+{
+  "meta": {
+    "schemaVersion": 1,
+    "normVersion": "b93c5ca9",
+    "generatedAt": "2026-09-26T12:16:00.722Z"
+  },
+  "rows": [
+    {
+      "type": "人物",
+      "id": "P001",
+      "canonical": "刘备",
+      "aliases": [
+        "玄德",
+        "刘玄德",
+        "刘皇叔",
+        "刘豫州",
+        "刘使君",
+        "先主",
+        "昭烈帝",
+        "昭烈皇帝",
+        "大耳儿",
+        "织席小儿",
+        "卖履小儿"
+      ],
+      "rewriteKeys": [
+        "玄德",
+        "刘玄德",
+        "刘豫州",
+        "先主",
+        "昭烈帝",
+        "大耳儿",
+        "织席小儿",
+        "卖履小儿"
+      ],
+      "fragmentOnly": [
+        "刘皇叔",
+        "刘使君",
+        "昭烈皇帝"
+      ],
+      "organGuard": null,
+      "note": "R2：刘皇叔、刘使君、昭烈皇帝 终审跨主条目（多主条目候选）禁入改写键（移入 fragmentOnly）"
+    },
+    {
+      "type": "人物",
+      "id": "P002",
+      "canonical": "关羽",
+      "aliases": [
+        "关公",
+        "云长",
+        "关云长",
+        "美髯公",
+        "汉寿亭侯",
+        "关某",
+        "关将军",
+        "关二爷",
+        "赤面长须"
+      ],
+      "rewriteKeys": [
+        "云长",
+        "关云长",
+        "美髯公",
+        "关某",
+        "关二爷",
+        "赤面长须",
+        "关公"
+      ],
+      "fragmentOnly": [
+        "汉寿亭侯",
+        "关将军"
+      ],
+      "organGuard": null,
+      "note": "bug-00041 纠偏：终审 share=1 误判，改回 rewriteKey"
+    },
+    {
+      "type": "人物",
+      "id": "P003",
+      "canonical": "张飞",
+      "aliases": [
+        "翼德",
+        "张翼德",
+        "燕人",
+        "燕人张飞",
+        "燕人张翼德",
+        "张车骑",
+        "西乡侯"
+      ],
+      "rewriteKeys": [
+        "翼德",
+        "张翼德",
+        "燕人",
+        "燕人张飞",
+        "燕人张翼德",
+        "张车骑",
+        "西乡侯"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P005",
+      "canonical": "曹操",
+      "aliases": [
+        "孟德",
+        "曹孟德",
+        "阿瞒",
+        "吉利",
+        "曹公",
+        "魏公",
+        "魏武帝",
+        "太祖武皇帝",
+        "曹贼"
+      ],
+      "rewriteKeys": [
+        "孟德",
+        "曹孟德",
+        "阿瞒",
+        "吉利",
+        "魏武帝",
+        "曹贼"
+      ],
+      "fragmentOnly": [
+        "曹公",
+        "魏公",
+        "太祖武皇帝"
+      ],
+      "organGuard": null,
+      "note": "R2：曹公、魏公、太祖武皇帝 终审跨主条目（多主条目候选）禁入改写键（移入 fragmentOnly）"
+    },
+    {
+      "type": "人物",
+      "id": "P083",
+      "canonical": "曹丕",
+      "aliases": [
+        "子桓",
+        "曹子桓",
+        "魏文帝",
+        "文帝",
+        "文皇帝",
+        "魏太子"
+      ],
+      "rewriteKeys": [
+        "子桓",
+        "曹子桓",
+        "魏文帝",
+        "魏太子"
+      ],
+      "fragmentOnly": [
+        "文帝",
+        "文皇帝"
+      ],
+      "organGuard": null,
+      "note": "R2：文帝、文皇帝 终审跨主条目（同串跨人组）；跨主条目（多主条目候选）禁入改写键（移入 fragmentOnly）"
+    },
+    {
+      "type": "人物",
+      "id": "P084",
+      "canonical": "曹植",
+      "aliases": [
+        "子建",
+        "曹子建",
+        "陈思王"
+      ],
+      "rewriteKeys": [
+        "子建",
+        "曹子建",
+        "陈思王"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P085",
+      "canonical": "曹彰",
+      "aliases": [
+        "子文",
+        "曹子文",
+        "黄须儿"
+      ],
+      "rewriteKeys": [
+        "子文",
+        "曹子文",
+        "黄须儿"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P133",
+      "canonical": "曹睿",
+      "aliases": [
+        "元仲",
+        "魏明帝",
+        "明帝"
+      ],
+      "rewriteKeys": [
+        "元仲",
+        "魏明帝"
+      ],
+      "fragmentOnly": [
+        "明帝"
+      ],
+      "organGuard": null,
+      "note": "R2：明帝 终审跨主条目（多主条目候选）禁入改写键（移入 fragmentOnly）"
+    },
+    {
+      "type": "人物",
+      "id": "P148",
+      "canonical": "曹芳",
+      "aliases": [
+        "兰卿",
+        "魏主芳",
+        "齐王"
+      ],
+      "rewriteKeys": [
+        "兰卿",
+        "魏主芳",
+        "齐王"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P149",
+      "canonical": "曹髦",
+      "aliases": [
+        "彦士",
+        "高贵乡公"
+      ],
+      "rewriteKeys": [
+        "彦士"
+      ],
+      "fragmentOnly": [
+        "高贵乡公"
+      ],
+      "organGuard": null,
+      "note": "R2：高贵乡公 终审跨主条目（多主条目候选）禁入改写键（移入 fragmentOnly）"
+    },
+    {
+      "type": "人物",
+      "id": "P150",
+      "canonical": "曹奂",
+      "aliases": [
+        "景明",
+        "常道乡公",
+        "陈留王"
+      ],
+      "rewriteKeys": [
+        "景明",
+        "常道乡公"
+      ],
+      "fragmentOnly": [
+        "陈留王"
+      ],
+      "organGuard": null,
+      "note": "R2：陈留王 终审跨主条目（同串跨人组）禁入改写键（移入 fragmentOnly）"
+    },
+    {
+      "type": "人物",
+      "id": "P004",
+      "canonical": "诸葛亮",
+      "aliases": [
+        "孔明",
+        "诸葛孔明",
+        "卧龙",
+        "卧龙先生",
+        "伏龙",
+        "武侯",
+        "武乡侯",
+        "忠武侯",
+        "相父",
+        "诸葛丞相"
+      ],
+      "rewriteKeys": [
+        "孔明",
+        "诸葛孔明",
+        "卧龙",
+        "卧龙先生",
+        "伏龙",
+        "武侯",
+        "武乡侯",
+        "忠武侯",
+        "相父"
+      ],
+      "fragmentOnly": [
+        "诸葛丞相"
+      ],
+      "organGuard": null,
+      "note": "R2：诸葛丞相 终审跨主条目（多主条目候选）禁入改写键（移入 fragmentOnly）"
+    },
+    {
+      "type": "人物",
+      "id": "P006",
+      "canonical": "孙权",
+      "aliases": [
+        "仲谋",
+        "孙仲谋",
+        "碧眼儿",
+        "碧眼小儿",
+        "碧眼紫髯",
+        "紫髯鼠辈"
+      ],
+      "rewriteKeys": [
+        "仲谋",
+        "孙仲谋",
+        "碧眼儿",
+        "碧眼小儿",
+        "碧眼紫髯",
+        "紫髯鼠辈"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P021",
+      "canonical": "孙策",
+      "aliases": [
+        "伯符",
+        "孙伯符",
+        "小霸王",
+        "孙郎"
+      ],
+      "rewriteKeys": [
+        "伯符",
+        "孙伯符",
+        "孙郎"
+      ],
+      "fragmentOnly": [
+        "小霸王"
+      ],
+      "organGuard": null,
+      "note": "R2：小霸王 终审跨主条目（多主条目候选）禁入改写键（移入 fragmentOnly）"
+    },
+    {
+      "type": "人物",
+      "id": "P022",
+      "canonical": "孙坚",
+      "aliases": [
+        "文台",
+        "孙文台",
+        "江东猛虎"
+      ],
+      "rewriteKeys": [
+        "文台",
+        "孙文台",
+        "江东猛虎"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P151",
+      "canonical": "孙亮",
+      "aliases": [
+        "会稽王"
+      ],
+      "rewriteKeys": [
+        "会稽王"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null,
+      "note": "R5：bug-00031 冲突词 子明 已从 aliases 删除（冲突组不进表）"
+    },
+    {
+      "type": "人物",
+      "id": "P129",
+      "canonical": "孙休",
+      "aliases": [
+        "子烈",
+        "琅琊王"
+      ],
+      "rewriteKeys": [
+        "子烈",
+        "琅琊王"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P128",
+      "canonical": "孙皓",
+      "aliases": [
+        "元宗",
+        "乌程侯",
+        "归命侯"
+      ],
+      "rewriteKeys": [
+        "元宗",
+        "归命侯"
+      ],
+      "fragmentOnly": [
+        "乌程侯"
+      ],
+      "organGuard": null,
+      "note": "R2：乌程侯 终审跨主条目（多主条目候选）禁入改写键（移入 fragmentOnly）"
+    },
+    {
+      "type": "人物",
+      "id": "P014",
+      "canonical": "周瑜",
+      "aliases": [
+        "公瑾",
+        "周公瑾",
+        "周郎",
+        "周大都督"
+      ],
+      "rewriteKeys": [
+        "公瑾",
+        "周公瑾",
+        "周郎",
+        "周大都督"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P020",
+      "canonical": "鲁肃",
+      "aliases": [
+        "子敬",
+        "鲁子敬"
+      ],
+      "rewriteKeys": [
+        "子敬",
+        "鲁子敬"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P019",
+      "canonical": "吕蒙",
+      "aliases": [
+        "吕子明"
+      ],
+      "rewriteKeys": [
+        "吕子明"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null,
+      "note": "R5：bug-00031 冲突词 子明 已从 aliases 删除（冲突组不进表）"
+    },
+    {
+      "type": "人物",
+      "id": "P018",
+      "canonical": "陆逊",
+      "aliases": [
+        "伯言",
+        "陆伯言"
+      ],
+      "rewriteKeys": [
+        "伯言",
+        "陆伯言"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P124",
+      "canonical": "陆抗",
+      "aliases": [
+        "幼节",
+        "陆幼节"
+      ],
+      "rewriteKeys": [
+        "幼节",
+        "陆幼节"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P015",
+      "canonical": "司马懿",
+      "aliases": [
+        "仲达",
+        "司马仲达",
+        "宣王",
+        "晋宣帝"
+      ],
+      "rewriteKeys": [
+        "仲达",
+        "司马仲达",
+        "宣王",
+        "晋宣帝"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P055",
+      "canonical": "司马师",
+      "aliases": [
+        "子元",
+        "司马子元",
+        "景王",
+        "景帝"
+      ],
+      "rewriteKeys": [
+        "子元",
+        "司马子元",
+        "景帝"
+      ],
+      "fragmentOnly": [
+        "景王"
+      ],
+      "organGuard": null,
+      "note": "R2：景王 终审跨主条目（多主条目候选）禁入改写键（移入 fragmentOnly）"
+    },
+    {
+      "type": "人物",
+      "id": "P054",
+      "canonical": "司马昭",
+      "aliases": [
+        "子尚",
+        "司马子尚",
+        "文王",
+        "文帝",
+        "晋王"
+      ],
+      "rewriteKeys": [
+        "子尚",
+        "司马子尚",
+        "文王",
+        "晋王"
+      ],
+      "fragmentOnly": [
+        "文帝"
+      ],
+      "organGuard": null,
+      "note": "R2：文帝 终审跨主条目（同串跨人组）禁入改写键（移入 fragmentOnly）"
+    },
+    {
+      "type": "人物",
+      "id": "P056",
+      "canonical": "司马炎",
+      "aliases": [
+        "安世",
+        "晋武帝",
+        "晋帝"
+      ],
+      "rewriteKeys": [
+        "安世",
+        "晋武帝"
+      ],
+      "fragmentOnly": [
+        "晋帝"
+      ],
+      "organGuard": null,
+      "note": "R2：晋帝 终审跨主条目（多主条目候选）禁入改写键（移入 fragmentOnly）"
+    },
+    {
+      "type": "人物",
+      "id": "P057",
+      "canonical": "邓艾",
+      "aliases": [
+        "士载",
+        "邓士载",
+        "邓征西"
+      ],
+      "rewriteKeys": [
+        "士载",
+        "邓士载",
+        "邓征西"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P058",
+      "canonical": "钟会",
+      "aliases": [
+        "士季",
+        "钟士季",
+        "钟镇西",
+        "钟司徒"
+      ],
+      "rewriteKeys": [
+        "士季",
+        "钟士季",
+        "钟镇西"
+      ],
+      "fragmentOnly": [
+        "钟司徒"
+      ],
+      "organGuard": null,
+      "note": "R2：钟司徒 终审跨主条目（多主条目候选）禁入改写键（移入 fragmentOnly）"
+    },
+    {
+      "type": "人物",
+      "id": "P017",
+      "canonical": "姜维",
+      "aliases": [
+        "伯约",
+        "姜伯约",
+        "平襄侯",
+        "姜大将军"
+      ],
+      "rewriteKeys": [
+        "伯约",
+        "姜伯约",
+        "平襄侯",
+        "姜大将军"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P008",
+      "canonical": "马超",
+      "aliases": [
+        "孟起",
+        "马孟起",
+        "锦马超",
+        "马儿",
+        "神威天将军"
+      ],
+      "rewriteKeys": [
+        "孟起",
+        "马孟起",
+        "锦马超",
+        "马儿",
+        "神威天将军"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P009",
+      "canonical": "黄忠",
+      "aliases": [
+        "汉升",
+        "黄汉升"
+      ],
+      "rewriteKeys": [
+        "汉升",
+        "黄汉升"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P007",
+      "canonical": "赵云",
+      "aliases": [
+        "子龙",
+        "赵子龙",
+        "常山赵子龙",
+        "虎威将军"
+      ],
+      "rewriteKeys": [
+        "子龙",
+        "赵子龙",
+        "常山赵子龙"
+      ],
+      "fragmentOnly": [
+        "虎威将军"
+      ],
+      "organGuard": null,
+      "note": "R2：虎威将军 终审跨主条目（多主条目候选）禁入改写键（移入 fragmentOnly）"
+    },
+    {
+      "type": "人物",
+      "id": "P068",
+      "canonical": "魏延",
+      "aliases": [
+        "文长",
+        "魏文长",
+        "南郑侯"
+      ],
+      "rewriteKeys": [
+        "文长",
+        "魏文长"
+      ],
+      "fragmentOnly": [
+        "南郑侯"
+      ],
+      "organGuard": null,
+      "note": "R2：南郑侯 终审跨主条目（多主条目候选）禁入改写键（移入 fragmentOnly）"
+    },
+    {
+      "type": "人物",
+      "id": "P016",
+      "canonical": "庞统",
+      "aliases": [
+        "士元",
+        "庞士元",
+        "凤雏",
+        "凤雏先生"
+      ],
+      "rewriteKeys": [
+        "士元",
+        "庞士元",
+        "凤雏",
+        "凤雏先生"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P152",
+      "canonical": "法正",
+      "aliases": [
+        "孝直",
+        "法孝直"
+      ],
+      "rewriteKeys": [
+        "孝直",
+        "法孝直"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P023",
+      "canonical": "张辽",
+      "aliases": [
+        "文远",
+        "张文远"
+      ],
+      "rewriteKeys": [
+        "文远",
+        "张文远"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P024",
+      "canonical": "许褚",
+      "aliases": [
+        "仲康",
+        "许仲康",
+        "虎痴",
+        "虎侯"
+      ],
+      "rewriteKeys": [
+        "仲康",
+        "许仲康",
+        "虎痴"
+      ],
+      "fragmentOnly": [
+        "虎侯"
+      ],
+      "organGuard": null,
+      "note": "R2：虎侯 终审跨主条目（多主条目候选）禁入改写键（移入 fragmentOnly）"
+    },
+    {
+      "type": "人物",
+      "id": "P025",
+      "canonical": "典韦",
+      "aliases": [
+        "恶来",
+        "古之恶来"
+      ],
+      "rewriteKeys": [
+        "恶来",
+        "古之恶来"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P032",
+      "canonical": "荀彧",
+      "aliases": [
+        "文若",
+        "荀文若"
+      ],
+      "rewriteKeys": [
+        "文若",
+        "荀文若"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P033",
+      "canonical": "荀攸",
+      "aliases": [
+        "公达",
+        "荀公达"
+      ],
+      "rewriteKeys": [
+        "公达",
+        "荀公达"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P034",
+      "canonical": "郭嘉",
+      "aliases": [
+        "奉孝",
+        "郭奉孝"
+      ],
+      "rewriteKeys": [
+        "奉孝",
+        "郭奉孝"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P035",
+      "canonical": "贾诩",
+      "aliases": [
+        "文和",
+        "贾文和"
+      ],
+      "rewriteKeys": [
+        "文和",
+        "贾文和"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P036",
+      "canonical": "程昱",
+      "aliases": [
+        "仲德",
+        "程仲德"
+      ],
+      "rewriteKeys": [
+        "仲德",
+        "程仲德"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P153",
+      "canonical": "刘晔",
+      "aliases": [
+        "子阳",
+        "刘子阳"
+      ],
+      "rewriteKeys": [
+        "子阳",
+        "刘子阳"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P154",
+      "canonical": "满宠",
+      "aliases": [
+        "伯宁",
+        "满伯宁"
+      ],
+      "rewriteKeys": [
+        "伯宁",
+        "满伯宁"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P155",
+      "canonical": "吕虔",
+      "aliases": [
+        "子恪",
+        "吕子恪"
+      ],
+      "rewriteKeys": [
+        "子恪",
+        "吕子恪"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P156",
+      "canonical": "毛玠",
+      "aliases": [
+        "孝先",
+        "毛孝先"
+      ],
+      "rewriteKeys": [
+        "孝先",
+        "毛孝先"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P039",
+      "canonical": "于禁",
+      "aliases": [
+        "文则",
+        "于文则"
+      ],
+      "rewriteKeys": [
+        "文则",
+        "于文则"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P026",
+      "canonical": "徐晃",
+      "aliases": [
+        "徐公明"
+      ],
+      "rewriteKeys": [
+        "徐公明"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null,
+      "note": "R5：bug-00031 冲突词 公明 已从 aliases 删除（冲突组不进表）"
+    },
+    {
+      "type": "人物",
+      "id": "P027",
+      "canonical": "张郃",
+      "aliases": [
+        "儁乂",
+        "张儁乂"
+      ],
+      "rewriteKeys": [
+        "儁乂",
+        "张儁乂"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P038",
+      "canonical": "乐进",
+      "aliases": [
+        "文谦",
+        "乐文谦"
+      ],
+      "rewriteKeys": [
+        "文谦",
+        "乐文谦"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P037",
+      "canonical": "李典",
+      "aliases": [
+        "曼成",
+        "李曼成"
+      ],
+      "rewriteKeys": [
+        "曼成",
+        "李曼成"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P040",
+      "canonical": "庞德",
+      "aliases": [
+        "令明",
+        "庞令明"
+      ],
+      "rewriteKeys": [
+        "令明",
+        "庞令明"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P030",
+      "canonical": "曹仁",
+      "aliases": [
+        "曹子孝"
+      ],
+      "rewriteKeys": [
+        "曹子孝"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null,
+      "note": "R5：bug-00031 冲突词 子孝 已从 aliases 删除（冲突组不进表）"
+    },
+    {
+      "type": "人物",
+      "id": "P031",
+      "canonical": "曹洪",
+      "aliases": [
+        "子廉",
+        "曹子廉"
+      ],
+      "rewriteKeys": [
+        "子廉",
+        "曹子廉"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P157",
+      "canonical": "曹休",
+      "aliases": [
+        "文烈",
+        "曹文烈"
+      ],
+      "rewriteKeys": [
+        "文烈",
+        "曹文烈"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P130",
+      "canonical": "曹真",
+      "aliases": [
+        "子丹",
+        "曹子丹"
+      ],
+      "rewriteKeys": [
+        "子丹",
+        "曹子丹"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P131",
+      "canonical": "曹爽",
+      "aliases": [
+        "昭伯",
+        "曹昭伯"
+      ],
+      "rewriteKeys": [
+        "昭伯",
+        "曹昭伯"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P028",
+      "canonical": "夏侯惇",
+      "aliases": [
+        "元让",
+        "夏侯元让"
+      ],
+      "rewriteKeys": [
+        "元让",
+        "夏侯元让"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P029",
+      "canonical": "夏侯渊",
+      "aliases": [
+        "妙才",
+        "夏侯妙才"
+      ],
+      "rewriteKeys": [
+        "妙才",
+        "夏侯妙才"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P134",
+      "canonical": "夏侯霸",
+      "aliases": [
+        "仲权",
+        "夏侯仲权"
+      ],
+      "rewriteKeys": [
+        "仲权",
+        "夏侯仲权"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P158",
+      "canonical": "夏侯楙",
+      "aliases": [
+        "子休",
+        "夏侯子休"
+      ],
+      "rewriteKeys": [
+        "子休",
+        "夏侯子休"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P012",
+      "canonical": "袁绍",
+      "aliases": [
+        "本初",
+        "袁本初"
+      ],
+      "rewriteKeys": [
+        "本初",
+        "袁本初"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P013",
+      "canonical": "袁术",
+      "aliases": [
+        "公路",
+        "袁公路"
+      ],
+      "rewriteKeys": [
+        "公路",
+        "袁公路"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P087",
+      "canonical": "袁谭",
+      "aliases": [
+        "显思",
+        "袁显思"
+      ],
+      "rewriteKeys": [
+        "显思",
+        "袁显思"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P159",
+      "canonical": "袁熙",
+      "aliases": [
+        "显奕",
+        "袁显奕"
+      ],
+      "rewriteKeys": [
+        "显奕",
+        "袁显奕"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P086",
+      "canonical": "袁尚",
+      "aliases": [
+        "显甫",
+        "袁显甫"
+      ],
+      "rewriteKeys": [
+        "显甫",
+        "袁显甫"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P011",
+      "canonical": "董卓",
+      "aliases": [
+        "仲颖",
+        "董仲颖",
+        "董太师",
+        "董贼"
+      ],
+      "rewriteKeys": [
+        "仲颖",
+        "董仲颖",
+        "董太师",
+        "董贼"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P010",
+      "canonical": "吕布",
+      "aliases": [
+        "奉先",
+        "吕奉先",
+        "温侯",
+        "吕温侯",
+        "三姓家奴"
+      ],
+      "rewriteKeys": [
+        "奉先",
+        "吕奉先",
+        "温侯",
+        "三姓家奴"
+      ],
+      "fragmentOnly": [
+        "吕温侯"
+      ],
+      "organGuard": null,
+      "note": "R2：吕温侯 终审跨主条目（多主条目候选）禁入改写键（移入 fragmentOnly）"
+    },
+    {
+      "type": "人物",
+      "id": "P049",
+      "canonical": "貂蝉",
+      "aliases": [
+        "歌伎貂蝉"
+      ],
+      "rewriteKeys": [
+        "歌伎貂蝉"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P050",
+      "canonical": "王允",
+      "aliases": [
+        "子师",
+        "王子师",
+        "王司徒"
+      ],
+      "rewriteKeys": [
+        "子师",
+        "王子师"
+      ],
+      "fragmentOnly": [
+        "王司徒"
+      ],
+      "organGuard": null,
+      "note": "R2：王司徒 终审跨主条目（多主条目候选）禁入改写键（移入 fragmentOnly）"
+    },
+    {
+      "type": "人物",
+      "id": "P051",
+      "canonical": "刘表",
+      "aliases": [
+        "景升",
+        "刘景升"
+      ],
+      "rewriteKeys": [
+        "景升",
+        "刘景升"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P052",
+      "canonical": "刘璋",
+      "aliases": [
+        "季玉",
+        "刘季玉"
+      ],
+      "rewriteKeys": [
+        "季玉",
+        "刘季玉"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P053",
+      "canonical": "刘禅",
+      "aliases": [
+        "阿斗",
+        "后主",
+        "安乐公"
+      ],
+      "rewriteKeys": [
+        "阿斗",
+        "后主",
+        "安乐公"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P088",
+      "canonical": "刘琦",
+      "aliases": [
+        "刘琦",
+        "公子琦"
+      ],
+      "rewriteKeys": [
+        "公子琦"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P089",
+      "canonical": "刘琮",
+      "aliases": [
+        "刘琮",
+        "公子琮"
+      ],
+      "rewriteKeys": [
+        "公子琮"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P160",
+      "canonical": "孙夫人",
+      "aliases": [
+        "枭姬",
+        "孙夫人"
+      ],
+      "rewriteKeys": [
+        "枭姬"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P063",
+      "canonical": "张昭",
+      "aliases": [
+        "子布",
+        "张子布"
+      ],
+      "rewriteKeys": [
+        "子布",
+        "张子布"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P065",
+      "canonical": "诸葛瑾",
+      "aliases": [
+        "子瑜",
+        "诸葛子瑜"
+      ],
+      "rewriteKeys": [
+        "子瑜",
+        "诸葛子瑜"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P066",
+      "canonical": "诸葛恪",
+      "aliases": [
+        "元逊",
+        "诸葛元逊"
+      ],
+      "rewriteKeys": [
+        "元逊",
+        "诸葛元逊"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P060",
+      "canonical": "甘宁",
+      "aliases": [
+        "兴霸",
+        "甘兴霸",
+        "锦帆贼"
+      ],
+      "rewriteKeys": [
+        "兴霸",
+        "甘兴霸",
+        "锦帆贼"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P061",
+      "canonical": "太史慈",
+      "aliases": [
+        "子义",
+        "太史子义"
+      ],
+      "rewriteKeys": [
+        "子义",
+        "太史子义"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P059",
+      "canonical": "黄盖",
+      "aliases": [
+        "公覆",
+        "黄公覆"
+      ],
+      "rewriteKeys": [
+        "公覆",
+        "黄公覆"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P120",
+      "canonical": "程普",
+      "aliases": [
+        "德谋",
+        "程德谋"
+      ],
+      "rewriteKeys": [
+        "德谋",
+        "程德谋"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P119",
+      "canonical": "韩当",
+      "aliases": [
+        "义公",
+        "韩义公"
+      ],
+      "rewriteKeys": [
+        "韩义公"
+      ],
+      "fragmentOnly": [
+        "义公"
+      ],
+      "organGuard": null,
+      "note": "R2：义公 终审跨主条目（多主条目候选）禁入改写键（移入 fragmentOnly）"
+    },
+    {
+      "type": "人物",
+      "id": "P118",
+      "canonical": "凌统",
+      "aliases": [
+        "公绩",
+        "凌公绩"
+      ],
+      "rewriteKeys": [
+        "公绩",
+        "凌公绩"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P117",
+      "canonical": "徐盛",
+      "aliases": [
+        "文向",
+        "徐文向"
+      ],
+      "rewriteKeys": [
+        "文向",
+        "徐文向"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P116",
+      "canonical": "丁奉",
+      "aliases": [
+        "承渊",
+        "丁承渊"
+      ],
+      "rewriteKeys": [
+        "承渊",
+        "丁承渊"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P067",
+      "canonical": "孟获",
+      "aliases": [
+        "蛮王孟获",
+        "南蛮王"
+      ],
+      "rewriteKeys": [
+        "蛮王孟获",
+        "南蛮王"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P161",
+      "canonical": "祝融夫人",
+      "aliases": [
+        "祝融夫人"
+      ],
+      "rewriteKeys": [],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P076",
+      "canonical": "华佗",
+      "aliases": [
+        "元化",
+        "华元化",
+        "神医华佗"
+      ],
+      "rewriteKeys": [
+        "元化",
+        "华元化",
+        "神医华佗"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P162",
+      "canonical": "于吉",
+      "aliases": [
+        "于神仙",
+        "于道人",
+        "于先生"
+      ],
+      "rewriteKeys": [
+        "于神仙",
+        "于道人",
+        "于先生"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P077",
+      "canonical": "左慈",
+      "aliases": [
+        "元放",
+        "乌角先生"
+      ],
+      "rewriteKeys": [
+        "元放",
+        "乌角先生"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P163",
+      "canonical": "管辂",
+      "aliases": [
+        "管公明",
+        "神卜"
+      ],
+      "rewriteKeys": [
+        "管公明",
+        "神卜"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null,
+      "note": "R5：bug-00031 冲突词 公明 已从 aliases 删除（冲突组不进表）"
+    },
+    {
+      "type": "人物",
+      "id": "P164",
+      "canonical": "普净",
+      "aliases": [
+        "普净禅师"
+      ],
+      "rewriteKeys": [
+        "普净禅师"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P165",
+      "canonical": "李意",
+      "aliases": [
+        "青城山隐者"
+      ],
+      "rewriteKeys": [
+        "青城山隐者"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P166",
+      "canonical": "马援",
+      "aliases": [
+        "伏波将军",
+        "伏波将军马援"
+      ],
+      "rewriteKeys": [
+        "伏波将军马援"
+      ],
+      "fragmentOnly": [
+        "伏波将军"
+      ],
+      "organGuard": null,
+      "note": "R2：伏波将军 终审跨主条目禁入改写键（移入 fragmentOnly）"
+    },
+    {
+      "type": "人物",
+      "id": "P167",
+      "canonical": "孟节",
+      "aliases": [
+        "万安隐者"
+      ],
+      "rewriteKeys": [
+        "万安隐者"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P108",
+      "canonical": "张鲁",
+      "aliases": [
+        "师君",
+        "张师君",
+        "汉宁太守",
+        "镇南中郎将"
+      ],
+      "rewriteKeys": [
+        "师君",
+        "张师君",
+        "汉宁太守",
+        "镇南中郎将"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P102",
+      "canonical": "马腾",
+      "aliases": [
+        "寿成",
+        "马寿成"
+      ],
+      "rewriteKeys": [
+        "寿成",
+        "马寿成"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P103",
+      "canonical": "韩遂",
+      "aliases": [
+        "文约",
+        "韩文约"
+      ],
+      "rewriteKeys": [
+        "文约",
+        "韩文约"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P075",
+      "canonical": "马岱",
+      "aliases": [
+        "伯瞻",
+        "马伯瞻"
+      ],
+      "rewriteKeys": [
+        "伯瞻",
+        "马伯瞻"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P168",
+      "canonical": "张松",
+      "aliases": [
+        "永年",
+        "张永年"
+      ],
+      "rewriteKeys": [
+        "永年",
+        "张永年"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P169",
+      "canonical": "孟达",
+      "aliases": [
+        "子度",
+        "孟子度"
+      ],
+      "rewriteKeys": [
+        "子度",
+        "孟子度"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P170",
+      "canonical": "黄权",
+      "aliases": [
+        "公衡",
+        "黄公衡"
+      ],
+      "rewriteKeys": [
+        "公衡",
+        "黄公衡"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P171",
+      "canonical": "李严",
+      "aliases": [
+        "正方",
+        "李正方"
+      ],
+      "rewriteKeys": [
+        "正方",
+        "李正方"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P172",
+      "canonical": "刘巴",
+      "aliases": [
+        "子初",
+        "刘子初"
+      ],
+      "rewriteKeys": [
+        "子初",
+        "刘子初"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P173",
+      "canonical": "许靖",
+      "aliases": [
+        "文休",
+        "许文休"
+      ],
+      "rewriteKeys": [
+        "文休",
+        "许文休"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P144",
+      "canonical": "糜竺",
+      "aliases": [
+        "子仲",
+        "糜子仲"
+      ],
+      "rewriteKeys": [
+        "子仲",
+        "糜子仲"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P145",
+      "canonical": "糜芳",
+      "aliases": [
+        "子方",
+        "糜子方"
+      ],
+      "rewriteKeys": [
+        "子方",
+        "糜子方"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P142",
+      "canonical": "孙乾",
+      "aliases": [
+        "公祐",
+        "孙公祐"
+      ],
+      "rewriteKeys": [
+        "公祐",
+        "孙公祐"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P143",
+      "canonical": "简雍",
+      "aliases": [
+        "宪和",
+        "简宪和"
+      ],
+      "rewriteKeys": [
+        "宪和",
+        "简宪和"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P141",
+      "canonical": "伊籍",
+      "aliases": [
+        "机伯",
+        "伊机伯"
+      ],
+      "rewriteKeys": [
+        "机伯",
+        "伊机伯"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P147",
+      "canonical": "马良",
+      "aliases": [
+        "季常",
+        "马季常"
+      ],
+      "rewriteKeys": [
+        "季常",
+        "马季常"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P069",
+      "canonical": "马谡",
+      "aliases": [
+        "幼常",
+        "马幼常"
+      ],
+      "rewriteKeys": [
+        "幼常",
+        "马幼常"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P090",
+      "canonical": "蒋琬",
+      "aliases": [
+        "公琰",
+        "蒋公琰"
+      ],
+      "rewriteKeys": [
+        "公琰",
+        "蒋公琰"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P091",
+      "canonical": "费祎",
+      "aliases": [
+        "文伟",
+        "费文伟"
+      ],
+      "rewriteKeys": [
+        "文伟",
+        "费文伟"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P092",
+      "canonical": "董允",
+      "aliases": [
+        "休昭",
+        "董休昭"
+      ],
+      "rewriteKeys": [
+        "休昭",
+        "董休昭"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P093",
+      "canonical": "杨仪",
+      "aliases": [
+        "威公",
+        "杨威公"
+      ],
+      "rewriteKeys": [
+        "威公",
+        "杨威公"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P071",
+      "canonical": "廖化",
+      "aliases": [
+        "元俭",
+        "廖元俭"
+      ],
+      "rewriteKeys": [
+        "元俭",
+        "廖元俭"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P174",
+      "canonical": "张翼",
+      "aliases": [
+        "伯恭",
+        "张伯恭"
+      ],
+      "rewriteKeys": [
+        "伯恭",
+        "张伯恭"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P175",
+      "canonical": "张嶷",
+      "aliases": [
+        "伯岐",
+        "张伯岐"
+      ],
+      "rewriteKeys": [
+        "伯岐",
+        "张伯岐"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P070",
+      "canonical": "王平",
+      "aliases": [
+        "子均",
+        "王子均"
+      ],
+      "rewriteKeys": [
+        "子均",
+        "王子均"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P073",
+      "canonical": "关兴",
+      "aliases": [
+        "安国",
+        "关安国"
+      ],
+      "rewriteKeys": [
+        "安国",
+        "关安国"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P110",
+      "canonical": "严颜",
+      "aliases": [
+        "希伯",
+        "严希伯"
+      ],
+      "rewriteKeys": [
+        "希伯",
+        "严希伯"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P176",
+      "canonical": "诸葛瞻",
+      "aliases": [
+        "思远",
+        "诸葛思远"
+      ],
+      "rewriteKeys": [
+        "思远",
+        "诸葛思远"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P177",
+      "canonical": "刘谌",
+      "aliases": [
+        "北地王"
+      ],
+      "rewriteKeys": [
+        "北地王"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P178",
+      "canonical": "谯周",
+      "aliases": [
+        "允南",
+        "谯允南"
+      ],
+      "rewriteKeys": [
+        "允南",
+        "谯允南"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P179",
+      "canonical": "郤正",
+      "aliases": [
+        "令先",
+        "郤令先"
+      ],
+      "rewriteKeys": [
+        "令先",
+        "郤令先"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P180",
+      "canonical": "秦宓",
+      "aliases": [
+        "子敕",
+        "秦子敕"
+      ],
+      "rewriteKeys": [
+        "子敕",
+        "秦子敕"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P181",
+      "canonical": "吴懿",
+      "aliases": [
+        "吴子远"
+      ],
+      "rewriteKeys": [
+        "吴子远"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null,
+      "note": "R5：bug-00031 冲突词 子远 已从 aliases 删除（冲突组不进表）"
+    },
+    {
+      "type": "人物",
+      "id": "P182",
+      "canonical": "吴班",
+      "aliases": [
+        "元雄",
+        "吴元雄"
+      ],
+      "rewriteKeys": [
+        "元雄",
+        "吴元雄"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P183",
+      "canonical": "李恢",
+      "aliases": [
+        "德昂",
+        "李德昂"
+      ],
+      "rewriteKeys": [
+        "德昂",
+        "李德昂"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P184",
+      "canonical": "彭羕",
+      "aliases": [
+        "永言",
+        "彭永言"
+      ],
+      "rewriteKeys": [
+        "永言",
+        "彭永言"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P109",
+      "canonical": "刘繇",
+      "aliases": [
+        "正礼",
+        "刘正礼"
+      ],
+      "rewriteKeys": [
+        "正礼",
+        "刘正礼"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P185",
+      "canonical": "严白虎",
+      "aliases": [
+        "严白虎"
+      ],
+      "rewriteKeys": [],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P132",
+      "canonical": "王朗",
+      "aliases": [
+        "景兴",
+        "王景兴"
+      ],
+      "rewriteKeys": [
+        "景兴",
+        "王景兴"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P136",
+      "canonical": "华歆",
+      "aliases": [
+        "子鱼",
+        "华子鱼"
+      ],
+      "rewriteKeys": [
+        "子鱼",
+        "华子鱼"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P186",
+      "canonical": "管宁",
+      "aliases": [
+        "幼安",
+        "管幼安"
+      ],
+      "rewriteKeys": [
+        "幼安",
+        "管幼安"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P187",
+      "canonical": "邴原",
+      "aliases": [
+        "根矩",
+        "邴根矩"
+      ],
+      "rewriteKeys": [
+        "根矩",
+        "邴根矩"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P043",
+      "canonical": "陈宫",
+      "aliases": [
+        "公台",
+        "陈公台"
+      ],
+      "rewriteKeys": [
+        "公台",
+        "陈公台"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P137",
+      "canonical": "张邈",
+      "aliases": [
+        "孟卓",
+        "张孟卓"
+      ],
+      "rewriteKeys": [
+        "孟卓",
+        "张孟卓"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P188",
+      "canonical": "张超",
+      "aliases": [
+        "孟高",
+        "张孟高"
+      ],
+      "rewriteKeys": [
+        "孟高",
+        "张孟高"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P042",
+      "canonical": "陈登",
+      "aliases": [
+        "元龙",
+        "陈元龙"
+      ],
+      "rewriteKeys": [
+        "元龙",
+        "陈元龙"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P189",
+      "canonical": "陈珪",
+      "aliases": [
+        "汉瑜",
+        "陈汉瑜"
+      ],
+      "rewriteKeys": [
+        "汉瑜",
+        "陈汉瑜"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P138",
+      "canonical": "臧霸",
+      "aliases": [
+        "宣高",
+        "臧宣高"
+      ],
+      "rewriteKeys": [
+        "宣高",
+        "臧宣高"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P104",
+      "canonical": "公孙瓒",
+      "aliases": [
+        "伯圭",
+        "公孙伯圭"
+      ],
+      "rewriteKeys": [
+        "伯圭",
+        "公孙伯圭"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P125",
+      "canonical": "羊祜",
+      "aliases": [
+        "叔子",
+        "羊叔子"
+      ],
+      "rewriteKeys": [
+        "叔子",
+        "羊叔子"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P126",
+      "canonical": "杜预",
+      "aliases": [
+        "元凯",
+        "杜元凯"
+      ],
+      "rewriteKeys": [
+        "元凯",
+        "杜元凯"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P127",
+      "canonical": "王濬",
+      "aliases": [
+        "士治",
+        "王士治"
+      ],
+      "rewriteKeys": [
+        "士治",
+        "王士治"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P190",
+      "canonical": "王浑",
+      "aliases": [
+        "玄冲",
+        "王玄冲"
+      ],
+      "rewriteKeys": [
+        "玄冲",
+        "王玄冲"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P191",
+      "canonical": "张华",
+      "aliases": [
+        "茂先",
+        "张茂先"
+      ],
+      "rewriteKeys": [
+        "茂先",
+        "张茂先"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P192",
+      "canonical": "孙綝",
+      "aliases": [
+        "子通",
+        "孙子通"
+      ],
+      "rewriteKeys": [
+        "子通",
+        "孙子通"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P193",
+      "canonical": "孙峻",
+      "aliases": [
+        "孙子远"
+      ],
+      "rewriteKeys": [
+        "孙子远"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null,
+      "note": "R5：bug-00031 冲突词 子远 已从 aliases 删除（冲突组不进表）"
+    },
+    {
+      "type": "人物",
+      "id": "P194",
+      "canonical": "滕胤",
+      "aliases": [
+        "承嗣",
+        "滕承嗣"
+      ],
+      "rewriteKeys": [
+        "承嗣",
+        "滕承嗣"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P195",
+      "canonical": "吕据",
+      "aliases": [
+        "世议",
+        "吕世议"
+      ],
+      "rewriteKeys": [
+        "世议",
+        "吕世议"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P196",
+      "canonical": "朱异",
+      "aliases": [
+        "季文",
+        "朱季文"
+      ],
+      "rewriteKeys": [
+        "季文",
+        "朱季文"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P197",
+      "canonical": "文钦",
+      "aliases": [
+        "仲若",
+        "文仲若"
+      ],
+      "rewriteKeys": [
+        "仲若",
+        "文仲若"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P198",
+      "canonical": "文鸯",
+      "aliases": [
+        "次骞",
+        "文次骞",
+        "阿鸯"
+      ],
+      "rewriteKeys": [
+        "次骞",
+        "文次骞",
+        "阿鸯"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P199",
+      "canonical": "毋丘俭",
+      "aliases": [
+        "仲恭",
+        "毋丘仲恭"
+      ],
+      "rewriteKeys": [
+        "仲恭",
+        "毋丘仲恭"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P200",
+      "canonical": "诸葛诞",
+      "aliases": [
+        "公休",
+        "诸葛公休"
+      ],
+      "rewriteKeys": [
+        "公休",
+        "诸葛公休"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P201",
+      "canonical": "贾充",
+      "aliases": [
+        "公闾",
+        "贾公闾"
+      ],
+      "rewriteKeys": [
+        "公闾",
+        "贾公闾"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P135",
+      "canonical": "钟繇",
+      "aliases": [
+        "元常",
+        "钟元常"
+      ],
+      "rewriteKeys": [
+        "元常",
+        "钟元常"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P202",
+      "canonical": "贾逵",
+      "aliases": [
+        "梁道",
+        "贾梁道"
+      ],
+      "rewriteKeys": [
+        "梁道",
+        "贾梁道"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P203",
+      "canonical": "何晏",
+      "aliases": [
+        "平叔",
+        "何平叔"
+      ],
+      "rewriteKeys": [
+        "平叔",
+        "何平叔"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P204",
+      "canonical": "邓飏",
+      "aliases": [
+        "玄茂",
+        "邓玄茂"
+      ],
+      "rewriteKeys": [
+        "玄茂",
+        "邓玄茂"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P205",
+      "canonical": "丁谧",
+      "aliases": [
+        "彦靖",
+        "丁彦靖"
+      ],
+      "rewriteKeys": [
+        "彦靖",
+        "丁彦靖"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P206",
+      "canonical": "毕轨",
+      "aliases": [
+        "昭先",
+        "毕昭先"
+      ],
+      "rewriteKeys": [
+        "昭先",
+        "毕昭先"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P207",
+      "canonical": "李胜",
+      "aliases": [
+        "公昭",
+        "李公昭"
+      ],
+      "rewriteKeys": [
+        "公昭",
+        "李公昭"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P208",
+      "canonical": "桓范",
+      "aliases": [
+        "元则",
+        "桓元则"
+      ],
+      "rewriteKeys": [
+        "元则",
+        "桓元则"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P209",
+      "canonical": "辛毗",
+      "aliases": [
+        "佐治",
+        "辛佐治"
+      ],
+      "rewriteKeys": [
+        "佐治",
+        "辛佐治"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P082",
+      "canonical": "陈群",
+      "aliases": [
+        "长文",
+        "陈长文"
+      ],
+      "rewriteKeys": [
+        "长文",
+        "陈长文"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P210",
+      "canonical": "司马孚",
+      "aliases": [
+        "叔达",
+        "司马叔达"
+      ],
+      "rewriteKeys": [
+        "叔达",
+        "司马叔达"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P211",
+      "canonical": "王沈",
+      "aliases": [
+        "处道",
+        "王处道"
+      ],
+      "rewriteKeys": [
+        "处道",
+        "王处道"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P212",
+      "canonical": "王业",
+      "aliases": [
+        "长绪",
+        "王长绪"
+      ],
+      "rewriteKeys": [
+        "长绪",
+        "王长绪"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P213",
+      "canonical": "吉平",
+      "aliases": [
+        "称平",
+        "吉称平"
+      ],
+      "rewriteKeys": [
+        "称平",
+        "吉称平"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P095",
+      "canonical": "祢衡",
+      "aliases": [
+        "正平",
+        "祢正平"
+      ],
+      "rewriteKeys": [
+        "正平",
+        "祢正平"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P106",
+      "canonical": "孔融",
+      "aliases": [
+        "文举",
+        "孔文举"
+      ],
+      "rewriteKeys": [
+        "文举",
+        "孔文举"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P094",
+      "canonical": "杨修",
+      "aliases": [
+        "德祖",
+        "杨德祖"
+      ],
+      "rewriteKeys": [
+        "德祖",
+        "杨德祖"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P214",
+      "canonical": "崔琰",
+      "aliases": [
+        "季珪",
+        "崔季珪"
+      ],
+      "rewriteKeys": [
+        "季珪",
+        "崔季珪"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P096",
+      "canonical": "陈琳",
+      "aliases": [
+        "孔璋",
+        "陈孔璋"
+      ],
+      "rewriteKeys": [
+        "孔璋",
+        "陈孔璋"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P215",
+      "canonical": "王修",
+      "aliases": [
+        "叔治",
+        "王叔治"
+      ],
+      "rewriteKeys": [
+        "叔治",
+        "王叔治"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P216",
+      "canonical": "田丰",
+      "aliases": [
+        "元皓",
+        "田元皓"
+      ],
+      "rewriteKeys": [
+        "元皓",
+        "田元皓"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P217",
+      "canonical": "审配",
+      "aliases": [
+        "正南",
+        "审正南"
+      ],
+      "rewriteKeys": [
+        "正南",
+        "审正南"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P218",
+      "canonical": "逢纪",
+      "aliases": [
+        "元图",
+        "逢元图"
+      ],
+      "rewriteKeys": [
+        "元图",
+        "逢元图"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P219",
+      "canonical": "郭图",
+      "aliases": [
+        "公则",
+        "郭公则"
+      ],
+      "rewriteKeys": [
+        "公则",
+        "郭公则"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P220",
+      "canonical": "许攸",
+      "aliases": [
+        "许子远"
+      ],
+      "rewriteKeys": [
+        "许子远"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null,
+      "note": "R5：bug-00031 冲突词 子远 已从 aliases 删除（冲突组不进表）"
+    },
+    {
+      "type": "人物",
+      "id": "P221",
+      "canonical": "司马攸",
+      "aliases": [
+        "大猷",
+        "司马大猷"
+      ],
+      "rewriteKeys": [
+        "大猷",
+        "司马大猷"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P222",
+      "canonical": "孙和",
+      "aliases": [
+        "孙子孝"
+      ],
+      "rewriteKeys": [
+        "孙子孝"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null,
+      "note": "R5：bug-00031 冲突词 子孝 已从 aliases 删除（冲突组不进表）"
+    },
+    {
+      "type": "人物",
+      "id": "P223",
+      "canonical": "孙登",
+      "aliases": [
+        "子高",
+        "孙子高"
+      ],
+      "rewriteKeys": [
+        "子高",
+        "孙子高"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "人物",
+      "id": "P099",
+      "canonical": "刘协",
+      "aliases": [
+        "献帝",
+        "汉献帝",
+        "陈留王",
+        "山阳公"
+      ],
+      "rewriteKeys": [
+        "汉献帝"
+      ],
+      "fragmentOnly": [
+        "献帝",
+        "陈留王",
+        "山阳公"
+      ],
+      "organGuard": null,
+      "note": "R2：献帝、陈留王、山阳公 终审跨主条目（多主条目候选）；跨主条目（同串跨人组）禁入改写键（移入 fragmentOnly）"
+    },
+    {
+      "type": "人物",
+      "id": "P224",
+      "canonical": "刘辩",
+      "aliases": [
+        "少帝",
+        "弘农王"
+      ],
+      "rewriteKeys": [
+        "弘农王"
+      ],
+      "fragmentOnly": [
+        "少帝"
+      ],
+      "organGuard": null,
+      "note": "R2：少帝 终审跨主条目禁入改写键（移入 fragmentOnly）"
+    },
+    {
+      "type": "地名",
+      "id": null,
+      "canonical": "涿县",
+      "aliases": [
+        "涿郡"
+      ],
+      "rewriteKeys": [
+        "涿郡"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "地名",
+      "id": null,
+      "canonical": "徐州",
+      "aliases": [
+        "徐郡"
+      ],
+      "rewriteKeys": [
+        "徐郡"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "地名",
+      "id": null,
+      "canonical": "宛城",
+      "aliases": [
+        "南阳"
+      ],
+      "rewriteKeys": [
+        "南阳"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "地名",
+      "id": null,
+      "canonical": "洛阳",
+      "aliases": [
+        "东都"
+      ],
+      "rewriteKeys": [
+        "东都"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "地名",
+      "id": null,
+      "canonical": "长安",
+      "aliases": [
+        "西都"
+      ],
+      "rewriteKeys": [
+        "西都"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "地名",
+      "id": null,
+      "canonical": "谯郡",
+      "aliases": [
+        "谯县"
+      ],
+      "rewriteKeys": [
+        "谯县"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "地名",
+      "id": null,
+      "canonical": "许都",
+      "aliases": [
+        "许昌"
+      ],
+      "rewriteKeys": [
+        "许昌"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "地名",
+      "id": null,
+      "canonical": "荆州",
+      "aliases": [
+        "荆襄",
+        "荆楚"
+      ],
+      "rewriteKeys": [
+        "荆襄",
+        "荆楚"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "地名",
+      "id": null,
+      "canonical": "江东",
+      "aliases": [
+        "江左",
+        "江南"
+      ],
+      "rewriteKeys": [
+        "江左",
+        "江南"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "地名",
+      "id": null,
+      "canonical": "建业",
+      "aliases": [
+        "秣陵",
+        "石头城"
+      ],
+      "rewriteKeys": [
+        "秣陵",
+        "石头城"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "地名",
+      "id": null,
+      "canonical": "合肥",
+      "aliases": [
+        "合淝"
+      ],
+      "rewriteKeys": [
+        "合淝"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "地名",
+      "id": null,
+      "canonical": "濡须",
+      "aliases": [
+        "濡须口",
+        "濡须坞"
+      ],
+      "rewriteKeys": [
+        "濡须口",
+        "濡须坞"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "地名",
+      "id": null,
+      "canonical": "寿春",
+      "aliases": [
+        "淮南"
+      ],
+      "rewriteKeys": [
+        "淮南"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "地名",
+      "id": null,
+      "canonical": "博望坡",
+      "aliases": [
+        "博望"
+      ],
+      "rewriteKeys": [],
+      "fragmentOnly": [
+        "博望"
+      ],
+      "organGuard": null,
+      "note": "bug-00036：博望 ⊂ 博望坡 本行真子串短式；2026-09-26 全表审计第二轮改判——语料存在非完整对齐变体「博望城/博望山」，邻接延伸检查兜不住，移出改写键转 fragmentOnly"
+    },
+    {
+      "type": "地名",
+      "id": null,
+      "canonical": "长坂坡",
+      "aliases": [
+        "长坂"
+      ],
+      "rewriteKeys": [],
+      "fragmentOnly": [
+        "长坂"
+      ],
+      "organGuard": null,
+      "note": "bug-00036：长坂 ⊂ 长坂坡 本行真子串短式；2026-09-26 全表审计第二轮改判——语料存在非完整对齐变体「长坂桥/长坂城/长坂围」（长坂桥 为回目专名），邻接延伸检查兜不住，移出改写键转 fragmentOnly"
+    },
+    {
+      "type": "地名",
+      "id": null,
+      "canonical": "汉水",
+      "aliases": [
+        "沔水"
+      ],
+      "rewriteKeys": [
+        "沔水"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "地名",
+      "id": null,
+      "canonical": "益州",
+      "aliases": [
+        "西川",
+        "蜀中",
+        "两川"
+      ],
+      "rewriteKeys": [
+        "西川",
+        "蜀中",
+        "两川"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "地名",
+      "id": null,
+      "canonical": "涪城",
+      "aliases": [
+        "涪关",
+        "涪水关"
+      ],
+      "rewriteKeys": [
+        "涪关",
+        "涪水关"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "地名",
+      "id": null,
+      "canonical": "陈仓",
+      "aliases": [
+        "陈仓道口"
+      ],
+      "rewriteKeys": [
+        "陈仓道口"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "地名",
+      "id": null,
+      "canonical": "上方谷",
+      "aliases": [
+        "葫芦谷"
+      ],
+      "rewriteKeys": [
+        "葫芦谷"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "地名",
+      "id": null,
+      "canonical": "汉中",
+      "aliases": [
+        "南郑",
+        "东川"
+      ],
+      "rewriteKeys": [
+        "南郑",
+        "东川"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "地名",
+      "id": null,
+      "canonical": "白帝城",
+      "aliases": [
+        "永安宫"
+      ],
+      "rewriteKeys": [
+        "永安宫"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "地名",
+      "id": null,
+      "canonical": "邺郡",
+      "aliases": [
+        "邺城"
+      ],
+      "rewriteKeys": [
+        "邺城"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "地名",
+      "id": null,
+      "canonical": "铜雀台",
+      "aliases": [
+        "铜雀",
+        "玉龙台",
+        "金凤台"
+      ],
+      "rewriteKeys": [
+        "玉龙台",
+        "金凤台"
+      ],
+      "fragmentOnly": [
+        "铜雀"
+      ],
+      "organGuard": null,
+      "note": "bug-00036：铜雀 ⊂ 铜雀台 本行真子串短式；2026-09-26 全表审计第二轮改判——语料存在非完整对齐变体「铜雀宫」（曾污染为 铜雀台宫），邻接延伸检查兜不住，移出改写键转 fragmentOnly"
+    },
+    {
+      "type": "地名",
+      "id": null,
+      "canonical": "陇西",
+      "aliases": [
+        "陇右"
+      ],
+      "rewriteKeys": [
+        "陇右"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "地名",
+      "id": null,
+      "canonical": "许田",
+      "aliases": [
+        "许田围场"
+      ],
+      "rewriteKeys": [
+        "许田围场"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "地名",
+      "id": null,
+      "canonical": "西城",
+      "aliases": [
+        "西城县"
+      ],
+      "rewriteKeys": [
+        "西城县"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "地名",
+      "id": null,
+      "canonical": "木门道",
+      "aliases": [
+        "木门道口"
+      ],
+      "rewriteKeys": [
+        "木门道口"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "地名",
+      "id": null,
+      "canonical": "上庸",
+      "aliases": [
+        "上庸城"
+      ],
+      "rewriteKeys": [
+        "上庸城"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "地名",
+      "id": null,
+      "canonical": "新城",
+      "aliases": [
+        "新城郡"
+      ],
+      "rewriteKeys": [
+        "新城郡"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "地名",
+      "id": null,
+      "canonical": "临沮",
+      "aliases": [
+        "临沮县"
+      ],
+      "rewriteKeys": [
+        "临沮县"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "地名",
+      "id": null,
+      "canonical": "南徐",
+      "aliases": [
+        "润州"
+      ],
+      "rewriteKeys": [
+        "润州"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "战役",
+      "id": null,
+      "canonical": "黄巾起义",
+      "aliases": [
+        "黄巾之乱",
+        "黄巾倡乱",
+        "黄巾反"
+      ],
+      "rewriteKeys": [
+        "黄巾之乱",
+        "黄巾倡乱",
+        "黄巾反"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "战役",
+      "id": null,
+      "canonical": "桃园三结义",
+      "aliases": [
+        "桃园之盟",
+        "桃园结义"
+      ],
+      "rewriteKeys": [
+        "桃园之盟",
+        "桃园结义"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "战役",
+      "id": null,
+      "canonical": "讨伐黄巾",
+      "aliases": [
+        "破黄巾",
+        "剿黄巾"
+      ],
+      "rewriteKeys": [
+        "破黄巾",
+        "剿黄巾"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "战役",
+      "id": null,
+      "canonical": "怒鞭督邮",
+      "aliases": [
+        "鞭督邮"
+      ],
+      "rewriteKeys": [
+        "鞭督邮"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null,
+      "note": "bug-00036：鞭督邮 ⊂ 怒鞭督邮 本行真子串短式，裁决保留（依赖邻接延伸检查兜底）"
+    },
+    {
+      "type": "战役",
+      "id": null,
+      "canonical": "十常侍之乱",
+      "aliases": [
+        "十常侍作乱",
+        "宦官之乱"
+      ],
+      "rewriteKeys": [
+        "十常侍作乱",
+        "宦官之乱"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "战役",
+      "id": null,
+      "canonical": "废立皇帝",
+      "aliases": [
+        "废少帝立陈留王",
+        "废立"
+      ],
+      "rewriteKeys": [
+        "废少帝立陈留王",
+        "废立"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null,
+      "note": "bug-00036：废立 ⊂ 废立皇帝 本行真子串短式，裁决保留（依赖邻接延伸检查兜底）"
+    },
+    {
+      "type": "战役",
+      "id": null,
+      "canonical": "匿传国玺",
+      "aliases": [
+        "匿玺",
+        "藏玉玺"
+      ],
+      "rewriteKeys": [
+        "匿玺",
+        "藏玉玺"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "战役",
+      "id": null,
+      "canonical": "磐河之战",
+      "aliases": [
+        "磐河厮杀"
+      ],
+      "rewriteKeys": [
+        "磐河厮杀"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "战役",
+      "id": null,
+      "canonical": "下邳之战",
+      "aliases": [
+        "白门楼"
+      ],
+      "rewriteKeys": [
+        "白门楼"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "战役",
+      "id": null,
+      "canonical": "许田打围",
+      "aliases": [
+        "许田射猎"
+      ],
+      "rewriteKeys": [
+        "许田射猎"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "战役",
+      "id": null,
+      "canonical": "衣带诏",
+      "aliases": [
+        "玉带诏",
+        "血诏"
+      ],
+      "rewriteKeys": [
+        "玉带诏",
+        "血诏"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "战役",
+      "id": null,
+      "canonical": "煮酒论英雄",
+      "aliases": [
+        "青梅煮酒"
+      ],
+      "rewriteKeys": [
+        "青梅煮酒"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "战役",
+      "id": null,
+      "canonical": "官渡之战",
+      "aliases": [
+        "官渡相持"
+      ],
+      "rewriteKeys": [
+        "官渡相持"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "战役",
+      "id": null,
+      "canonical": "乌巢烧粮",
+      "aliases": [
+        "劫乌巢"
+      ],
+      "rewriteKeys": [
+        "劫乌巢"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "战役",
+      "id": null,
+      "canonical": "赤壁之战",
+      "aliases": [
+        "赤壁鏖兵",
+        "火烧赤壁",
+        "赤壁纵火"
+      ],
+      "rewriteKeys": [
+        "赤壁鏖兵",
+        "火烧赤壁",
+        "赤壁纵火"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "战役",
+      "id": null,
+      "canonical": "草船借箭",
+      "aliases": [
+        "借箭"
+      ],
+      "rewriteKeys": [
+        "借箭"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null,
+      "note": "bug-00036：借箭 ⊂ 草船借箭 本行真子串短式，裁决保留（依赖邻接延伸检查兜底）"
+    },
+    {
+      "type": "战役",
+      "id": null,
+      "canonical": "华容道",
+      "aliases": [
+        "义释华容"
+      ],
+      "rewriteKeys": [
+        "义释华容"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "战役",
+      "id": null,
+      "canonical": "南郡之战",
+      "aliases": [
+        "取南郡"
+      ],
+      "rewriteKeys": [
+        "取南郡"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "战役",
+      "id": null,
+      "canonical": "百骑劫营",
+      "aliases": [
+        "百骑劫魏营"
+      ],
+      "rewriteKeys": [
+        "百骑劫魏营"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "战役",
+      "id": null,
+      "canonical": "五臣死节",
+      "aliases": [
+        "许都之变"
+      ],
+      "rewriteKeys": [
+        "许都之变"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "战役",
+      "id": null,
+      "canonical": "汉中争夺",
+      "aliases": [
+        "取汉中"
+      ],
+      "rewriteKeys": [
+        "取汉中"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "战役",
+      "id": null,
+      "canonical": "败走麦城",
+      "aliases": [
+        "麦城之败"
+      ],
+      "rewriteKeys": [
+        "麦城之败"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "战役",
+      "id": null,
+      "canonical": "火烧连营",
+      "aliases": [
+        "烧营"
+      ],
+      "rewriteKeys": [
+        "烧营"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "战役",
+      "id": null,
+      "canonical": "白帝托孤",
+      "aliases": [
+        "永安托孤"
+      ],
+      "rewriteKeys": [
+        "永安托孤"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "战役",
+      "id": null,
+      "canonical": "五丈原之役",
+      "aliases": [
+        "秋风五丈原"
+      ],
+      "rewriteKeys": [
+        "秋风五丈原"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "战役",
+      "id": null,
+      "canonical": "偷度阴平",
+      "aliases": [
+        "暗度阴平"
+      ],
+      "rewriteKeys": [
+        "暗度阴平"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "战役",
+      "id": null,
+      "canonical": "三顾草庐",
+      "aliases": [
+        "三顾茅庐"
+      ],
+      "rewriteKeys": [
+        "三顾茅庐"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "战役",
+      "id": null,
+      "canonical": "隆中决策",
+      "aliases": [
+        "隆中对"
+      ],
+      "rewriteKeys": [
+        "隆中对"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "战役",
+      "id": null,
+      "canonical": "七擒七纵",
+      "aliases": [
+        "七擒孟获"
+      ],
+      "rewriteKeys": [
+        "七擒孟获"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "战役",
+      "id": null,
+      "canonical": "三分归一统",
+      "aliases": [
+        "三国归晋",
+        "三分归晋"
+      ],
+      "rewriteKeys": [
+        "三国归晋",
+        "三分归晋"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "战役",
+      "id": null,
+      "canonical": "过五关斩六将",
+      "aliases": [
+        "五关斩六将",
+        "千里走单骑"
+      ],
+      "rewriteKeys": [
+        "五关斩六将",
+        "千里走单骑"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null,
+      "note": "bug-00036：五关斩六将 ⊂ 过五关斩六将 本行真子串短式，裁决保留（依赖邻接延伸检查兜底）"
+    },
+    {
+      "type": "战役",
+      "id": null,
+      "canonical": "温酒斩华雄",
+      "aliases": [
+        "斩华雄"
+      ],
+      "rewriteKeys": [
+        "斩华雄"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null,
+      "note": "bug-00036：斩华雄 ⊂ 温酒斩华雄 本行真子串短式，裁决保留（依赖邻接延伸检查兜底）"
+    },
+    {
+      "type": "战役",
+      "id": null,
+      "canonical": "三英战吕布",
+      "aliases": [
+        "三英战温侯"
+      ],
+      "rewriteKeys": [
+        "三英战温侯"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "战役",
+      "id": null,
+      "canonical": "舌战群儒",
+      "aliases": [
+        "舌战"
+      ],
+      "rewriteKeys": [
+        "舌战"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "战役",
+      "id": null,
+      "canonical": "群英会",
+      "aliases": [
+        "蒋干盗书",
+        "蒋干中计"
+      ],
+      "rewriteKeys": [
+        "蒋干盗书",
+        "蒋干中计"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "战役",
+      "id": null,
+      "canonical": "单刀赴会",
+      "aliases": [
+        "单刀会"
+      ],
+      "rewriteKeys": [
+        "单刀会"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "战役",
+      "id": null,
+      "canonical": "水淹七军",
+      "aliases": [
+        "水淹于禁"
+      ],
+      "rewriteKeys": [
+        "水淹于禁"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "战役",
+      "id": null,
+      "canonical": "白衣渡江",
+      "aliases": [
+        "白衣摇橹"
+      ],
+      "rewriteKeys": [
+        "白衣摇橹"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "战役",
+      "id": null,
+      "canonical": "三气周瑜",
+      "aliases": [
+        "气死周瑜"
+      ],
+      "rewriteKeys": [
+        "气死周瑜"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "战役",
+      "id": null,
+      "canonical": "挥泪斩马谡",
+      "aliases": [
+        "斩马谡"
+      ],
+      "rewriteKeys": [
+        "斩马谡"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null,
+      "note": "bug-00036：斩马谡 ⊂ 挥泪斩马谡 本行真子串短式，裁决保留（依赖邻接延伸检查兜底）"
+    },
+    {
+      "type": "战役",
+      "id": null,
+      "canonical": "单骑救主",
+      "aliases": [
+        "七进七出",
+        "长坂坡救阿斗"
+      ],
+      "rewriteKeys": [
+        "七进七出",
+        "长坂坡救阿斗"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "数字称谓",
+      "id": null,
+      "canonical": "五虎上将",
+      "aliases": [
+        "五虎将",
+        "五虎大将",
+        "五虎上将军"
+      ],
+      "rewriteKeys": [
+        "五虎将",
+        "五虎大将",
+        "五虎上将军"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "数字称谓",
+      "id": null,
+      "canonical": "六出祁山",
+      "aliases": [
+        "六出"
+      ],
+      "rewriteKeys": [],
+      "fragmentOnly": [
+        "六出"
+      ],
+      "organGuard": null,
+      "note": "R10：六出 数字称谓过泛不作键（移入 fragmentOnly）"
+    },
+    {
+      "type": "数字称谓",
+      "id": null,
+      "canonical": "九伐中原",
+      "aliases": [
+        "九伐"
+      ],
+      "rewriteKeys": [],
+      "fragmentOnly": [
+        "九伐"
+      ],
+      "organGuard": null,
+      "note": "R10：九伐 数字称谓过泛不作键（移入 fragmentOnly）"
+    },
+    {
+      "type": "数字称谓",
+      "id": null,
+      "canonical": "十八路诸侯",
+      "aliases": [
+        "十八镇诸侯"
+      ],
+      "rewriteKeys": [
+        "十八镇诸侯"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "势力",
+      "id": null,
+      "canonical": "东汉",
+      "aliases": [
+        "汉朝",
+        "汉室",
+        "大汉",
+        "炎汉",
+        "汉家"
+      ],
+      "rewriteKeys": [],
+      "fragmentOnly": [
+        "汉朝",
+        "汉室",
+        "大汉",
+        "炎汉",
+        "汉家"
+      ],
+      "organGuard": null,
+      "note": "R7：势力类行不设改写键，aliases 全落 fragmentOnly"
+    },
+    {
+      "type": "势力",
+      "id": null,
+      "canonical": "曹魏",
+      "aliases": [
+        "魏国",
+        "大魏",
+        "曹氏",
+        "魏室"
+      ],
+      "rewriteKeys": [],
+      "fragmentOnly": [
+        "魏国",
+        "大魏",
+        "曹氏",
+        "魏室"
+      ],
+      "organGuard": null,
+      "note": "R7：势力类行不设改写键，aliases 全落 fragmentOnly"
+    },
+    {
+      "type": "势力",
+      "id": null,
+      "canonical": "蜀汉",
+      "aliases": [
+        "蜀国",
+        "西蜀",
+        "季汉"
+      ],
+      "rewriteKeys": [],
+      "fragmentOnly": [
+        "蜀国",
+        "西蜀",
+        "季汉"
+      ],
+      "organGuard": null,
+      "note": "R7：势力类行不设改写键，aliases 全落 fragmentOnly"
+    },
+    {
+      "type": "势力",
+      "id": null,
+      "canonical": "东吴",
+      "aliases": [
+        "吴国",
+        "孙吴",
+        "江东孙氏",
+        "吴室"
+      ],
+      "rewriteKeys": [],
+      "fragmentOnly": [
+        "吴国",
+        "孙吴",
+        "江东孙氏",
+        "吴室"
+      ],
+      "organGuard": null,
+      "note": "R7：势力类行不设改写键，aliases 全落 fragmentOnly"
+    },
+    {
+      "type": "势力",
+      "id": null,
+      "canonical": "西晋",
+      "aliases": [
+        "晋国",
+        "大晋",
+        "司马氏",
+        "晋室"
+      ],
+      "rewriteKeys": [],
+      "fragmentOnly": [
+        "晋国",
+        "大晋",
+        "司马氏",
+        "晋室"
+      ],
+      "organGuard": null,
+      "note": "R7：势力类行不设改写键，aliases 全落 fragmentOnly"
+    },
+    {
+      "type": "势力",
+      "id": null,
+      "canonical": "黄巾",
+      "aliases": [
+        "黄巾军",
+        "黄巾贼",
+        "黄巾党"
+      ],
+      "rewriteKeys": [],
+      "fragmentOnly": [
+        "黄巾军",
+        "黄巾贼",
+        "黄巾党"
+      ],
+      "organGuard": null,
+      "note": "R7：势力类行不设改写键，aliases 全落 fragmentOnly"
+    },
+    {
+      "type": "势力",
+      "id": null,
+      "canonical": "十常侍",
+      "aliases": [
+        "宦官集团",
+        "阉党"
+      ],
+      "rewriteKeys": [],
+      "fragmentOnly": [
+        "宦官集团",
+        "阉党"
+      ],
+      "organGuard": null,
+      "note": "R7：势力类行不设改写键，aliases 全落 fragmentOnly"
+    },
+    {
+      "type": "势力",
+      "id": null,
+      "canonical": "西凉军",
+      "aliases": [
+        "西凉兵",
+        "西州军",
+        "凉州军"
+      ],
+      "rewriteKeys": [],
+      "fragmentOnly": [
+        "西凉兵",
+        "西州军",
+        "凉州军"
+      ],
+      "organGuard": null,
+      "note": "R7：势力类行不设改写键，aliases 全落 fragmentOnly"
+    },
+    {
+      "type": "势力",
+      "id": null,
+      "canonical": "南蛮",
+      "aliases": [
+        "蛮兵",
+        "蛮方",
+        "南人"
+      ],
+      "rewriteKeys": [],
+      "fragmentOnly": [
+        "蛮兵",
+        "蛮方",
+        "南人"
+      ],
+      "organGuard": null,
+      "note": "R7：势力类行不设改写键，aliases 全落 fragmentOnly"
+    },
+    {
+      "type": "势力",
+      "id": null,
+      "canonical": "乌桓",
+      "aliases": [
+        "乌丸"
+      ],
+      "rewriteKeys": [],
+      "fragmentOnly": [
+        "乌丸"
+      ],
+      "organGuard": null,
+      "note": "R7：势力类行不设改写键，aliases 全落 fragmentOnly"
+    },
+    {
+      "type": "势力",
+      "id": null,
+      "canonical": "羌人",
+      "aliases": [
+        "西羌",
+        "羌兵"
+      ],
+      "rewriteKeys": [],
+      "fragmentOnly": [
+        "西羌",
+        "羌兵"
+      ],
+      "organGuard": null,
+      "note": "R7：势力类行不设改写键，aliases 全落 fragmentOnly"
+    },
+    {
+      "type": "势力",
+      "id": null,
+      "canonical": "五溪番兵",
+      "aliases": [
+        "番兵"
+      ],
+      "rewriteKeys": [],
+      "fragmentOnly": [
+        "番兵"
+      ],
+      "organGuard": null,
+      "note": "R7：势力类行不设改写键，aliases 全落 fragmentOnly"
+    },
+    {
+      "type": "势力",
+      "id": null,
+      "canonical": "泰山寇",
+      "aliases": [
+        "泰山贼"
+      ],
+      "rewriteKeys": [],
+      "fragmentOnly": [
+        "泰山贼"
+      ],
+      "organGuard": null,
+      "note": "R7：势力类行不设改写键，aliases 全落 fragmentOnly"
+    },
+    {
+      "type": "势力",
+      "id": null,
+      "canonical": "白波军",
+      "aliases": [
+        "白波帅"
+      ],
+      "rewriteKeys": [],
+      "fragmentOnly": [
+        "白波帅"
+      ],
+      "organGuard": null,
+      "note": "R7：势力类行不设改写键，aliases 全落 fragmentOnly"
+    },
+    {
+      "type": "势力",
+      "id": null,
+      "canonical": "黑山贼",
+      "aliases": [
+        "黑山军"
+      ],
+      "rewriteKeys": [],
+      "fragmentOnly": [
+        "黑山军"
+      ],
+      "organGuard": null,
+      "note": "R7：势力类行不设改写键，aliases 全落 fragmentOnly"
+    },
+    {
+      "type": "官职",
+      "id": null,
+      "canonical": "皇帝",
+      "aliases": [
+        "天子",
+        "陛下",
+        "至尊"
+      ],
+      "rewriteKeys": [],
+      "fragmentOnly": [
+        "天子",
+        "陛下",
+        "至尊"
+      ],
+      "organGuard": null,
+      "note": "R7+R2：皇帝 终审跨主条目禁入改写键，官职类行 aliases 全落 fragmentOnly"
+    },
+    {
+      "type": "官职",
+      "id": null,
+      "canonical": "皇后",
+      "aliases": [
+        "正宫"
+      ],
+      "rewriteKeys": [],
+      "fragmentOnly": [
+        "正宫"
+      ],
+      "organGuard": null,
+      "note": "R7+R2：皇后 终审禁入改写键（泛官职裸词）禁入改写键，官职类行 aliases 全落 fragmentOnly"
+    },
+    {
+      "type": "官职",
+      "id": null,
+      "canonical": "皇太后",
+      "aliases": [
+        "太后"
+      ],
+      "rewriteKeys": [],
+      "fragmentOnly": [
+        "太后"
+      ],
+      "organGuard": null,
+      "note": "R2：太后 终审禁入改写键（泛官职裸词）禁入改写键（移入 fragmentOnly）；R7+R2：皇太后 终审跨主条目禁入改写键，官职类行 aliases 全落 fragmentOnly"
+    },
+    {
+      "type": "官职",
+      "id": null,
+      "canonical": "太子",
+      "aliases": [
+        "储君"
+      ],
+      "rewriteKeys": [],
+      "fragmentOnly": [
+        "储君"
+      ],
+      "organGuard": null,
+      "note": "R7+R2：太子 终审禁入改写键（泛官职裸词）禁入改写键，官职类行 aliases 全落 fragmentOnly"
+    },
+    {
+      "type": "官职",
+      "id": null,
+      "canonical": "王世子",
+      "aliases": [
+        "世子"
+      ],
+      "rewriteKeys": [],
+      "fragmentOnly": [
+        "世子"
+      ],
+      "organGuard": null,
+      "note": "R7+R2：王世子 终审跨主条目禁入改写键，官职类行 aliases 全落 fragmentOnly"
+    },
+    {
+      "type": "官职",
+      "id": null,
+      "canonical": "丞相",
+      "aliases": [
+        "相国"
+      ],
+      "rewriteKeys": [],
+      "fragmentOnly": [
+        "相国"
+      ],
+      "organGuard": null,
+      "note": "R2：相国 终审禁入改写键（泛官职裸词）禁入改写键（移入 fragmentOnly）；R7+R2：丞相 终审禁入改写键（泛官职裸词）禁入改写键，官职类行 aliases 全落 fragmentOnly"
+    },
+    {
+      "type": "官职",
+      "id": null,
+      "canonical": "太守",
+      "aliases": [
+        "郡守"
+      ],
+      "rewriteKeys": [],
+      "fragmentOnly": [
+        "郡守"
+      ],
+      "organGuard": null,
+      "note": "R7+R2：太守 终审跨主条目禁入改写键，官职类行 aliases 全落 fragmentOnly"
+    },
+    {
+      "type": "官职",
+      "id": null,
+      "canonical": "常侍",
+      "aliases": [
+        "中常侍"
+      ],
+      "rewriteKeys": [],
+      "fragmentOnly": [
+        "中常侍"
+      ],
+      "organGuard": null,
+      "note": "R7+R2：常侍 终审跨主条目禁入改写键，官职类行 aliases 全落 fragmentOnly"
+    },
+    {
+      "type": "官职",
+      "id": null,
+      "canonical": "先锋",
+      "aliases": [
+        "前部先锋"
+      ],
+      "rewriteKeys": [],
+      "fragmentOnly": [
+        "前部先锋"
+      ],
+      "organGuard": null,
+      "note": "R7+R2：先锋 终审跨主条目禁入改写键，官职类行 aliases 全落 fragmentOnly"
+    },
+    {
+      "type": "官职",
+      "id": null,
+      "canonical": "监军",
+      "aliases": [
+        "监军使者"
+      ],
+      "rewriteKeys": [],
+      "fragmentOnly": [
+        "监军使者"
+      ],
+      "organGuard": null,
+      "note": "R7+R2：监军 终审跨主条目禁入改写键，官职类行 aliases 全落 fragmentOnly"
+    },
+    {
+      "type": "官职",
+      "id": null,
+      "canonical": "州牧",
+      "aliases": [
+        "牧伯"
+      ],
+      "rewriteKeys": [],
+      "fragmentOnly": [
+        "牧伯"
+      ],
+      "organGuard": null,
+      "note": "R7+R2：州牧 终审跨主条目禁入改写键，官职类行 aliases 全落 fragmentOnly"
+    },
+    {
+      "type": "官职",
+      "id": null,
+      "canonical": "刺史",
+      "aliases": [
+        "刺使"
+      ],
+      "rewriteKeys": [],
+      "fragmentOnly": [
+        "刺使"
+      ],
+      "organGuard": null,
+      "note": "R7+R2：刺史 终审跨主条目禁入改写键，官职类行 aliases 全落 fragmentOnly"
+    },
+    {
+      "type": "器物",
+      "id": null,
+      "canonical": "青龙偃月刀",
+      "aliases": [
+        "冷艳锯",
+        "青龙刀"
+      ],
+      "rewriteKeys": [
+        "冷艳锯",
+        "青龙刀"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "器物",
+      "id": null,
+      "canonical": "丈八蛇矛",
+      "aliases": [
+        "丈八点钢矛",
+        "蛇矛"
+      ],
+      "rewriteKeys": [
+        "丈八点钢矛"
+      ],
+      "fragmentOnly": [
+        "蛇矛"
+      ],
+      "organGuard": null,
+      "note": "bug-00036：蛇矛 ⊂ 丈八蛇矛 真子串，禁入改写键（移入 fragmentOnly）"
+    },
+    {
+      "type": "器物",
+      "id": null,
+      "canonical": "方天画戟",
+      "aliases": [
+        "画戟"
+      ],
+      "rewriteKeys": [],
+      "fragmentOnly": [
+        "画戟"
+      ],
+      "organGuard": null,
+      "note": "bug-00036：画戟 ⊂ 方天画戟 真子串，禁入改写键（移入 fragmentOnly）"
+    },
+    {
+      "type": "器物",
+      "id": null,
+      "canonical": "赤兔马",
+      "aliases": [
+        "赤兔"
+      ],
+      "rewriteKeys": [],
+      "fragmentOnly": [
+        "赤兔"
+      ],
+      "organGuard": null,
+      "note": "bug-00036：赤兔 ⊂ 赤兔马 真子串，禁入改写键（移入 fragmentOnly）"
+    },
+    {
+      "type": "器物",
+      "id": null,
+      "canonical": "的卢马",
+      "aliases": [
+        "的卢"
+      ],
+      "rewriteKeys": [
+        "的卢"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null,
+      "note": "bug-00036：的卢 ⊂ 的卢马 本行真子串短式，裁决保留（依赖邻接延伸检查兜底）"
+    },
+    {
+      "type": "器物",
+      "id": null,
+      "canonical": "爪黄飞电马",
+      "aliases": [
+        "爪黄飞电"
+      ],
+      "rewriteKeys": [
+        "爪黄飞电"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null,
+      "note": "bug-00036：爪黄飞电 ⊂ 爪黄飞电马 本行真子串短式，裁决保留（依赖邻接延伸检查兜底）"
+    },
+    {
+      "type": "器物",
+      "id": null,
+      "canonical": "传国玉玺",
+      "aliases": [
+        "玉玺",
+        "传国宝"
+      ],
+      "rewriteKeys": [
+        "传国宝"
+      ],
+      "fragmentOnly": [
+        "玉玺"
+      ],
+      "organGuard": null,
+      "note": "bug-00036：玉玺 ⊂ 传国玉玺 真子串，禁入改写键（移入 fragmentOnly）"
+    },
+    {
+      "type": "器物",
+      "id": null,
+      "canonical": "连弩",
+      "aliases": [
+        "十矢连弩"
+      ],
+      "rewriteKeys": [
+        "十矢连弩"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "器物",
+      "id": null,
+      "canonical": "发石车",
+      "aliases": [
+        "霹雳车"
+      ],
+      "rewriteKeys": [
+        "霹雳车"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "器物",
+      "id": null,
+      "canonical": "铁索",
+      "aliases": [
+        "连环索"
+      ],
+      "rewriteKeys": [
+        "连环索"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "器物",
+      "id": null,
+      "canonical": "巾帼女衣",
+      "aliases": [
+        "巾帼",
+        "妇人缟素之服"
+      ],
+      "rewriteKeys": [
+        "妇人缟素之服"
+      ],
+      "fragmentOnly": [
+        "巾帼"
+      ],
+      "organGuard": null,
+      "note": "bug-00036：巾帼 ⊂ 巾帼女衣 真子串，禁入改写键（移入 fragmentOnly）"
+    },
+    {
+      "type": "器物",
+      "id": null,
+      "canonical": "遁甲天书",
+      "aliases": [
+        "天书三卷"
+      ],
+      "rewriteKeys": [
+        "天书三卷"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "器物",
+      "id": null,
+      "canonical": "七星皂幡",
+      "aliases": [
+        "皂幡"
+      ],
+      "rewriteKeys": [],
+      "fragmentOnly": [
+        "皂幡"
+      ],
+      "organGuard": null,
+      "note": "bug-00036：皂幡 ⊂ 七星皂幡 真子串，禁入改写键（移入 fragmentOnly）"
+    },
+    {
+      "type": "器物",
+      "id": null,
+      "canonical": "火炮",
+      "aliases": [
+        "铁炮"
+      ],
+      "rewriteKeys": [
+        "铁炮"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "器物",
+      "id": null,
+      "canonical": "七星宝刀",
+      "aliases": [
+        "七宝刀"
+      ],
+      "rewriteKeys": [
+        "七宝刀"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "器物",
+      "id": null,
+      "canonical": "倚天剑",
+      "aliases": [
+        "倚天"
+      ],
+      "rewriteKeys": [
+        "倚天"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null,
+      "note": "bug-00036：倚天 ⊂ 倚天剑 本行真子串短式，裁决保留（依赖邻接延伸检查兜底）"
+    },
+    {
+      "type": "器物",
+      "id": null,
+      "canonical": "青釭剑",
+      "aliases": [
+        "青釭"
+      ],
+      "rewriteKeys": [],
+      "fragmentOnly": [
+        "青釭"
+      ],
+      "organGuard": null,
+      "note": "bug-00036：青釭 ⊂ 青釭剑 真子串，禁入改写键（移入 fragmentOnly）"
+    },
+    {
+      "type": "器物",
+      "id": null,
+      "canonical": "雌雄双股剑",
+      "aliases": [
+        "双股剑"
+      ],
+      "rewriteKeys": [
+        "双股剑"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null,
+      "note": "bug-00036：双股剑 ⊂ 雌雄双股剑 本行真子串短式，裁决保留（依赖邻接延伸检查兜底）"
+    },
+    {
+      "type": "器物",
+      "id": null,
+      "canonical": "木牛流马",
+      "aliases": [
+        "木牛",
+        "流马"
+      ],
+      "rewriteKeys": [],
+      "fragmentOnly": [
+        "木牛",
+        "流马"
+      ],
+      "organGuard": null,
+      "note": "bug-00036：流马 ⊂ 木牛流马 真子串，禁入改写键（移入 fragmentOnly）"
+    },
+    {
+      "type": "时间",
+      "id": null,
+      "canonical": "建宁",
+      "aliases": [
+        "建宁二年",
+        "建宁四年"
+      ],
+      "rewriteKeys": [
+        "建宁二年",
+        "建宁四年"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "时间",
+      "id": null,
+      "canonical": "光和",
+      "aliases": [
+        "光和元年"
+      ],
+      "rewriteKeys": [
+        "光和元年"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "时间",
+      "id": null,
+      "canonical": "中平",
+      "aliases": [
+        "中平元年",
+        "中平六年"
+      ],
+      "rewriteKeys": [
+        "中平元年",
+        "中平六年"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "时间",
+      "id": null,
+      "canonical": "兴平",
+      "aliases": [
+        "兴平元年"
+      ],
+      "rewriteKeys": [
+        "兴平元年"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "时间",
+      "id": null,
+      "canonical": "建安",
+      "aliases": [
+        "建安元年",
+        "建安三年",
+        "建安四年",
+        "建安五年",
+        "建安七年",
+        "建安八年",
+        "建安十二年",
+        "建安十三年",
+        "建安十五年",
+        "建安十七年",
+        "建安十九年",
+        "建安二十年",
+        "建安二十一年",
+        "建安二十三年",
+        "建安二十四年",
+        "建安二十五年"
+      ],
+      "rewriteKeys": [
+        "建安元年",
+        "建安三年",
+        "建安四年",
+        "建安五年",
+        "建安七年",
+        "建安八年",
+        "建安十二年",
+        "建安十三年",
+        "建安十五年",
+        "建安十七年",
+        "建安十九年",
+        "建安二十年",
+        "建安二十一年",
+        "建安二十三年",
+        "建安二十四年",
+        "建安二十五年"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "时间",
+      "id": null,
+      "canonical": "延康",
+      "aliases": [
+        "延康元年"
+      ],
+      "rewriteKeys": [
+        "延康元年"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "时间",
+      "id": null,
+      "canonical": "黄初",
+      "aliases": [
+        "黄初元年",
+        "黄初五年"
+      ],
+      "rewriteKeys": [
+        "黄初元年",
+        "黄初五年"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "时间",
+      "id": null,
+      "canonical": "太和",
+      "aliases": [
+        "太和元年",
+        "太和二年",
+        "太和五年"
+      ],
+      "rewriteKeys": [
+        "太和元年",
+        "太和二年",
+        "太和五年"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "时间",
+      "id": null,
+      "canonical": "青龙",
+      "aliases": [
+        "青龙元年",
+        "青龙二年",
+        "青龙三年"
+      ],
+      "rewriteKeys": [
+        "青龙元年",
+        "青龙二年",
+        "青龙三年"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "时间",
+      "id": null,
+      "canonical": "景初",
+      "aliases": [
+        "景初三年"
+      ],
+      "rewriteKeys": [
+        "景初三年"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "时间",
+      "id": null,
+      "canonical": "正始",
+      "aliases": [
+        "正始元年",
+        "正始十年"
+      ],
+      "rewriteKeys": [
+        "正始元年",
+        "正始十年"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "时间",
+      "id": null,
+      "canonical": "嘉平",
+      "aliases": [
+        "嘉平元年",
+        "嘉平三年",
+        "嘉平六年"
+      ],
+      "rewriteKeys": [
+        "嘉平元年",
+        "嘉平三年",
+        "嘉平六年"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "时间",
+      "id": null,
+      "canonical": "正元",
+      "aliases": [
+        "正元元年",
+        "正元二年",
+        "正元三年"
+      ],
+      "rewriteKeys": [
+        "正元元年",
+        "正元二年",
+        "正元三年"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "时间",
+      "id": null,
+      "canonical": "魏甘露",
+      "aliases": [
+        "甘露元年",
+        "甘露二年",
+        "甘露四年"
+      ],
+      "rewriteKeys": [
+        "甘露四年"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null,
+      "note": "R6：甘露元年、甘露二年 同串跨行键（多目标）弃用，不进 fragmentOnly"
+    },
+    {
+      "type": "时间",
+      "id": null,
+      "canonical": "吴甘露",
+      "aliases": [
+        "甘露元年",
+        "甘露二年"
+      ],
+      "rewriteKeys": [],
+      "fragmentOnly": [],
+      "organGuard": null,
+      "note": "R6：甘露元年、甘露二年 同串跨行键（多目标）弃用，不进 fragmentOnly"
+    },
+    {
+      "type": "时间",
+      "id": null,
+      "canonical": "景元",
+      "aliases": [
+        "景元元年",
+        "景元四年",
+        "景元五年"
+      ],
+      "rewriteKeys": [
+        "景元元年",
+        "景元四年",
+        "景元五年"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "时间",
+      "id": null,
+      "canonical": "咸熙",
+      "aliases": [
+        "咸熙元年"
+      ],
+      "rewriteKeys": [
+        "咸熙元年"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "时间",
+      "id": null,
+      "canonical": "泰始",
+      "aliases": [
+        "泰始元年",
+        "泰始七年"
+      ],
+      "rewriteKeys": [
+        "泰始元年",
+        "泰始七年"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "时间",
+      "id": null,
+      "canonical": "章武",
+      "aliases": [
+        "章武元年",
+        "章武二年",
+        "章武三年"
+      ],
+      "rewriteKeys": [
+        "章武元年",
+        "章武二年",
+        "章武三年"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "时间",
+      "id": null,
+      "canonical": "蜀汉建兴",
+      "aliases": [
+        "建兴元年",
+        "建兴三年",
+        "建兴四年",
+        "建兴五年",
+        "建兴六年",
+        "建兴七年",
+        "建兴八年",
+        "建兴九年",
+        "建兴十二年",
+        "建兴十三年"
+      ],
+      "rewriteKeys": [
+        "建兴元年",
+        "建兴三年",
+        "建兴四年",
+        "建兴五年",
+        "建兴六年",
+        "建兴七年",
+        "建兴八年",
+        "建兴九年",
+        "建兴十二年",
+        "建兴十三年"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "时间",
+      "id": null,
+      "canonical": "延熙",
+      "aliases": [
+        "延熙十五年",
+        "延熙十六年",
+        "延熙二十年"
+      ],
+      "rewriteKeys": [
+        "延熙十五年",
+        "延熙十六年",
+        "延熙二十年"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "时间",
+      "id": null,
+      "canonical": "景耀",
+      "aliases": [
+        "景耀元年",
+        "景耀四年",
+        "景耀五年",
+        "景耀六年"
+      ],
+      "rewriteKeys": [
+        "景耀元年",
+        "景耀四年",
+        "景耀五年",
+        "景耀六年"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "时间",
+      "id": null,
+      "canonical": "炎兴",
+      "aliases": [
+        "炎兴元年"
+      ],
+      "rewriteKeys": [
+        "炎兴元年"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "时间",
+      "id": null,
+      "canonical": "黄武",
+      "aliases": [
+        "黄武元年",
+        "黄武八年"
+      ],
+      "rewriteKeys": [
+        "黄武元年",
+        "黄武八年"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "时间",
+      "id": null,
+      "canonical": "黄龙",
+      "aliases": [
+        "黄龙元年"
+      ],
+      "rewriteKeys": [
+        "黄龙元年"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "时间",
+      "id": null,
+      "canonical": "嘉禾",
+      "aliases": [
+        "嘉禾四年"
+      ],
+      "rewriteKeys": [
+        "嘉禾四年"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "时间",
+      "id": null,
+      "canonical": "赤乌",
+      "aliases": [
+        "赤乌四年"
+      ],
+      "rewriteKeys": [
+        "赤乌四年"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "时间",
+      "id": null,
+      "canonical": "太元",
+      "aliases": [
+        "太元元年"
+      ],
+      "rewriteKeys": [
+        "太元元年"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "时间",
+      "id": null,
+      "canonical": "永安",
+      "aliases": [
+        "永安元年"
+      ],
+      "rewriteKeys": [
+        "永安元年"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "时间",
+      "id": null,
+      "canonical": "元兴",
+      "aliases": [
+        "元兴元年"
+      ],
+      "rewriteKeys": [
+        "元兴元年"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "时间",
+      "id": null,
+      "canonical": "宝鼎",
+      "aliases": [
+        "宝鼎元年"
+      ],
+      "rewriteKeys": [
+        "宝鼎元年"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "时间",
+      "id": null,
+      "canonical": "凤凰",
+      "aliases": [
+        "凤凰元年"
+      ],
+      "rewriteKeys": [
+        "凤凰元年"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "时间",
+      "id": null,
+      "canonical": "吴建兴",
+      "aliases": [
+        "建兴二年"
+      ],
+      "rewriteKeys": [
+        "建兴二年"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "典故",
+      "id": null,
+      "canonical": "反间计",
+      "aliases": [
+        "反间"
+      ],
+      "rewriteKeys": [],
+      "fragmentOnly": [
+        "反间"
+      ],
+      "organGuard": null,
+      "note": "R9：两字茎 反间 移入 fragmentOnly（独立语义占比核查）"
+    },
+    {
+      "type": "典故",
+      "id": null,
+      "canonical": "诈降计",
+      "aliases": [
+        "诈降"
+      ],
+      "rewriteKeys": [],
+      "fragmentOnly": [
+        "诈降"
+      ],
+      "organGuard": null,
+      "note": "R9：两字茎 诈降 移入 fragmentOnly（独立语义占比核查）"
+    },
+    {
+      "type": "典故",
+      "id": null,
+      "canonical": "火攻",
+      "aliases": [
+        "用火"
+      ],
+      "rewriteKeys": [
+        "用火"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "典故",
+      "id": null,
+      "canonical": "水攻",
+      "aliases": [
+        "放水淹"
+      ],
+      "rewriteKeys": [
+        "放水淹"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "典故",
+      "id": null,
+      "canonical": "疑兵计",
+      "aliases": [
+        "疑兵"
+      ],
+      "rewriteKeys": [],
+      "fragmentOnly": [
+        "疑兵"
+      ],
+      "organGuard": null,
+      "note": "R9：两字茎 疑兵 移入 fragmentOnly（独立语义占比核查）"
+    },
+    {
+      "type": "典故",
+      "id": null,
+      "canonical": "二虎竞食",
+      "aliases": [
+        "二虎竞食之计"
+      ],
+      "rewriteKeys": [
+        "二虎竞食之计"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "典故",
+      "id": null,
+      "canonical": "驱虎吞狼",
+      "aliases": [
+        "驱虎吞狼之计"
+      ],
+      "rewriteKeys": [
+        "驱虎吞狼之计"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "典故",
+      "id": null,
+      "canonical": "掘坑待虎",
+      "aliases": [
+        "掘坑待虎之计"
+      ],
+      "rewriteKeys": [
+        "掘坑待虎之计"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "典故",
+      "id": null,
+      "canonical": "背水阵",
+      "aliases": [
+        "背水为阵"
+      ],
+      "rewriteKeys": [
+        "背水为阵"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "典故",
+      "id": null,
+      "canonical": "减兵添灶",
+      "aliases": [
+        "增灶"
+      ],
+      "rewriteKeys": [
+        "增灶"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "典故",
+      "id": null,
+      "canonical": "攻心为上",
+      "aliases": [
+        "心战为上"
+      ],
+      "rewriteKeys": [
+        "心战为上"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "典故",
+      "id": null,
+      "canonical": "连环船",
+      "aliases": [
+        "铁索连舟"
+      ],
+      "rewriteKeys": [
+        "铁索连舟"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "典故",
+      "id": null,
+      "canonical": "诈病赚权",
+      "aliases": [
+        "诈病"
+      ],
+      "rewriteKeys": [
+        "诈病"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null,
+      "note": "bug-00036：诈病 ⊂ 诈病赚权 本行真子串短式，裁决保留（依赖邻接延伸检查兜底）"
+    },
+    {
+      "type": "典故",
+      "id": null,
+      "canonical": "禅让",
+      "aliases": [
+        "受禅"
+      ],
+      "rewriteKeys": [
+        "受禅"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "典故",
+      "id": null,
+      "canonical": "韬晦",
+      "aliases": [
+        "韬晦之计"
+      ],
+      "rewriteKeys": [
+        "韬晦之计"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "典故",
+      "id": null,
+      "canonical": "掎角之势",
+      "aliases": [
+        "犄角之势"
+      ],
+      "rewriteKeys": [
+        "犄角之势"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "典故",
+      "id": null,
+      "canonical": "祈禳北斗",
+      "aliases": [
+        "禳星"
+      ],
+      "rewriteKeys": [
+        "禳星"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "典故",
+      "id": null,
+      "canonical": "连环计",
+      "aliases": [
+        "连环"
+      ],
+      "rewriteKeys": [],
+      "fragmentOnly": [
+        "连环"
+      ],
+      "organGuard": null,
+      "note": "R9：两字茎 连环 移入 fragmentOnly（独立语义占比核查）"
+    },
+    {
+      "type": "典故",
+      "id": null,
+      "canonical": "美人计",
+      "aliases": [
+        "美人"
+      ],
+      "rewriteKeys": [],
+      "fragmentOnly": [
+        "美人"
+      ],
+      "organGuard": null,
+      "note": "R9：两字茎 美人 移入 fragmentOnly（独立语义占比核查）"
+    },
+    {
+      "type": "典故",
+      "id": null,
+      "canonical": "苦肉计",
+      "aliases": [
+        "苦肉"
+      ],
+      "rewriteKeys": [],
+      "fragmentOnly": [
+        "苦肉"
+      ],
+      "organGuard": null,
+      "note": "bug-00036：苦肉 ⊂ 苦肉计 真子串，禁入改写键（移入 fragmentOnly）"
+    },
+    {
+      "type": "典故",
+      "id": null,
+      "canonical": "空城计",
+      "aliases": [
+        "空城"
+      ],
+      "rewriteKeys": [],
+      "fragmentOnly": [
+        "空城"
+      ],
+      "organGuard": null,
+      "note": "R9：两字茎 空城 移入 fragmentOnly（独立语义占比核查）"
+    },
+    {
+      "type": "典故",
+      "id": null,
+      "canonical": "将计就计",
+      "aliases": [
+        "就计"
+      ],
+      "rewriteKeys": [],
+      "fragmentOnly": [
+        "就计"
+      ],
+      "organGuard": null,
+      "note": "bug-00036：就计 ⊂ 将计就计 真子串，禁入改写键（移入 fragmentOnly）"
+    },
+    {
+      "type": "典故",
+      "id": null,
+      "canonical": "缓兵计",
+      "aliases": [
+        "缓兵"
+      ],
+      "rewriteKeys": [],
+      "fragmentOnly": [
+        "缓兵"
+      ],
+      "organGuard": null,
+      "note": "bug-00036：缓兵 ⊂ 缓兵计 真子串，禁入改写键（移入 fragmentOnly）"
+    },
+    {
+      "type": "典故",
+      "id": null,
+      "canonical": "假途灭虢",
+      "aliases": [
+        "假途"
+      ],
+      "rewriteKeys": [
+        "假途"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null,
+      "note": "bug-00036：假途 ⊂ 假途灭虢 本行真子串短式，裁决保留（依赖邻接延伸检查兜底）"
+    },
+    {
+      "type": "典故",
+      "id": null,
+      "canonical": "反客为主",
+      "aliases": [
+        "反客"
+      ],
+      "rewriteKeys": [
+        "反客"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null,
+      "note": "bug-00036：反客 ⊂ 反客为主 本行真子串短式，裁决保留（依赖邻接延伸检查兜底）"
+    },
+    {
+      "type": "典故",
+      "id": null,
+      "canonical": "步步为营",
+      "aliases": [
+        "步步营"
+      ],
+      "rewriteKeys": [
+        "步步营"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "典故",
+      "id": null,
+      "canonical": "拖刀计",
+      "aliases": [
+        "拖刀"
+      ],
+      "rewriteKeys": [],
+      "fragmentOnly": [
+        "拖刀"
+      ],
+      "organGuard": null,
+      "note": "R9：两字茎 拖刀 移入 fragmentOnly（独立语义占比核查）"
+    },
+    {
+      "type": "典故",
+      "id": null,
+      "canonical": "混元一气阵",
+      "aliases": [
+        "混元阵"
+      ],
+      "rewriteKeys": [
+        "混元阵"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "典故",
+      "id": null,
+      "canonical": "长蛇卷地阵",
+      "aliases": [
+        "长蛇阵"
+      ],
+      "rewriteKeys": [
+        "长蛇阵"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "典故",
+      "id": null,
+      "canonical": "八卦阵",
+      "aliases": [
+        "八阵"
+      ],
+      "rewriteKeys": [
+        "八阵"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "典故",
+      "id": null,
+      "canonical": "奇门遁甲",
+      "aliases": [
+        "遁甲"
+      ],
+      "rewriteKeys": [],
+      "fragmentOnly": [],
+      "organGuard": null,
+      "note": "bug-00036：遁甲 同时 ⊂奇门遁甲/遁甲天书（跨行真子串），改写目标歧义，禁入改写键且不入 fragmentOnly（防跨行双写污染）"
+    },
+    {
+      "type": "身体",
+      "id": null,
+      "canonical": "眼睛",
+      "aliases": [
+        "眼珠",
+        "眼目"
+      ],
+      "rewriteKeys": [
+        "眼珠",
+        "眼目"
+      ],
+      "fragmentOnly": [],
+      "organGuard": {
+        "term": "目",
+        "semantic": "眼睛",
+        "total": 198,
+        "hasAmbiguity": true
+      }
+    },
+    {
+      "type": "身体",
+      "id": null,
+      "canonical": "左眼",
+      "aliases": [
+        "左目"
+      ],
+      "rewriteKeys": [
+        "左目"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "身体",
+      "id": null,
+      "canonical": "右眼",
+      "aliases": [
+        "右目"
+      ],
+      "rewriteKeys": [
+        "右目"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "身体",
+      "id": null,
+      "canonical": "双眼",
+      "aliases": [
+        "双目"
+      ],
+      "rewriteKeys": [
+        "双目"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "身体",
+      "id": null,
+      "canonical": "嘴",
+      "aliases": [
+        "口中",
+        "口吐",
+        "开口",
+        "口内",
+        "口称"
+      ],
+      "rewriteKeys": [
+        "口中",
+        "口吐",
+        "开口",
+        "口内",
+        "口称"
+      ],
+      "fragmentOnly": [],
+      "organGuard": {
+        "term": "口",
+        "semantic": "嘴",
+        "total": 482,
+        "hasAmbiguity": true
+      }
+    },
+    {
+      "type": "身体",
+      "id": null,
+      "canonical": "头",
+      "aliases": [
+        "头颅",
+        "脑袋",
+        "首级"
+      ],
+      "rewriteKeys": [
+        "头颅",
+        "脑袋",
+        "首级"
+      ],
+      "fragmentOnly": [],
+      "organGuard": {
+        "term": "首",
+        "semantic": "头",
+        "total": 392,
+        "hasAmbiguity": true
+      }
+    },
+    {
+      "type": "身体",
+      "id": null,
+      "canonical": "脸",
+      "aliases": [
+        "面门",
+        "面容",
+        "容貌"
+      ],
+      "rewriteKeys": [
+        "面门",
+        "面容",
+        "容貌"
+      ],
+      "fragmentOnly": [],
+      "organGuard": {
+        "term": "面",
+        "semantic": "脸",
+        "total": 807,
+        "hasAmbiguity": true
+      }
+    },
+    {
+      "type": "身体",
+      "id": null,
+      "canonical": "颈",
+      "aliases": [
+        "脖子",
+        "咽喉",
+        "喉咙"
+      ],
+      "rewriteKeys": [
+        "脖子",
+        "咽喉",
+        "喉咙"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "身体",
+      "id": null,
+      "canonical": "肩",
+      "aliases": [
+        "肩膀",
+        "肩窝"
+      ],
+      "rewriteKeys": [
+        "肩膀",
+        "肩窝"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "身体",
+      "id": null,
+      "canonical": "臂",
+      "aliases": [
+        "手臂",
+        "臂膊"
+      ],
+      "rewriteKeys": [
+        "手臂",
+        "臂膊"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "身体",
+      "id": null,
+      "canonical": "手",
+      "aliases": [
+        "手指",
+        "十指",
+        "手腕"
+      ],
+      "rewriteKeys": [
+        "手指",
+        "十指",
+        "手腕"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "身体",
+      "id": null,
+      "canonical": "胸",
+      "aliases": [
+        "胸膛",
+        "前胸"
+      ],
+      "rewriteKeys": [
+        "胸膛",
+        "前胸"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "身体",
+      "id": null,
+      "canonical": "心",
+      "aliases": [
+        "心脏",
+        "心窝"
+      ],
+      "rewriteKeys": [
+        "心脏",
+        "心窝"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "身体",
+      "id": null,
+      "canonical": "背",
+      "aliases": [
+        "后背",
+        "脊背",
+        "后心"
+      ],
+      "rewriteKeys": [
+        "后背",
+        "脊背",
+        "后心"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "身体",
+      "id": null,
+      "canonical": "腰",
+      "aliases": [
+        "腰部"
+      ],
+      "rewriteKeys": [
+        "腰部"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "身体",
+      "id": null,
+      "canonical": "腹",
+      "aliases": [
+        "肚腹"
+      ],
+      "rewriteKeys": [
+        "肚腹"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "身体",
+      "id": null,
+      "canonical": "髀",
+      "aliases": [
+        "髀肉",
+        "髀里肉"
+      ],
+      "rewriteKeys": [
+        "髀肉",
+        "髀里肉"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "身体",
+      "id": null,
+      "canonical": "血",
+      "aliases": [
+        "鲜血",
+        "血流"
+      ],
+      "rewriteKeys": [
+        "鲜血",
+        "血流"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "身体",
+      "id": null,
+      "canonical": "骨",
+      "aliases": [
+        "骨骸"
+      ],
+      "rewriteKeys": [
+        "骨骸"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "身体",
+      "id": null,
+      "canonical": "皮肉",
+      "aliases": [
+        "肌肤"
+      ],
+      "rewriteKeys": [
+        "肌肤"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "身体",
+      "id": null,
+      "canonical": "眉",
+      "aliases": [
+        "卧蚕眉"
+      ],
+      "rewriteKeys": [
+        "卧蚕眉"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "身体",
+      "id": null,
+      "canonical": "须髯",
+      "aliases": [
+        "胡须",
+        "美髯",
+        "长髯",
+        "须发"
+      ],
+      "rewriteKeys": [
+        "胡须",
+        "美髯",
+        "长髯",
+        "须发"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "身体",
+      "id": null,
+      "canonical": "脑",
+      "aliases": [
+        "脑浆",
+        "头脑"
+      ],
+      "rewriteKeys": [
+        "脑浆",
+        "头脑"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "身体",
+      "id": null,
+      "canonical": "额",
+      "aliases": [
+        "头额"
+      ],
+      "rewriteKeys": [
+        "头额"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null
+    },
+    {
+      "type": "死亡",
+      "id": null,
+      "canonical": "死亡",
+      "aliases": [
+        "殒命",
+        "亡故",
+        "身死",
+        "阵亡",
+        "遇害",
+        "被杀",
+        "自刎",
+        "自缢",
+        "气绝",
+        "归天",
+        "归神",
+        "捐生",
+        "丧命",
+        "病亡",
+        "病故",
+        "逝世",
+        "去世",
+        "身故",
+        "善终",
+        "寿终",
+        "驾崩",
+        "晏驾",
+        "崩殂",
+        "薨逝",
+        "殒身",
+        "丧生",
+        "捐躯",
+        "殒灭",
+        "亡殁",
+        "亡逝",
+        "卒亡",
+        "殂落",
+        "崩逝",
+        "薨殂",
+        "夭亡",
+        "夭折",
+        "短命",
+        "断命",
+        "送命",
+        "没命",
+        "毕命",
+        "殒谢",
+        "亡化",
+        "亡魂",
+        "丧亡",
+        "丧身",
+        "捐命",
+        "殉难",
+        "殉国",
+        "就义",
+        "伏法",
+        "伏诛",
+        "受诛",
+        "被诛",
+        "被戮",
+        "被斩",
+        "斩首",
+        "枭首",
+        "悬首",
+        "暴尸",
+        "戮尸",
+        "鞭尸",
+        "归西",
+        "上西天",
+        "与世长辞",
+        "溘然长逝",
+        "一命呜呼",
+        "命丧",
+        "身殒",
+        "绝命"
+      ],
+      "rewriteKeys": [],
+      "fragmentOnly": [
+        "殒命",
+        "亡故",
+        "身死",
+        "阵亡",
+        "遇害",
+        "被杀",
+        "自刎",
+        "自缢",
+        "气绝",
+        "归天",
+        "归神",
+        "捐生",
+        "丧命",
+        "病亡",
+        "病故",
+        "逝世",
+        "去世",
+        "身故",
+        "善终",
+        "寿终",
+        "驾崩",
+        "晏驾",
+        "崩殂",
+        "薨逝",
+        "殒身",
+        "丧生",
+        "捐躯",
+        "殒灭",
+        "亡殁",
+        "亡逝",
+        "卒亡",
+        "殂落",
+        "崩逝",
+        "薨殂",
+        "夭亡",
+        "夭折",
+        "短命",
+        "断命",
+        "送命",
+        "没命",
+        "毕命",
+        "殒谢",
+        "亡化",
+        "亡魂",
+        "丧亡",
+        "丧身",
+        "捐命",
+        "殉难",
+        "殉国",
+        "就义",
+        "伏法",
+        "伏诛",
+        "受诛",
+        "被诛",
+        "被戮",
+        "被斩",
+        "斩首",
+        "枭首",
+        "悬首",
+        "暴尸",
+        "戮尸",
+        "鞭尸",
+        "归西",
+        "上西天",
+        "与世长辞",
+        "溘然长逝",
+        "一命呜呼",
+        "命丧",
+        "身殒",
+        "绝命"
+      ],
+      "organGuard": null,
+      "note": "R8：多字死亡短语仅作片段侧素材（禁入改写键）"
+    },
+    {
+      "type": "登场",
+      "id": null,
+      "canonical": "人物首次登场",
+      "aliases": [
+        "首次登场",
+        "初次登场",
+        "第一次出现",
+        "首次出现",
+        "初次出现",
+        "第一次登场",
+        "初登场",
+        "初现身",
+        "始现",
+        "始出",
+        "始登场",
+        "登场",
+        "出场",
+        "出世"
+      ],
+      "rewriteKeys": [
+        "首次登场",
+        "初次登场",
+        "第一次出现",
+        "首次出现",
+        "初次出现",
+        "第一次登场",
+        "初登场",
+        "初现身",
+        "始现",
+        "始出",
+        "始登场",
+        "登场",
+        "出场",
+        "出世"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null,
+      "note": "bug-00036：登场/首次登场 ⊂ 人物首次登场 本行真子串短式，裁决保留（依赖邻接延伸检查兜底）"
+    },
+    {
+      "type": "登场",
+      "id": null,
+      "canonical": "出山",
+      "aliases": [
+        "出仕",
+        "入仕"
+      ],
+      "rewriteKeys": [
+        "出仕",
+        "入仕"
+      ],
+      "fragmentOnly": [],
+      "organGuard": null,
+      "note": "bug-00036：原或式 canonical「出仕/出山」规范为 出山；出仕/入仕 → 出山 改写（邻接延伸检查兜底）"
+    }
+  ],
+  "policy": {
+    "bannedRewriteKeys": [
+      "丞相",
+      "义公",
+      "乌程侯",
+      "伏波将军",
+      "先锋",
+      "公明",
+      "关将军",
+      "刘使君",
+      "刘皇叔",
+      "刺史",
+      "南郑侯",
+      "司徒",
+      "吕温侯",
+      "大将军",
+      "太后",
+      "太子",
+      "太守",
+      "太祖武皇帝",
+      "子孝",
+      "子明",
+      "子远",
+      "小霸王",
+      "少帝",
+      "山阳公",
+      "州牧",
+      "常侍",
+      "文帝",
+      "文皇帝",
+      "明帝",
+      "昭烈皇帝",
+      "晋帝",
+      "景王",
+      "曹公",
+      "汉寿亭侯",
+      "献帝",
+      "王世子",
+      "王司徒",
+      "皇后",
+      "皇太后",
+      "皇帝",
+      "监军",
+      "相国",
+      "虎侯",
+      "虎威将军",
+      "诸葛丞相",
+      "车骑将军",
+      "钟司徒",
+      "陈留王",
+      "高贵乡公",
+      "魏公",
+      "魏王"
+    ],
+    "ambiguityGuard": [
+      {
+        "term": "口",
+        "semantic": "嘴",
+        "total": 482,
+        "bad": [
+          [
+            "关口",
+            9
+          ],
+          [
+            "山口",
+            10
+          ],
+          [
+            "渡口",
+            15
+          ],
+          [
+            "路口",
+            6
+          ],
+          [
+            "洞口",
+            6
+          ],
+          [
+            "出口",
+            1
+          ],
+          [
+            "人口",
+            4
+          ],
+          [
+            "一口",
+            14
+          ]
+        ],
+        "good": [
+          [
+            "口中",
+            15
+          ],
+          [
+            "口吐",
+            4
+          ],
+          [
+            "口内",
+            7
+          ],
+          [
+            "口称",
+            9
+          ],
+          [
+            "开口",
+            3
+          ],
+          [
+            "口出",
+            5
+          ]
+        ],
+        "hasAmbiguity": true
+      },
+      {
+        "term": "目",
+        "semantic": "眼睛",
+        "total": 198,
+        "bad": [
+          [
+            "目今",
+            21
+          ],
+          [
+            "目下",
+            8
+          ]
+        ],
+        "good": [
+          [
+            "左目",
+            3
+          ],
+          [
+            "双目",
+            1
+          ],
+          [
+            "眼目",
+            2
+          ],
+          [
+            "耳目",
+            5
+          ],
+          [
+            "怒目",
+            12
+          ],
+          [
+            "举目",
+            5
+          ],
+          [
+            "拭目",
+            1
+          ]
+        ],
+        "hasAmbiguity": true
+      },
+      {
+        "term": "首",
+        "semantic": "头",
+        "total": 392,
+        "bad": [
+          [
+            "首先",
+            3
+          ],
+          [
+            "回首",
+            2
+          ],
+          [
+            "自首",
+            2
+          ]
+        ],
+        "good": [
+          [
+            "首级",
+            90
+          ],
+          [
+            "斩首",
+            30
+          ],
+          [
+            "枭首",
+            5
+          ]
+        ],
+        "hasAmbiguity": true
+      },
+      {
+        "term": "发",
+        "semantic": "头发",
+        "total": 402,
+        "bad": [
+          [
+            "发兵",
+            25
+          ],
+          [
+            "发明",
+            2
+          ],
+          [
+            "发怒",
+            4
+          ],
+          [
+            "发丧",
+            8
+          ],
+          [
+            "散发",
+            2
+          ],
+          [
+            "发付",
+            9
+          ]
+        ],
+        "good": [
+          [
+            "头发",
+            3
+          ]
+        ],
+        "hasAmbiguity": true
+      },
+      {
+        "term": "足",
+        "semantic": "脚",
+        "total": 372,
+        "bad": [
+          [
+            "不足",
+            68
+          ],
+          [
+            "足以",
+            14
+          ],
+          [
+            "足下",
+            44
+          ],
+          [
+            "足矣",
+            12
+          ],
+          [
+            "足见",
+            4
+          ],
+          [
+            "丰足",
+            4
+          ]
+        ],
+        "good": [
+          [
+            "手足",
+            18
+          ],
+          [
+            "鼎足",
+            11
+          ]
+        ],
+        "hasAmbiguity": true
+      },
+      {
+        "term": "须",
+        "semantic": "胡须",
+        "total": 287,
+        "bad": [
+          [
+            "必须",
+            23
+          ],
+          [
+            "须臾",
+            51
+          ],
+          [
+            "须得",
+            6
+          ],
+          [
+            "务须",
+            1
+          ]
+        ],
+        "good": [
+          [
+            "须发",
+            6
+          ],
+          [
+            "长须",
+            5
+          ]
+        ],
+        "hasAmbiguity": true
+      },
+      {
+        "term": "指",
+        "semantic": "手指",
+        "total": 209,
+        "bad": [
+          [
+            "指示",
+            1
+          ],
+          [
+            "指挥",
+            16
+          ],
+          [
+            "指日",
+            3
+          ],
+          [
+            "指教",
+            5
+          ],
+          [
+            "指称",
+            1
+          ]
+        ],
+        "good": [
+          [
+            "手指",
+            19
+          ],
+          [
+            "十指",
+            2
+          ]
+        ],
+        "hasAmbiguity": true
+      },
+      {
+        "term": "面",
+        "semantic": "脸",
+        "total": 807,
+        "bad": [
+          [
+            "面前",
+            23
+          ],
+          [
+            "方面",
+            3
+          ]
+        ],
+        "good": [
+          [
+            "面门",
+            8
+          ],
+          [
+            "面目",
+            30
+          ],
+          [
+            "面如",
+            21
+          ]
+        ],
+        "hasAmbiguity": true
+      },
+      {
+        "term": "肤",
+        "semantic": "皮肤",
+        "total": 2,
+        "bad": [],
+        "good": [
+          [
+            "肌肤",
+            1
+          ]
+        ],
+        "hasAmbiguity": false
+      },
+      {
+        "term": "颜",
+        "semantic": "容貌/面色",
+        "total": 154,
+        "bad": [],
+        "good": [
+          [
+            "汗颜",
+            1
+          ],
+          [
+            "龙颜",
+            1
+          ]
+        ],
+        "hasAmbiguity": false
+      },
+      {
+        "term": "唇",
+        "semantic": "嘴唇（部分词，不与嘴互换）",
+        "total": 22,
+        "bad": [
+          [
+            "唇亡",
+            3
+          ],
+          [
+            "唇齿",
+            10
+          ]
+        ],
+        "good": [],
+        "hasAmbiguity": true
+      },
+      {
+        "term": "舌",
+        "semantic": "舌头（部分词）",
+        "total": 33,
+        "bad": [
+          [
+            "舌战",
+            1
+          ]
+        ],
+        "good": [
+          [
+            "舌头",
+            3
+          ]
+        ],
+        "hasAmbiguity": true
+      },
+      {
+        "term": "齿",
+        "semantic": "牙齿（部分词）",
+        "total": 45,
+        "bad": [
+          [
+            "切齿",
+            19
+          ],
+          [
+            "唇齿",
+            10
+          ]
+        ],
+        "good": [
+          [
+            "牙齿",
+            1
+          ]
+        ],
+        "hasAmbiguity": true
+      },
+      {
+        "term": "牙",
+        "semantic": "牙齿（部分词）",
+        "total": 57,
+        "bad": [],
+        "good": [
+          [
+            "咬牙",
+            11
+          ],
+          [
+            "门牙",
+            2
+          ],
+          [
+            "牙齿",
+            1
+          ]
+        ],
+        "hasAmbiguity": false
+      },
+      {
+        "term": "卒",
+        "semantic": "死亡（单字，士卒误伤）",
+        "total": 132,
+        "bad": [
+          [
+            "士卒",
+            37
+          ],
+          [
+            "小卒",
+            19
+          ],
+          [
+            "狱卒",
+            10
+          ],
+          [
+            "兵卒",
+            4
+          ],
+          [
+            "走卒",
+            2
+          ]
+        ],
+        "good": [
+          [
+            "卒于",
+            2
+          ]
+        ],
+        "hasAmbiguity": true
+      },
+      {
+        "term": "亡",
+        "semantic": "死亡（单字，逃亡/灭亡混）",
+        "total": 183,
+        "bad": [
+          [
+            "灭亡",
+            3
+          ],
+          [
+            "逃亡",
+            2
+          ],
+          [
+            "败亡",
+            4
+          ],
+          [
+            "存亡",
+            8
+          ],
+          [
+            "亡命",
+            1
+          ]
+        ],
+        "good": [
+          [
+            "身亡",
+            4
+          ],
+          [
+            "死亡",
+            6
+          ],
+          [
+            "阵亡",
+            5
+          ]
+        ],
+        "hasAmbiguity": true
+      },
+      {
+        "term": "崩",
+        "semantic": "驾崩（单字，山崩/崩裂混）",
+        "total": 40,
+        "bad": [
+          [
+            "山崩",
+            5
+          ],
+          [
+            "崩裂",
+            4
+          ]
+        ],
+        "good": [
+          [
+            "驾崩",
+            2
+          ]
+        ],
+        "hasAmbiguity": true
+      },
+      {
+        "term": "死",
+        "semantic": "死亡（单字，死战/死守为拼死义）",
+        "total": 989,
+        "bad": [
+          [
+            "死战",
+            88
+          ],
+          [
+            "死守",
+            7
+          ]
+        ],
+        "good": [
+          [
+            "身死",
+            16
+          ],
+          [
+            "死节",
+            4
+          ]
+        ],
+        "hasAmbiguity": true
+      },
+      {
+        "term": "薨",
+        "semantic": "死亡（单字低歧义）",
+        "total": 6,
+        "bad": [],
+        "good": [
+          [
+            "薨逝",
+            1
+          ]
+        ],
+        "hasAmbiguity": false
+      },
+      {
+        "term": "殂",
+        "semantic": "死亡（单字低歧义）",
+        "total": 3,
+        "bad": [],
+        "good": [
+          [
+            "崩殂",
+            1
+          ]
+        ],
+        "hasAmbiguity": false
+      },
+      {
+        "term": "殒",
+        "semantic": "死亡（单字低歧义）",
+        "total": 7,
+        "bad": [],
+        "good": [
+          [
+            "殒命",
+            2
+          ]
+        ],
+        "hasAmbiguity": false
+      },
+      {
+        "term": "殁",
+        "semantic": "死亡（单字低歧义）",
+        "total": 8,
+        "bad": [],
+        "good": [],
+        "hasAmbiguity": false
+      },
+      {
+        "term": "许",
+        "semantic": "许都（单字，许褚/许多/许诺混）",
+        "total": 569,
+        "bad": [
+          [
+            "许褚",
+            121
+          ],
+          [
+            "许多",
+            29
+          ],
+          [
+            "许诺",
+            4
+          ]
+        ],
+        "good": [
+          [
+            "许都",
+            117
+          ],
+          [
+            "许昌",
+            70
+          ]
+        ],
+        "hasAmbiguity": true
+      },
+      {
+        "term": "上",
+        "semantic": "皇帝（单字，方位/动作义压倒）",
+        "total": 2051,
+        "bad": [
+          [
+            "上马",
+            191
+          ],
+          [
+            "上前",
+            2
+          ],
+          [
+            "上面",
+            4
+          ]
+        ],
+        "good": [
+          [
+            "皇上",
+            3
+          ]
+        ],
+        "hasAmbiguity": true
+      },
+      {
+        "term": "相",
+        "semantic": "丞相（单字，互相/相府/相思混）",
+        "total": 1603,
+        "bad": [
+          [
+            "互相",
+            22
+          ],
+          [
+            "相府",
+            37
+          ],
+          [
+            "相思",
+            1
+          ]
+        ],
+        "good": [
+          [
+            "相国",
+            10
+          ]
+        ],
+        "hasAmbiguity": true
+      },
+      {
+        "term": "魏",
+        "semantic": "曹魏（单字，魏延/魏兵混）",
+        "total": 1202,
+        "bad": [
+          [
+            "魏延",
+            322
+          ],
+          [
+            "魏兵",
+            301
+          ],
+          [
+            "魏军",
+            40
+          ]
+        ],
+        "good": [
+          [
+            "魏国",
+            22
+          ]
+        ],
+        "hasAmbiguity": true
+      },
+      {
+        "term": "吴",
+        "semantic": "东吴（单字，吴懿/吴班/吴郡混）",
+        "total": 950,
+        "bad": [
+          [
+            "吴懿",
+            38
+          ],
+          [
+            "吴班",
+            36
+          ],
+          [
+            "吴国太",
+            8
+          ],
+          [
+            "吴郡",
+            13
+          ],
+          [
+            "吴兵",
+            101
+          ]
+        ],
+        "good": [
+          [
+            "吴国",
+            15
+          ],
+          [
+            "孙吴",
+            1
+          ]
+        ],
+        "hasAmbiguity": true
+      },
+      {
+        "term": "蜀",
+        "semantic": "蜀汉（单字，蜀郡/蜀兵混）",
+        "total": 841,
+        "bad": [
+          [
+            "蜀郡",
+            7
+          ],
+          [
+            "蜀兵",
+            392
+          ]
+        ],
+        "good": [
+          [
+            "蜀汉",
+            11
+          ],
+          [
+            "西蜀",
+            33
+          ]
+        ],
+        "hasAmbiguity": true
+      },
+      {
+        "term": "晋",
+        "semantic": "西晋（单字，晋王/晋国混）",
+        "total": 82,
+        "bad": [
+          [
+            "晋王",
+            9
+          ]
+        ],
+        "good": [
+          [
+            "晋国",
+            1
+          ],
+          [
+            "大晋",
+            3
+          ]
+        ],
+        "hasAmbiguity": true
+      }
+    ]
+  }
+}

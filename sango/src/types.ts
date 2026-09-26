@@ -138,8 +138,10 @@ export type DeathIntent =
 export interface RetrievalQueryDiagnostics {
   /** 工具入参 query 原文。 */
   raw: string;
-  /** alias 归一化后文本。 */
+  /** entity-table rewriteKeys 替换后文本（人名与换说法同一口径；表加载失败时恒等）。 */
   normalized: string;
+  /** query 侧实际改写命中明细（接口 §5）：按替换发生顺序；邻接延伸保护未替换 / fragmentOnly 不计入；无改写为 []。 */
+  rewrites: RetrievalQueryRewrite[];
   /** 分词 tokens。 */
   tokens: string[];
 }
@@ -151,10 +153,18 @@ export interface RetrievalEnvDiagnostics {
   degradedBm25Only: boolean;
   /** 语料 chunk 总数。 */
   corpusChunks: number;
-  /** alias 条数。 */
+  /** 表内 rewriteKeys 总数（含人物与非人物）；表加载失败为 0（接口 §5 env.aliasCount 新语义）。 */
   aliasCount: number;
+  /** 表 meta.normVersion（8 位内容 hash）；表加载失败降级为空串（与 aliasCount=0 同口径，接口 §5）。 */
+  normVersion: string;
   /** 向量维度；降级为 null。 */
   vectorDim: number | null;
+}
+
+/** query 侧一次实际改写命中明细（接口 §5 query.rewrites 元素）：from=原文片段、to=规范形。 */
+export interface RetrievalQueryRewrite {
+  from: string;
+  to: string;
 }
 
 export interface RetrievalFunnelDiagnostics {
