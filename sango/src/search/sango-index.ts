@@ -1,4 +1,4 @@
-﻿/**
+/**
  * SangoIndex：sango_novel_search 的检索核心（BM25 + 离线向量混合召回）。
  *
  * - 语料：data/corpus/sanguo-yanyi/001.json .. 120.json（chunk 级 schema v2，与 Python 构建脚本同源）
@@ -373,7 +373,7 @@ export class SangoIndex {
 
   /**
    * 索引剥壳（feat-A014）：剥离标签中的类型信息，返回仅供 tagPostings 入库的文本 ——
-   *   - 人物之生-XX登场 / 人物之死-XX之死 / 人物之封-XX → XX（纯人物名）
+   *   - 人物之生-XX登场 / 人物之死-XX之死 → XX（纯人物名）
    *   - 武将单挑-A-B → A-B（保留对阵双方）
    *   - event 其余类型前缀（战役- / 政治事件- / 谋略/计策- / 结盟/外交- / 典故事件-）剥离前缀、保留内容
    *   - story 标签无类型前缀，原文即终型
@@ -383,7 +383,6 @@ export class SangoIndex {
    */
   private stripTagType(normTag: string): string {
     if (normTag.startsWith('人物之生-')) return normTag.slice('人物之生-'.length).replace(/登场$/, '');
-    if (normTag.startsWith('人物之封-')) return normTag.slice('人物之封-'.length);
     if (normTag.startsWith('人物之死-')) return normTag.slice('人物之死-'.length).replace(/之死$/, '');
     if (normTag.startsWith('武将单挑-')) return normTag.slice('武将单挑-'.length);
     for (const prefix of ['战役-', '政治事件-', '谋略/计策-', '结盟/外交-', '典故事件-']) {

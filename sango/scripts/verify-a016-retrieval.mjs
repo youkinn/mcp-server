@@ -3,6 +3,8 @@
  *
  * 验收 3：换说法 query（右目）与规范形 query（右眼）各自 search top10 证据段集合相同。
  * 验收 5：「五关斩六将」与「过五关斩六将」均能在 top10 召回第 27 回同一段落（证据段同一锚）。
+ * 基线6：bug-00037「刘备登基后，张飞被封为什么」无标签机制下不召回 0081:c0002（检索侧基线记录，
+ *         拒答由编排层护栏承接，见 mcp-orchestrator ㉕ 负例回归）。
  *
  * 用法：node scripts/verify-a016-retrieval.mjs [证据落盘路径]
  * 默认落盘：dev-docs/test/standard-set/results/feat-A016-retrieval-acceptance.json
@@ -69,29 +71,29 @@ async function main() {
     top10B: r5b.detail,
   };
 
-  // 验收6（bug-00037 检索侧回归）：官职/封号类问句须召回事实段——「刘备登基后，张飞被封为什么」
-  // 的答案「迁张飞为车骑将军，领司隶校尉，封西乡侯」落在 0081:c0002（人物之封-张飞 标签第三路召回）。
+  const ok3 = acc3.top10Same;
+  // 基线6（bug-00037 终态记录，非通过项）：「刘备登基后，张飞被封为什么」在无标签机制下原文问法
+  // top10 不召回 0081:c0002——实测去标签后（含登基→登宝位/章武元年/即皇帝位全部归一化变体）答案段
+  // 连 top50 都进不去，检索侧无「不引入噪声」的解法；该类问句由编排层护栏「零支撑/错位支撑 → 拒答」
+  // 承接（复刻 trace 4d7a408a 的 ㉕ 负例回归）。此基线防未来用标签作弊回头。
   const q6 = '刘备登基后，张飞被封为什么';
   const r6 = await top10(index, q6);
-  const acc6 = {
+  const baseline6 = {
     query: q6,
     normalized: normalize(q6),
     targetChunk: 'sanguo-yanyi:0081:c0002',
     inTop10: r6.ids.includes('sanguo-yanyi:0081:c0002'),
     top10: r6.detail,
   };
-
-  const ok3 = acc3.top10Same;
   const ok5 = acc5.sameAnchor.length > 0;
-  const ok6 = acc6.inTop10;
-  const evidence = { normVersion: normVersion(), rows: rowsCount(), rewriteKeys: rewriteKeyCount(), acceptance3: acc3, acceptance5: acc5, acceptance6: acc6 };
+  const evidence = { normVersion: normVersion(), rows: rowsCount(), rewriteKeys: rewriteKeyCount(), acceptance3: acc3, acceptance5: acc5, baseline6 };
   mkdirSync(path.dirname(OUT_FILE), { recursive: true });
   writeFileSync(OUT_FILE, JSON.stringify(evidence, null, 2), "utf8");
   console.log(`[a016-acceptance] 验收3 top10集合相同=${ok3}（normalized: ${acc3.normalizedA} == ${acc3.normalizedB}）`);
   console.log(`[a016-acceptance] 验收5 第27回同一锚=${JSON.stringify(sameCh27)} ok=${ok5}`);
-  console.log(`[a016-acceptance] 验收6 0081:c0002 in top10=${ok6}（bug-00037 回归）`);
+  console.log(`[a016-acceptance] 基线6 0081:c0002 in top10=${baseline6.inTop10}（期望 false：检索侧不召回，拒答由编排层护栏承接）`);
   console.log(`[a016-acceptance] 证据落盘：${OUT_FILE}`);
-  process.exitCode = ok3 && ok5 && ok6 ? 0 : 1;
+  process.exitCode = ok3 && ok5 ? 0 : 1;
 }
 
 main().catch((e) => {

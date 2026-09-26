@@ -1,10 +1,10 @@
-﻿#!/usr/bin/env node
+#!/usr/bin/env node
 /**
  * feat-A014 标签体系数据侧静态校验（零 LLM）。
  *
  * 对 sango/data/corpus/tags/{event,story,duel}.json 做全量静态断言：
  *   - chunkId 必须存在于语料（死键 = 0）
- *   - event.json 只含 人物之生-XX登场 / 人物之死-XX之死 / 人物之封-XX 三类，多标签 | 分隔且不重复
+ *   - event.json 只含 人物之生-XX登场 / 人物之死-XX之死 两类，多标签 | 分隔且不重复
  *   - 同一人物只记首次登场（无重复登场标签）
  *   - 登场/之死/单挑人名须用 alias 规范名（alias.json 覆盖到的人，须等于 build_alias.py
  *     PERSONS 表登记的规范名；未覆盖者不校验）
@@ -29,11 +29,10 @@ const ENTITY_TABLE_FILE = path.join(path.resolve(HERE, '..', 'data'), 'entity-ta
 
 const BIRTH_RE = /^人物之生-(.+)登场$/;
 const DEATH_RE = /^人物之死-(.+)之死$/;
-const HONOR_RE = /^人物之封-(.+)$/;
 const DUEL_RE = /^武将单挑-([^-]+)-([^-]+)$/;
 const STORY_PUNCT_RE = /[，。、；：？！“”‘’「」『』《》〈〉【】（）…·—–-]/;
 const STORY_EXEMPT = new Set(['既生瑜，何生亮']);
-const EVENT_COUNT_EXPECT = { birth: 135, death: 336, honor: 1, total: 472, entries: 355 };
+const EVENT_COUNT_EXPECT = { birth: 135, death: 336, total: 471, entries: 354 };
 const STORY_ENTRIES_EXPECT = 334;
 const DUEL_ENTRIES_EXPECT = 39;
 
@@ -106,7 +105,6 @@ section('event.json');
   const keys = Object.keys(data);
   let birth = 0;
   let death = 0;
-  let honor = 0;
   const debutByPid = new Map();
   const badNames = [];
 
@@ -119,8 +117,7 @@ section('event.json');
     for (const tag of tags) {
       const birthHit = tag.match(BIRTH_RE);
       const deathHit = tag.match(DEATH_RE);
-      const honorHit = tag.match(HONOR_RE);
-      assert(Boolean(birthHit) || Boolean(deathHit) || Boolean(honorHit), `标签格式合规：${key} => ${tag}`);
+      assert(Boolean(birthHit) || Boolean(deathHit), `标签格式合规：${key} => ${tag}`);
       if (birthHit) {
         birth += 1;
         const pid = canonicalPerson(birthHit[1]);
@@ -128,11 +125,6 @@ section('event.json');
         debutByPid.set(pid, key);
         if (nameToId.has(birthHit[1]) && canonicalPerson(birthHit[1]) !== birthHit[1]) {
           badNames.push(`登场:${birthHit[1]}`);
-        }
-      } else if (honorHit) {
-        honor += 1;
-        if (nameToId.has(honorHit[1]) && canonicalPerson(honorHit[1]) !== honorHit[1]) {
-          badNames.push(`之封:${honorHit[1]}`);
         }
       } else if (deathHit) {
         death += 1;
@@ -144,12 +136,10 @@ section('event.json');
   }
 
   assert(
-    birth === EVENT_COUNT_EXPECT.birth &&
-      death === EVENT_COUNT_EXPECT.death &&
-      honor === EVENT_COUNT_EXPECT.honor,
-    `生 ${EVENT_COUNT_EXPECT.birth} / 死 ${EVENT_COUNT_EXPECT.death} / 封 ${EVENT_COUNT_EXPECT.honor} / 总 ${EVENT_COUNT_EXPECT.total}（实际 ${birth} / ${death} / ${honor} / ${birth + death + honor}）`,
+    birth === EVENT_COUNT_EXPECT.birth && death === EVENT_COUNT_EXPECT.death,
+    `生 ${EVENT_COUNT_EXPECT.birth} / 死 ${EVENT_COUNT_EXPECT.death} / 总 ${EVENT_COUNT_EXPECT.total}（实际 ${birth} / ${death} / ${birth + death}）`,
   );
-  assert(badNames.length === 0, `登场/之死/之封人名均为 alias 规范名` + (badNames.length ? `（命中：${badNames.join('、')}）` : '（未命中别名）'));
+  assert(badNames.length === 0, `登场/之死人名均为 alias 规范名` + (badNames.length ? `（命中：${badNames.join('、')}）` : '（未命中别名）'));
 }
 
 section('story.json');
@@ -211,6 +201,3 @@ section('汇总');
 console.log(`  断言 ${checks} 项，失败 ${failures} 项`);
 console.log('  死键：chunkId 缺失即报错（见上逐条断言），以上失败为 0 即三文件死键 = 0');
 process.exit(failures === 0 ? 0 : 1);
-
-
-
