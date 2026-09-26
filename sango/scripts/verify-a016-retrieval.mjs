@@ -69,15 +69,29 @@ async function main() {
     top10B: r5b.detail,
   };
 
+  // 验收6（bug-00037 检索侧回归）：官职/封号类问句须召回事实段——「刘备登基后，张飞被封为什么」
+  // 的答案「迁张飞为车骑将军，领司隶校尉，封西乡侯」落在 0081:c0002（人物之封-张飞 标签第三路召回）。
+  const q6 = '刘备登基后，张飞被封为什么';
+  const r6 = await top10(index, q6);
+  const acc6 = {
+    query: q6,
+    normalized: normalize(q6),
+    targetChunk: 'sanguo-yanyi:0081:c0002',
+    inTop10: r6.ids.includes('sanguo-yanyi:0081:c0002'),
+    top10: r6.detail,
+  };
+
   const ok3 = acc3.top10Same;
   const ok5 = acc5.sameAnchor.length > 0;
-  const evidence = { normVersion: normVersion(), rows: rowsCount(), rewriteKeys: rewriteKeyCount(), acceptance3: acc3, acceptance5: acc5 };
+  const ok6 = acc6.inTop10;
+  const evidence = { normVersion: normVersion(), rows: rowsCount(), rewriteKeys: rewriteKeyCount(), acceptance3: acc3, acceptance5: acc5, acceptance6: acc6 };
   mkdirSync(path.dirname(OUT_FILE), { recursive: true });
   writeFileSync(OUT_FILE, JSON.stringify(evidence, null, 2), "utf8");
   console.log(`[a016-acceptance] 验收3 top10集合相同=${ok3}（normalized: ${acc3.normalizedA} == ${acc3.normalizedB}）`);
   console.log(`[a016-acceptance] 验收5 第27回同一锚=${JSON.stringify(sameCh27)} ok=${ok5}`);
+  console.log(`[a016-acceptance] 验收6 0081:c0002 in top10=${ok6}（bug-00037 回归）`);
   console.log(`[a016-acceptance] 证据落盘：${OUT_FILE}`);
-  process.exitCode = ok3 && ok5 ? 0 : 1;
+  process.exitCode = ok3 && ok5 && ok6 ? 0 : 1;
 }
 
 main().catch((e) => {
