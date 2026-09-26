@@ -1,7 +1,8 @@
 /**
  * FEAT-A016 实体表加载与归一化（单一模块，检索侧 SangoIndex 与 sango_query_embed 共用同一实例）。
  *
- * 契约：docs/feat-A016-term-normalization-interface.md §1（单表文件契约）/ §2.1（归一化实现）；
+ * 契约：docs/feat-A016-term-normalization-interface.md §1（单表文件契约）/ §2.1（归一化实现）/
+ * §5（query.rewrites / env.normVersion 诊断字段）；
  * 表结构见 docs/feat-A016-entity-table-design.md（§2 schema / §7 内存结构 / §8 加载校验）。
  * - 表内违规键（单字 / banned / 跨行重复 / canonical 自指等）→ 告警 + 剔键，不拒全表（接口 §1.6）；
  * - 「键排斥规则」（bug-00036）：rewriteKeys 不得是表内他行 canonical 的真子串（跨行子串改写目标歧义）→ 告警 + 剔键；
@@ -391,24 +392,49 @@ export function loadEntityTable(dataDir: string = DEFAULT_DATA_DIR): boolean {
   );
   return true;
 }
+ /** 一次改写命中明细（query 侧替换记录）：from=原文片段、to=规范形。 */
+ export interface NormalizeHit {
+   from: string;
+   to: string;
+ }
 
-/**
- * 文本归一化：改写键按长度降序 alternation 全局替换为规范形（最长匹配口径不变）。
+ /** normalizeDetail 出参：text=归一化后文本；hits=实际改写命中明细（按替换发生顺序）。 */
+ export interface NormalizeDetail {
+   text: string;
+   hits: NormalizeHit[];
+ }
+
+ /**
+ * 文本归一化 + query 侧实际改写命中明细（接口 §5 query.rewrites 数据源；test-1921 提测增补）。
+ * 替换算法与 normalize 完全一致（改写键按长度降序 alternation 全局替换，最长匹配口径不变；
  * 替换前做邻接延伸检查（bug-00036）：键命中处若与邻接字符能延伸为表内已知词（任意行 canonical /
- * aliases / rewriteKeys 中最长命中），则不替换该键——防 canonical 原文被真子串键二次扩张
- * （长坂坡 保持 长坂坡，不再出现 长坂坡坡）；独立语境（博望之战 中的 博望）照常改写。
- * 表加载失败 / 降级时退化为恒等（接口 §1.6：检索与工具继续工作）。
+ * aliases / rewriteKeys 中最长命中），则不替换该键——防 canonical 原文被真子串键二次扩张）。
+ * hits 口径：
+ * - 按替换发生顺序（String.replace 回调即自左向右处理序）排列；
+ * - 仅记「实际发生替换」的键：邻接延伸检查保护未替换的键不计入；
+ * - fragmentOnly 键不在 query 侧替换（不进入 keyToCanon / pattern），不计入；
+ * - 无改写 / 表加载失败降级（pattern=null）→ hits=[] 且 text 恒等（接口 §1.6：检索与工具继续工作）。
  */
-export function normalize(text: string): string {
-  if (!tableState.pattern) return text;
-  return text.replace(tableState.pattern, (m, offset: number) => {
-    const ext = tableState.keyExtensions.get(m);
-    if (ext) {
-      for (const { word, offset: j } of ext) {
-        const start = offset - j;
-        if (start >= 0 && text.startsWith(word, start)) return m;
-      }
-    }
-    return tableState.keyToCanon.get(m) ?? m;
-  });
-}
+ export function normalizeDetail(text: string): NormalizeDetail {
+   if (!tableState.pattern) return { text, hits: [] };
+   const hits: NormalizeHit[] = [];
+   const out = text.replace(tableState.pattern, (m, offset: number) => {
+     const ext = tableState.keyExtensions.get(m);
+     if (ext) {
+       for (const { word, offset: j } of ext) {
+         const start = offset - j;
+         if (start >= 0 && text.startsWith(word, start)) return m;
+       }
+     }
+     const to = tableState.keyToCanon.get(m);
+     if (to === undefined || to === m) return m;
+     hits.push({ from: m, to });
+     return to;
+   });
+   return { text: out, hits };
+ }
+
+ /** 文本归一化：签名与行为不变（内部委托 normalizeDetail().text），既有调用点零改动。 */
+ export function normalize(text: string): string {
+   return normalizeDetail(text).text;
+ }

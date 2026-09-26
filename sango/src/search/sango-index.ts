@@ -18,7 +18,9 @@ import {
   fragmentKeyToCanon as entityFragmentKeyToCanon,
   loadEntityTable,
   normalize as entityNormalize,
+  normalizeDetail as entityNormalizeDetail,
   rewriteKeyCount as entityRewriteKeyCount,
+  normVersion as entityNormVersion,
 } from '../normalize/entity-table.ts';
 import type {
   Chapter,
@@ -29,6 +31,7 @@ import type {
   RetrievalCandidateDiagnostics,
   RetrievalDiagnostics,
   RetrievalDiagnosticsTiming,
+  RetrievalQueryRewrite,
   SearchEntry,
   SearchHit,
   SearchResult,
@@ -96,6 +99,8 @@ const DIAGNOSTICS_BUDGET_BYTES = 64 * 1024;
 interface DiagnosticsBuildContext {
   raw: string;
   normalized: string;
+  /** query 侧实际改写命中明细（entityNormalizeDetail().hits，接口 §5 query.rewrites）。 */
+  rewrites: RetrievalQueryRewrite[];
   tokens: string[];
   bm25: Float64Array;
   bm25Norm: Float64Array;
@@ -473,7 +478,8 @@ export class SangoIndex {
     if (this.n === 0) return { entries: [], diagnostics: null };
     // §2.2 硬约束（FEAT-A016）：query 改写必须在 embed 之前 —— normalized 恒为 embed 输入。
     // query 与语料侧 / 标签侧同口径归一化（entity-table rewriteKeys 替换；表缺失时退化为恒等）。
-    const normalized = entityNormalize(query);
+    const normDetail = entityNormalizeDetail(query);
+    const normalized = normDetail.text;
     const qTokens = tokenize(normalized);
     // feat-A013：检索分阶段耗时（毫秒）。各段按「---- 阶段 ----」分界独立计时；
     // 空结果早退路径下未执行的段保持 null（语义见 RetrievalDiagnosticsTiming）。
@@ -578,7 +584,9 @@ export class SangoIndex {
         return {
           entries: [],
           diagnostics: wantDiag
-            ? this.safeDiagnostics(() => this.emptySearchDiagnostics(query, normalized, qTokens, null, deathIntent, timing))
+            ? this.safeDiagnostics(() =>
+                this.emptySearchDiagnostics(query, normalized, normDetail.hits, qTokens, null, deathIntent, timing),
+              )
             : null,
         };
       }
@@ -589,7 +597,9 @@ export class SangoIndex {
         return {
           entries: [],
           diagnostics: wantDiag
-            ? this.safeDiagnostics(() => this.emptySearchDiagnostics(query, normalized, qTokens, cosine, deathIntent, timing))
+            ? this.safeDiagnostics(() =>
+                this.emptySearchDiagnostics(query, normalized, normDetail.hits, qTokens, cosine, deathIntent, timing),
+              )
             : null,
         };
       }
@@ -605,7 +615,9 @@ export class SangoIndex {
       return {
         entries: [],
         diagnostics: wantDiag
-          ? this.safeDiagnostics(() => this.emptySearchDiagnostics(query, normalized, qTokens, cosine, deathIntent, timing))
+          ? this.safeDiagnostics(() =>
+              this.emptySearchDiagnostics(query, normalized, normDetail.hits, qTokens, cosine, deathIntent, timing),
+            )
           : null,
       };
     }
@@ -633,6 +645,7 @@ export class SangoIndex {
             this.buildDiagnostics({
               raw: query,
               normalized,
+              rewrites: normDetail.hits,
               tokens: qTokens,
               bm25,
               bm25Norm,
@@ -665,6 +678,7 @@ export class SangoIndex {
   private emptySearchDiagnostics(
     query: string,
     normalized: string,
+    rewrites: RetrievalQueryRewrite[],
     tokens: string[],
     cosine: Float64Array | null,
     deathIntent: DeathIntent | null,
@@ -673,6 +687,7 @@ export class SangoIndex {
     return this.buildDiagnostics({
       raw: query,
       normalized,
+      rewrites,
       tokens,
       bm25: new Float64Array(0),
       bm25Norm: new Float64Array(0),
@@ -709,12 +724,13 @@ export class SangoIndex {
     return {
       truncated: false,
       truncatedCount: 0,
-      query: { raw: ctx.raw, normalized: ctx.normalized, tokens: ctx.tokens },
+      query: { raw: ctx.raw, normalized: ctx.normalized, rewrites: ctx.rewrites, tokens: ctx.tokens },
       env: {
         vectorScheme: degraded ? null : this.vecScheme === VEC_SCHEME_MODEL ? 'bge-m3' : null,
         degradedBm25Only: degraded,
         corpusChunks: this.n,
         aliasCount: entityRewriteKeyCount(),
+        normVersion: entityNormVersion(),
         vectorDim: degraded ? null : this.vecDim,
       },
       funnel: {

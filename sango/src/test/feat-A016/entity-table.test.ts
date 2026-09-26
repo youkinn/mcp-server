@@ -12,6 +12,7 @@ import { fileURLToPath } from 'node:url';
 import {
   loadEntityTable,
   normalize,
+  normalizeDetail,
   normVersion,
   rewriteKeyCount,
   rowsCount,
@@ -123,6 +124,7 @@ test('④ 加载失败降级（接口 §1.6）：文件缺失 / JSON 损坏 / sc
     try {
       assert.equal(loadEntityTable(empty), false);
       assert.equal(normalize('云长'), '云长', '缺表 → 恒等归一化');
+      assert.deepEqual(normalizeDetail('云长'), { text: '云长', hits: [] }, '缺表 → normalizeDetail 恒等且明细空集（接口 §5 降级口径）');
       assert.equal(rewriteKeyCount(), 0);
       assert.equal(normVersion(), '');
     } finally {
@@ -260,5 +262,61 @@ test('⑦ 键排斥规则 + 邻接延伸检查（bug-00036）：跨行 canonical
     }
   } finally {
     cap.restore();
+  }
+});
+
+test('⑧ normalizeDetail（接口 §5 query.rewrites 数据源）：命中明细 / 无命中空集 / 延伸保护与 fragmentOnly 不计入', () => {
+  // 真实表锚点：normalizeDetail().text 与 normalize 同口径（既有行为样例逐一核对）
+  loadEntityTable(REAL_DATA_DIR);
+  assert.deepEqual(
+    normalizeDetail('云长 五关斩六将'),
+    {
+      text: '关羽 过五关斩六将',
+      hits: [
+        { from: '云长', to: '关羽' },
+        { from: '五关斩六将', to: '过五关斩六将' },
+      ],
+    },
+    'hits 按替换发生顺序记录 query 侧实际命中（人物字号 → 换说法）',
+  );
+  assert.deepEqual(normalizeDetail('天子'), { text: '天子', hits: [] }, 'fragmentOnly 不在 query 侧替换、不计入');
+  for (const s of ['长坂坡', '博望之战', '铜雀台', '云长', '五关斩六将', '天子']) {
+    assert.equal(normalizeDetail(s).text, normalize(s), `normalizeDetail().text 与 normalize 恒同：${s}`);
+  }
+
+  // 临时表确定性语义：单用例覆盖 命中顺序 / fragmentOnly 不计入 / 邻接延伸保护不计入
+  const dir = makeTempTable({
+    meta: { schemaVersion: 1, normVersion: 'aabbccdd', generatedAt: '' },
+    rows: [
+      {
+        type: '人物',
+        id: 'P001',
+        canonical: '曹操',
+        aliases: ['孟德', '阿瞒'],
+        rewriteKeys: ['孟德'],
+        fragmentOnly: ['阿瞒'],
+        organGuard: null,
+      },
+      { type: '地名', id: null, canonical: '博望坡', aliases: ['博望'], rewriteKeys: ['博望'], fragmentOnly: [], organGuard: null },
+      { type: '地名', id: null, canonical: '长坂坡', aliases: ['长坂'], rewriteKeys: ['长坂'], fragmentOnly: [], organGuard: null },
+    ],
+    policy: { bannedRewriteKeys: [], ambiguityGuard: [] },
+  });
+  try {
+    assert.equal(loadEntityTable(dir), true);
+    assert.deepEqual(
+      normalizeDetail('孟德 阿瞒 博望 长坂坡'),
+      {
+        text: '曹操 阿瞒 博望坡 长坂坡',
+        hits: [
+          { from: '孟德', to: '曹操' },
+          { from: '博望', to: '博望坡' },
+        ],
+      },
+      '仅记实际替换键：阿瞒（fragmentOnly）与 长坂（延伸为已知词 长坂坡）不计入',
+    );
+    assert.deepEqual(normalizeDetail('董卓 来犯'), { text: '董卓 来犯', hits: [] }, '无改写 → hits=[]');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
   }
 });

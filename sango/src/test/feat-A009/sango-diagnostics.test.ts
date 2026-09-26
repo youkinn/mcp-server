@@ -5,7 +5,8 @@
  * result._meta.diagnostics（content 契约零改动）/ 旁路（产出失败不影响 content）/ 候选命中的标签文本
  * （hitLabels：与 labelHit 自洽、标签表成员、双字词元求交，另用真实语料 data/corpus 核对一次）。
  * 夹具与 feat-A004 同源：4 chunk（第 1 回 1 个 / 第 73 回 3 个）、无向量文件（降级纯 BM25）、
- * entity-table 2 条 rewriteKeys / 2 人物行（FEAT-A016 单表；rewriteKeyCount=2 为 env.aliasCount 新口径）。
+ * entity-table 2 条 rewriteKeys / 2 人物行（FEAT-A016 单表；rewriteKeyCount=2 为 env.aliasCount 新口径，
+ * env.normVersion=5f0a1c2d 为夹具表 meta；query.rewrites 为 query 侧实际改写命中明细）。
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -85,10 +86,10 @@ test('② 请求诊断：结构字段齐全（truncated/truncatedCount/query/env
   assert.ok(diagnostics, '请求诊断时应产出');
   assert.equal(diagnostics.truncated, false);
   assert.equal(diagnostics.truncatedCount, 0);
-  assert.deepEqual(Object.keys(diagnostics.query).sort(), ['normalized', 'raw', 'tokens']);
+  assert.deepEqual(Object.keys(diagnostics.query).sort(), ['normalized', 'raw', 'rewrites', 'tokens']);
   assert.deepEqual(
     Object.keys(diagnostics.env).sort(),
-    ['aliasCount', 'corpusChunks', 'degradedBm25Only', 'vectorDim', 'vectorScheme'],
+    ['aliasCount', 'corpusChunks', 'degradedBm25Only', 'normVersion', 'vectorDim', 'vectorScheme'],
   );
   assert.deepEqual(
     Object.keys(diagnostics.funnel).sort(),
@@ -108,6 +109,12 @@ test('③ query 处理链：raw=入参、normalized=rewriteKeys 替换结果、t
   assert.ok(diagnostics);
   assert.equal(diagnostics.query.raw, '云长');
   assert.equal(diagnostics.query.normalized, '关羽', '云长 经 rewriteKeys 替换为规范形 关羽（人名与换说法同一口径）');
+  assert.deepEqual(
+    diagnostics.query.rewrites,
+    [{ from: '云长', to: '关羽' }],
+    'query.rewrites = query 侧实际改写命中明细（接口 §5，按替换顺序；无改写为 []）',
+  );
+  assert.equal(diagnostics.env.normVersion, '5f0a1c2d', 'env.normVersion = 表 meta.normVersion（夹具表，接口 §5）');
   assert.ok(Array.isArray(diagnostics.query.tokens) && diagnostics.query.tokens.length > 0);
 });
 
@@ -234,8 +241,8 @@ test('⑨ 64KB 预算截断（硬约束 3）：超限诊断 truncated=true、tru
   const overBudget: RetrievalDiagnostics = {
     truncated: false,
     truncatedCount: 0,
-    query: { raw: 'q', normalized: 'q', tokens: ['q'] },
-    env: { vectorScheme: null, degradedBm25Only: true, corpusChunks: 4, aliasCount: 5, vectorDim: null },
+    query: { raw: 'q', normalized: 'q', rewrites: [], tokens: ['q'] },
+    env: { vectorScheme: null, degradedBm25Only: true, corpusChunks: 4, aliasCount: 5, normVersion: '', vectorDim: null },
     funnel: { corpusChunks: 4, lexicalHits: 1, vectorTop50: 0, labelHits: 0, mergedCandidates: 1000, topN: 10, injected: null, cited: null },
     timing: { bm25: 1.2, vector: 3.4, label: 0.5, merge: 2.1 },
     candidates: Array.from({ length: 1000 }, (_, i) => ({ ...candidate, rank: i + 1 })),
@@ -255,8 +262,8 @@ test('⑨ 64KB 预算截断（硬约束 3）：超限诊断 truncated=true、tru
   const tiny: RetrievalDiagnostics = {
     truncated: false,
     truncatedCount: 0,
-    query: { raw: 'q', normalized: 'q', tokens: ['q'] },
-    env: { vectorScheme: null, degradedBm25Only: true, corpusChunks: 4, aliasCount: 5, vectorDim: null },
+    query: { raw: 'q', normalized: 'q', rewrites: [], tokens: ['q'] },
+    env: { vectorScheme: null, degradedBm25Only: true, corpusChunks: 4, aliasCount: 5, normVersion: '', vectorDim: null },
     funnel: { corpusChunks: 4, lexicalHits: 1, vectorTop50: 0, labelHits: 0, mergedCandidates: 1, topN: 1, injected: null, cited: null },
     timing: { bm25: 0.4, vector: null, label: 0.1, merge: 0.8 },
     candidates: [candidate],
