@@ -1,7 +1,7 @@
 {
   "meta": {
     "schemaVersion": 1,
-    "normVersion": "013a2709",
+    "normVersion": "b93c5ca9",
     "generatedAt": "2026-09-26T12:16:00.722Z"
   },
   "rows": [
@@ -61,15 +61,15 @@
         "美髯公",
         "关某",
         "关二爷",
-        "赤面长须"
+        "赤面长须",
+        "关公"
       ],
       "fragmentOnly": [
-        "关公",
         "汉寿亭侯",
         "关将军"
       ],
       "organGuard": null,
-      "note": "R2：关公、汉寿亭侯、关将军 终审跨主条目（多主条目候选）禁入改写键（移入 fragmentOnly）"
+      "note": "bug-00041 纠偏：终审 share=1 误判，改回 rewriteKey"
     },
     {
       "type": "人物",
@@ -6409,7 +6409,6 @@
       "伏波将军",
       "先锋",
       "公明",
-      "关公",
       "关将军",
       "刘使君",
       "刘皇叔",

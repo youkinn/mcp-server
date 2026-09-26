@@ -49,14 +49,14 @@ test('① 真实表加载：启动日志行 + rewriteKeyCount / normVersion / ro
   }
   const log = cap.lines.find((l) => l.includes('entity-table loaded'));
   assert.ok(log, '应输出 [sango] entity-table loaded 日志行');
-  assert.match(log, /rows=407 keys=702 normVersion=\w{8}/, 'rows / keys / normVersion 齐全（bug-00036 两轮裁决后 keys=702）');
+  assert.match(log, /rows=407 keys=703 normVersion=\w{8}/, 'rows / keys / normVersion 齐全（bug-00041 关公 回 rewriteKey 后 keys=703）');
   assert.equal(rowsCount(), 407, 'person 193 + nonPerson 214');
   assert.equal(normVersion().length, 8, 'normVersion 为 8 位内容 hash');
   const table = JSON.parse(readFileSync(path.join(REAL_DATA_DIR, 'entity-table.json'), 'utf8')) as {
     rows: Array<{ rewriteKeys: string[] }>;
   };
   const rawKeyCount = new Set(table.rows.flatMap((r) => r.rewriteKeys)).size;
-  assert.equal(rawKeyCount, 704, '原始表键数（锚点，bug-00036 两轮后：移出 13 键 + 出山 + 三结义 + 铜雀/博望/长坂，桃园结义 转键）');
+  assert.equal(rawKeyCount, 705, '原始表键数（锚点，bug-00036 两轮 + bug-00041 关公 回键后：705）');
   assert.equal(rewriteKeyCount(), rawKeyCount - 2, '模块生效计数 = 原始键 - 2 条 ambiguityGuard 禁入（晋王 / 舌战）');
 });
 
@@ -67,7 +67,8 @@ test('② 行为样例（接口 §6 / 表设计 §8 验证方式）：rewriteKey
   assert.equal(normalize('云长'), '关羽', '人物字号 → 规范形');
   assert.equal(normalize('右目'), '右眼', '身体方位 → 规范形（验收 3 夏侯惇样例）');
   assert.equal(normalize('天子'), '天子', '官职类 fragmentOnly 不参与 query 改写（K2 禁入）');
-  assert.equal(normalize('关公'), '关公', '人物 fragmentOnly（跨主条目终审禁入）不做替换');
+  assert.equal(normalize('关公'), '关羽', 'bug-00041：关公 由终审误判纠偏回 rewriteKey（与云长同口径）');
+  assert.equal(normalize('桃园之盟中关公是老几'), '桃园三结义中关羽是老几', 'bug-00041 样例题（负责人 test-1921 #3）：桃园之盟 + 关公 双键同句改写');
   assert.equal(normalize('甘露元年'), '甘露元年', '同串跨行键弃用后恒等（K3：魏/吴双目标不做改写）');
   assert.equal(normalize('子明'), '子明', 'bug-00031 冲突词出表后恒等（不进任何可替换集）');
   assert.equal(normalize('文帝'), '文帝', '跨主条目（同串跨人组）不替换（共享标签多挂，原文直配）');
@@ -107,7 +108,8 @@ test('③ fragmentOnly 双写素材（表设计 §6 消费矩阵）：fragmentKe
   loadEntityTable(REAL_DATA_DIR);
   const fk = fragmentKeyToCanon();
   assert.equal(fk.get('天子'), '皇帝', '官职行 fragmentOnly → 规范形（索引侧双写扩展用）');
-  assert.equal(fk.get('关公'), '关羽', '人物行 fragmentOnly → 规范形');
+  assert.equal(fk.get('关公'), undefined, 'bug-00041：关公 移出 fragmentOnly（回 rewriteKey）');
+  assert.equal(fk.get('关将军'), '关羽', '人物行 fragmentOnly（关将军 维持终审判定）→ 规范形');
   assert.equal(fk.get('自刎'), '死亡', '死亡类多字短语 → 规范形（query「死亡」可词法命中含自刎片段）');
   assert.equal(fk.get('阿瞒'), undefined, '真实表无 阿瞒（草稿无该别名），夹具表才有');
   assert.equal(fk.get('赤兔'), '赤兔马', 'bug-00036：赤兔 移入 fragmentOnly（索引侧双写扩展）');
@@ -280,6 +282,17 @@ test('⑧ normalizeDetail（接口 §5 query.rewrites 数据源）：命中明�
     'hits 按替换发生顺序记录 query 侧实际命中（人物字号 → 换说法）',
   );
   assert.deepEqual(normalizeDetail('天子'), { text: '天子', hits: [] }, 'fragmentOnly 不在 query 侧替换、不计入');
+  assert.deepEqual(
+    normalizeDetail('桃园之盟中关公是老几'),
+    {
+      text: '桃园三结义中关羽是老几',
+      hits: [
+        { from: '桃园之盟', to: '桃园三结义' },
+        { from: '关公', to: '关羽' },
+      ],
+    },
+    'bug-00041：关公 改回 rewriteKey 后计入 query 侧改写明细（hits 按命中顺序，与云长同口径）',
+  );
   for (const s of ['长坂坡', '博望之战', '铜雀台', '云长', '五关斩六将', '天子']) {
     assert.equal(normalizeDetail(s).text, normalize(s), `normalizeDetail().text 与 normalize 恒同：${s}`);
   }
