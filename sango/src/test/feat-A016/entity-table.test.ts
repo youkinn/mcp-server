@@ -48,14 +48,14 @@ test('① 真实表加载：启动日志行 + rewriteKeyCount / normVersion / ro
   }
   const log = cap.lines.find((l) => l.includes('entity-table loaded'));
   assert.ok(log, '应输出 [sango] entity-table loaded 日志行');
-  assert.match(log, /rows=407 keys=705 normVersion=\w{8}/, 'rows / keys / normVersion 齐全（bug-00036 裁决后 keys=705）');
+  assert.match(log, /rows=407 keys=702 normVersion=\w{8}/, 'rows / keys / normVersion 齐全（bug-00036 两轮裁决后 keys=702）');
   assert.equal(rowsCount(), 407, 'person 193 + nonPerson 214');
   assert.equal(normVersion().length, 8, 'normVersion 为 8 位内容 hash');
   const table = JSON.parse(readFileSync(path.join(REAL_DATA_DIR, 'entity-table.json'), 'utf8')) as {
     rows: Array<{ rewriteKeys: string[] }>;
   };
   const rawKeyCount = new Set(table.rows.flatMap((r) => r.rewriteKeys)).size;
-  assert.equal(rawKeyCount, 707, '原始表键数（锚点，bug-00036 移出 13 键 + 出山 出键后，改表需同步）');
+  assert.equal(rawKeyCount, 704, '原始表键数（锚点，bug-00036 两轮后：移出 13 键 + 出山 + 三结义 + 铜雀/博望/长坂，桃园结义 转键）');
   assert.equal(rewriteKeyCount(), rawKeyCount - 2, '模块生效计数 = 原始键 - 2 条 ambiguityGuard 禁入（晋王 / 舌战）');
 });
 
@@ -71,10 +71,24 @@ test('② 行为样例（接口 §6 / 表设计 §8 验证方式）：rewriteKey
   assert.equal(normalize('子明'), '子明', 'bug-00031 冲突词出表后恒等（不进任何可替换集）');
   assert.equal(normalize('文帝'), '文帝', '跨主条目（同串跨人组）不替换（共享标签多挂，原文直配）');
   // bug-00036：邻接延伸检查（机制层）——长词 canonical 不因真子串键二次扩张
-  assert.equal(normalize('长坂坡'), '长坂坡', '长坂 键命中处延伸为 长坂坡 → 不替换（不再出现 长坂坡坡）');
+  assert.equal(normalize('长坂坡'), '长坂坡', '长坂 移出改写键后 canonical 恒等');
   assert.equal(normalize('长坂坡 赵云救阿斗'), '长坂坡 赵云救刘禅', '延伸检查不阻塞其他键改写（阿斗 → 刘禅）');
-  assert.equal(normalize('博望之战'), '博望坡之战', '独立语境 博望 → 博望坡 照常改写');
-  assert.equal(normalize('铜雀台'), '铜雀台', '铜雀 键命中处延伸为 铜雀台 → 不替换');
+  assert.equal(normalize('博望之战'), '博望之战', '博望 移出改写键后恒等（不再改写成 博望坡之战）');
+  assert.equal(normalize('铜雀台'), '铜雀台', '铜雀 移出改写键后 canonical 恒等');
+  // bug-00036 第二轮（全表审计，2026-09-26）：变体专名不被插词污染——延伸检查兜不住
+  // 铜雀宫 / 博望城·博望山 / 长坂桥·长坂城·长坂围（长坂桥 为第 42 回回目专名），三者随键转出而恒等
+  assert.equal(normalize('铜雀宫'), '铜雀宫', '「铜雀宫」不再被 铜雀 键污染为 铜雀台宫');
+  assert.equal(normalize('博望城'), '博望城', '「博望城」不再被 博望 键污染为 博望坡城');
+  assert.equal(normalize('长坂桥'), '长坂桥', '「长坂桥」不再被 长坂 键污染为 长坂坡桥');
+  // 提测 test-1921（2026-09-26）：桃园三结义 规范为 canonical，三写法同口径归一化——
+  // 桃园三结义 恒等（不再被 三结义 键损坏为 桃园桃园结义）、桃园结义 / 桃园之盟 → 桃园三结义
+  assert.equal(normalize('桃园三结义'), '桃园三结义', 'canonical 恒等，不再损坏为 桃园桃园结义');
+  assert.equal(normalize('桃园结义'), '桃园三结义', '别名 → 规范形（提测 trace 96bbe8ae / 4f04f5f3）');
+  assert.equal(normalize('桃园之盟'), '桃园三结义', '别名 → 规范形');
+  // bug-00036 判据：三结义 ⊂ 桃园三结义 且非独立指称，移出改写键（负责人 2026-09-26 质疑确认）——
+  // 延伸检查只覆盖「桃园三结义」完整对齐，覆盖不了「宴桃园豪杰三结义 / X 三结义」类上下文
+  assert.equal(normalize('三结义'), '三结义', '三结义 移出改写键后恒等，不作替换');
+  assert.equal(normalize('宴桃园豪杰三结义'), '宴桃园豪杰三结义', '回目「宴桃园豪杰三结义」不被插词污染');
   // bug-00036：数据层裁决——不合规子串键移出改写键（可转 fragmentOnly），原文恒等
   assert.equal(normalize('赤兔马'), '赤兔马', '赤兔 不在 rewriteKeys，canonical 原文不扩张');
   assert.equal(normalize('赤兔'), '赤兔', '赤兔 移入 fragmentOnly（query 侧不改写）');

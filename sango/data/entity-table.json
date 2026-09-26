@@ -1,8 +1,8 @@
 {
   "meta": {
     "schemaVersion": 1,
-    "normVersion": "b0821282",
-    "generatedAt": "2026-09-26T03:24:03.130Z"
+    "normVersion": "013a2709",
+    "generatedAt": "2026-09-26T12:16:00.722Z"
   },
   "rows": [
     {
@@ -3288,12 +3288,12 @@
       "aliases": [
         "博望"
       ],
-      "rewriteKeys": [
+      "rewriteKeys": [],
+      "fragmentOnly": [
         "博望"
       ],
-      "fragmentOnly": [],
       "organGuard": null,
-      "note": "bug-00036：博望 ⊂ 博望坡 本行真子串短式，裁决保留（依赖邻接延伸检查兜底）"
+      "note": "bug-00036：博望 ⊂ 博望坡 本行真子串短式；2026-09-26 全表审计第二轮改判——语料存在非完整对齐变体「博望城/博望山」，邻接延伸检查兜不住，移出改写键转 fragmentOnly"
     },
     {
       "type": "地名",
@@ -3302,12 +3302,12 @@
       "aliases": [
         "长坂"
       ],
-      "rewriteKeys": [
+      "rewriteKeys": [],
+      "fragmentOnly": [
         "长坂"
       ],
-      "fragmentOnly": [],
       "organGuard": null,
-      "note": "bug-00036：长坂 ⊂ 长坂坡 本行真子串短式，裁决保留（依赖邻接延伸检查兜底）"
+      "note": "bug-00036：长坂 ⊂ 长坂坡 本行真子串短式；2026-09-26 全表审计第二轮改判——语料存在非完整对齐变体「长坂桥/长坂城/长坂围」（长坂桥 为回目专名），邻接延伸检查兜不住，移出改写键转 fragmentOnly"
     },
     {
       "type": "地名",
@@ -3431,13 +3431,14 @@
         "金凤台"
       ],
       "rewriteKeys": [
-        "铜雀",
         "玉龙台",
         "金凤台"
       ],
-      "fragmentOnly": [],
+      "fragmentOnly": [
+        "铜雀"
+      ],
       "organGuard": null,
-      "note": "bug-00036：铜雀 ⊂ 铜雀台 本行真子串短式，裁决保留（依赖邻接延伸检查兜底）"
+      "note": "bug-00036：铜雀 ⊂ 铜雀台 本行真子串短式；2026-09-26 全表审计第二轮改判——语料存在非完整对齐变体「铜雀宫」（曾污染为 铜雀台宫），邻接延伸检查兜不住，移出改写键转 fragmentOnly"
     },
     {
       "type": "地名",
@@ -3563,14 +3564,14 @@
     {
       "type": "战役",
       "id": null,
-      "canonical": "桃园结义",
+      "canonical": "桃园三结义",
       "aliases": [
         "桃园之盟",
-        "三结义"
+        "桃园结义"
       ],
       "rewriteKeys": [
         "桃园之盟",
-        "三结义"
+        "桃园结义"
       ],
       "fragmentOnly": [],
       "organGuard": null
