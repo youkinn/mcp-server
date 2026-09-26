@@ -48,14 +48,14 @@ test('① 真实表加载：启动日志行 + rewriteKeyCount / normVersion / ro
   }
   const log = cap.lines.find((l) => l.includes('entity-table loaded'));
   assert.ok(log, '应输出 [sango] entity-table loaded 日志行');
-  assert.match(log, /rows=407 keys=719 normVersion=\w{8}/, 'rows / keys / normVersion 齐全');
+  assert.match(log, /rows=407 keys=705 normVersion=\w{8}/, 'rows / keys / normVersion 齐全（bug-00036 裁决后 keys=705）');
   assert.equal(rowsCount(), 407, 'person 193 + nonPerson 214');
   assert.equal(normVersion().length, 8, 'normVersion 为 8 位内容 hash');
   const table = JSON.parse(readFileSync(path.join(REAL_DATA_DIR, 'entity-table.json'), 'utf8')) as {
     rows: Array<{ rewriteKeys: string[] }>;
   };
   const rawKeyCount = new Set(table.rows.flatMap((r) => r.rewriteKeys)).size;
-  assert.equal(rawKeyCount, 721, '原始表键数（锚点，改表需同步）');
+  assert.equal(rawKeyCount, 707, '原始表键数（锚点，bug-00036 移出 13 键 + 出山 出键后，改表需同步）');
   assert.equal(rewriteKeyCount(), rawKeyCount - 2, '模块生效计数 = 原始键 - 2 条 ambiguityGuard 禁入（晋王 / 舌战）');
 });
 
@@ -70,6 +70,22 @@ test('② 行为样例（接口 §6 / 表设计 §8 验证方式）：rewriteKey
   assert.equal(normalize('甘露元年'), '甘露元年', '同串跨行键弃用后恒等（K3：魏/吴双目标不做改写）');
   assert.equal(normalize('子明'), '子明', 'bug-00031 冲突词出表后恒等（不进任何可替换集）');
   assert.equal(normalize('文帝'), '文帝', '跨主条目（同串跨人组）不替换（共享标签多挂，原文直配）');
+  // bug-00036：邻接延伸检查（机制层）——长词 canonical 不因真子串键二次扩张
+  assert.equal(normalize('长坂坡'), '长坂坡', '长坂 键命中处延伸为 长坂坡 → 不替换（不再出现 长坂坡坡）');
+  assert.equal(normalize('长坂坡 赵云救阿斗'), '长坂坡 赵云救刘禅', '延伸检查不阻塞其他键改写（阿斗 → 刘禅）');
+  assert.equal(normalize('博望之战'), '博望坡之战', '独立语境 博望 → 博望坡 照常改写');
+  assert.equal(normalize('铜雀台'), '铜雀台', '铜雀 键命中处延伸为 铜雀台 → 不替换');
+  // bug-00036：数据层裁决——不合规子串键移出改写键（可转 fragmentOnly），原文恒等
+  assert.equal(normalize('赤兔马'), '赤兔马', '赤兔 不在 rewriteKeys，canonical 原文不扩张');
+  assert.equal(normalize('赤兔'), '赤兔', '赤兔 移入 fragmentOnly（query 侧不改写）');
+  assert.equal(normalize('木牛流马'), '木牛流马', '木牛 / 流马 移出后长词不扩张');
+  assert.equal(normalize('传国玉玺'), '传国玉玺', '玉玺 移出后长词不扩张');
+  assert.equal(normalize('就会就计'), '就会就计', '就计 移出后不改写');
+  assert.equal(normalize('遁甲'), '遁甲', '遁甲 跨行真子串（⊂奇门遁甲/遁甲天书）移出，恒等');
+  // bug-00036：登场行或式 canonical 规范为 出山
+  assert.equal(normalize('出仕'), '出山', '或式 canonical 规范后 出仕 → 出山');
+  assert.equal(normalize('入仕'), '出山', '入仕 → 出山');
+  assert.equal(normalize('出山'), '出山', '出山 为 canonical，恒等');
 });
 
 test('③ fragmentOnly 双写素材（表设计 §6 消费矩阵）：fragmentKeyToCanon 覆盖禁入词 → 规范形', () => {
@@ -79,6 +95,10 @@ test('③ fragmentOnly 双写素材（表设计 §6 消费矩阵）：fragmentKe
   assert.equal(fk.get('关公'), '关羽', '人物行 fragmentOnly → 规范形');
   assert.equal(fk.get('自刎'), '死亡', '死亡类多字短语 → 规范形（query「死亡」可词法命中含自刎片段）');
   assert.equal(fk.get('阿瞒'), undefined, '真实表无 阿瞒（草稿无该别名），夹具表才有');
+  assert.equal(fk.get('赤兔'), '赤兔马', 'bug-00036：赤兔 移入 fragmentOnly（索引侧双写扩展）');
+  assert.equal(fk.get('玉玺'), '传国玉玺', 'bug-00036：玉玺 移入 fragmentOnly');
+  assert.equal(fk.get('木牛'), '木牛流马', 'bug-00036：木牛 移入 fragmentOnly');
+  assert.equal(fk.get('就计'), '将计就计', 'bug-00036：就计 移入 fragmentOnly');
 });
 
 test('④ 加载失败降级（接口 §1.6）：文件缺失 / JSON 损坏 / schemaVersion 非法 / 有效行数 0 → normalize 恒等', () => {
@@ -191,4 +211,40 @@ test('⑥ 夹具表（feat-A004 同源）：rewriteKeyCount / 替换 / fragmentO
   assert.equal(normalize('云长'), '关羽');
   assert.equal(normalize('阿瞒'), '阿瞒', 'fragmentOnly 不参与 query 改写');
   assert.equal(normalize('关公'), '关公', 'fragmentOnly（banned 词）不参与 query 改写');
+});
+
+test('⑦ 键排斥规则 + 邻接延伸检查（bug-00036）：跨行 canonical 真子串剔键；本行子串短式保留且不扩张长词', () => {
+  const cap = captureStderr();
+  try {
+    const dir = makeTempTable({
+      meta: { schemaVersion: 1, normVersion: 'ffffffff', generatedAt: '' },
+      rows: [
+        // 本行 canonical 子串短式（保留，依赖邻接延伸检查兜底）
+        { type: '地名', id: null, canonical: '博望坡', aliases: ['博望', '长坂桥'], rewriteKeys: ['博望'], fragmentOnly: [], organGuard: null, note: 'bug-00036：裁决保留' },
+        { type: '地名', id: null, canonical: '长坂坡', aliases: ['长坂'], rewriteKeys: ['长坂'], fragmentOnly: [], organGuard: null, note: 'bug-00036：裁决保留' },
+        // 跨行 canonical 真子串键（K4：告警 + 剔键）
+        { type: '典故', id: null, canonical: '奇门遁甲', aliases: ['遁甲'], rewriteKeys: ['遁甲'], fragmentOnly: [], organGuard: null },
+        { type: '器物', id: null, canonical: '遁甲天书', aliases: ['天书三卷'], rewriteKeys: ['天书三卷'], fragmentOnly: [], organGuard: null },
+      ],
+      policy: { bannedRewriteKeys: [], ambiguityGuard: [] },
+    });
+    try {
+      assert.equal(loadEntityTable(dir), true, '存在违规键仍成功加载（不拒全表）');
+      assert.equal(normalize('博望之战'), '博望坡之战', '独立语境 博望 → 博望坡 照常改写');
+      assert.equal(normalize('博望坡'), '博望坡', '长词 canonical 不因 博望 键二次扩张');
+      assert.equal(normalize('长坂坡'), '长坂坡', '长坂 命中处延伸为 长坂坡 → 不替换');
+      assert.equal(normalize('长坂桥'), '长坂桥', '延伸检查覆盖 aliases（长坂桥 为表内已知词）');
+      assert.equal(normalize('遁甲'), '遁甲', '跨行 canonical 真子串键被剔（K4），恒等');
+      assert.equal(normalize('遁甲天书'), '遁甲天书', '他行 longer canonical 不受影响');
+      const warnings = cap.lines.filter((l) => l.includes('entity-table 校验'));
+      assert.ok(
+        warnings.some((l) => l.includes('真子串') && l.includes('K4')),
+        '跨行 canonical 真子串键告警（K4）',
+      );
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  } finally {
+    cap.restore();
+  }
 });

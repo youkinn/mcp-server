@@ -1,8 +1,8 @@
 {
   "meta": {
     "schemaVersion": 1,
-    "normVersion": "6147b604",
-    "generatedAt": "2026-09-25T17:51:04.849Z"
+    "normVersion": "b0821282",
+    "generatedAt": "2026-09-26T03:24:03.130Z"
   },
   "rows": [
     {
@@ -3292,7 +3292,8 @@
         "博望"
       ],
       "fragmentOnly": [],
-      "organGuard": null
+      "organGuard": null,
+      "note": "bug-00036：博望 ⊂ 博望坡 本行真子串短式，裁决保留（依赖邻接延伸检查兜底）"
     },
     {
       "type": "地名",
@@ -3305,7 +3306,8 @@
         "长坂"
       ],
       "fragmentOnly": [],
-      "organGuard": null
+      "organGuard": null,
+      "note": "bug-00036：长坂 ⊂ 长坂坡 本行真子串短式，裁决保留（依赖邻接延伸检查兜底）"
     },
     {
       "type": "地名",
@@ -3434,7 +3436,8 @@
         "金凤台"
       ],
       "fragmentOnly": [],
-      "organGuard": null
+      "organGuard": null,
+      "note": "bug-00036：铜雀 ⊂ 铜雀台 本行真子串短式，裁决保留（依赖邻接延伸检查兜底）"
     },
     {
       "type": "地名",
@@ -3598,7 +3601,8 @@
         "鞭督邮"
       ],
       "fragmentOnly": [],
-      "organGuard": null
+      "organGuard": null,
+      "note": "bug-00036：鞭督邮 ⊂ 怒鞭督邮 本行真子串短式，裁决保留（依赖邻接延伸检查兜底）"
     },
     {
       "type": "战役",
@@ -3628,7 +3632,8 @@
         "废立"
       ],
       "fragmentOnly": [],
-      "organGuard": null
+      "organGuard": null,
+      "note": "bug-00036：废立 ⊂ 废立皇帝 本行真子串短式，裁决保留（依赖邻接延伸检查兜底）"
     },
     {
       "type": "战役",
@@ -3766,7 +3771,8 @@
         "借箭"
       ],
       "fragmentOnly": [],
-      "organGuard": null
+      "organGuard": null,
+      "note": "bug-00036：借箭 ⊂ 草船借箭 本行真子串短式，裁决保留（依赖邻接延伸检查兜底）"
     },
     {
       "type": "战役",
@@ -3965,7 +3971,8 @@
         "千里走单骑"
       ],
       "fragmentOnly": [],
-      "organGuard": null
+      "organGuard": null,
+      "note": "bug-00036：五关斩六将 ⊂ 过五关斩六将 本行真子串短式，裁决保留（依赖邻接延伸检查兜底）"
     },
     {
       "type": "战役",
@@ -3978,7 +3985,8 @@
         "斩华雄"
       ],
       "fragmentOnly": [],
-      "organGuard": null
+      "organGuard": null,
+      "note": "bug-00036：斩华雄 ⊂ 温酒斩华雄 本行真子串短式，裁决保留（依赖邻接延伸检查兜底）"
     },
     {
       "type": "战役",
@@ -4084,7 +4092,8 @@
         "斩马谡"
       ],
       "fragmentOnly": [],
-      "organGuard": null
+      "organGuard": null,
+      "note": "bug-00036：斩马谡 ⊂ 挥泪斩马谡 本行真子串短式，裁决保留（依赖邻接延伸检查兜底）"
     },
     {
       "type": "战役",
@@ -4611,11 +4620,13 @@
         "蛇矛"
       ],
       "rewriteKeys": [
-        "丈八点钢矛",
+        "丈八点钢矛"
+      ],
+      "fragmentOnly": [
         "蛇矛"
       ],
-      "fragmentOnly": [],
-      "organGuard": null
+      "organGuard": null,
+      "note": "bug-00036：蛇矛 ⊂ 丈八蛇矛 真子串，禁入改写键（移入 fragmentOnly）"
     },
     {
       "type": "器物",
@@ -4624,11 +4635,12 @@
       "aliases": [
         "画戟"
       ],
-      "rewriteKeys": [
+      "rewriteKeys": [],
+      "fragmentOnly": [
         "画戟"
       ],
-      "fragmentOnly": [],
-      "organGuard": null
+      "organGuard": null,
+      "note": "bug-00036：画戟 ⊂ 方天画戟 真子串，禁入改写键（移入 fragmentOnly）"
     },
     {
       "type": "器物",
@@ -4637,11 +4649,12 @@
       "aliases": [
         "赤兔"
       ],
-      "rewriteKeys": [
+      "rewriteKeys": [],
+      "fragmentOnly": [
         "赤兔"
       ],
-      "fragmentOnly": [],
-      "organGuard": null
+      "organGuard": null,
+      "note": "bug-00036：赤兔 ⊂ 赤兔马 真子串，禁入改写键（移入 fragmentOnly）"
     },
     {
       "type": "器物",
@@ -4654,7 +4667,8 @@
         "的卢"
       ],
       "fragmentOnly": [],
-      "organGuard": null
+      "organGuard": null,
+      "note": "bug-00036：的卢 ⊂ 的卢马 本行真子串短式，裁决保留（依赖邻接延伸检查兜底）"
     },
     {
       "type": "器物",
@@ -4667,7 +4681,8 @@
         "爪黄飞电"
       ],
       "fragmentOnly": [],
-      "organGuard": null
+      "organGuard": null,
+      "note": "bug-00036：爪黄飞电 ⊂ 爪黄飞电马 本行真子串短式，裁决保留（依赖邻接延伸检查兜底）"
     },
     {
       "type": "器物",
@@ -4678,11 +4693,13 @@
         "传国宝"
       ],
       "rewriteKeys": [
-        "玉玺",
         "传国宝"
       ],
-      "fragmentOnly": [],
-      "organGuard": null
+      "fragmentOnly": [
+        "玉玺"
+      ],
+      "organGuard": null,
+      "note": "bug-00036：玉玺 ⊂ 传国玉玺 真子串，禁入改写键（移入 fragmentOnly）"
     },
     {
       "type": "器物",
@@ -4732,11 +4749,13 @@
         "妇人缟素之服"
       ],
       "rewriteKeys": [
-        "巾帼",
         "妇人缟素之服"
       ],
-      "fragmentOnly": [],
-      "organGuard": null
+      "fragmentOnly": [
+        "巾帼"
+      ],
+      "organGuard": null,
+      "note": "bug-00036：巾帼 ⊂ 巾帼女衣 真子串，禁入改写键（移入 fragmentOnly）"
     },
     {
       "type": "器物",
@@ -4758,11 +4777,12 @@
       "aliases": [
         "皂幡"
       ],
-      "rewriteKeys": [
+      "rewriteKeys": [],
+      "fragmentOnly": [
         "皂幡"
       ],
-      "fragmentOnly": [],
-      "organGuard": null
+      "organGuard": null,
+      "note": "bug-00036：皂幡 ⊂ 七星皂幡 真子串，禁入改写键（移入 fragmentOnly）"
     },
     {
       "type": "器物",
@@ -4801,7 +4821,8 @@
         "倚天"
       ],
       "fragmentOnly": [],
-      "organGuard": null
+      "organGuard": null,
+      "note": "bug-00036：倚天 ⊂ 倚天剑 本行真子串短式，裁决保留（依赖邻接延伸检查兜底）"
     },
     {
       "type": "器物",
@@ -4810,11 +4831,12 @@
       "aliases": [
         "青釭"
       ],
-      "rewriteKeys": [
+      "rewriteKeys": [],
+      "fragmentOnly": [
         "青釭"
       ],
-      "fragmentOnly": [],
-      "organGuard": null
+      "organGuard": null,
+      "note": "bug-00036：青釭 ⊂ 青釭剑 真子串，禁入改写键（移入 fragmentOnly）"
     },
     {
       "type": "器物",
@@ -4827,7 +4849,8 @@
         "双股剑"
       ],
       "fragmentOnly": [],
-      "organGuard": null
+      "organGuard": null,
+      "note": "bug-00036：双股剑 ⊂ 雌雄双股剑 本行真子串短式，裁决保留（依赖邻接延伸检查兜底）"
     },
     {
       "type": "器物",
@@ -4837,12 +4860,13 @@
         "木牛",
         "流马"
       ],
-      "rewriteKeys": [
+      "rewriteKeys": [],
+      "fragmentOnly": [
         "木牛",
         "流马"
       ],
-      "fragmentOnly": [],
-      "organGuard": null
+      "organGuard": null,
+      "note": "bug-00036：流马 ⊂ 木牛流马 真子串，禁入改写键（移入 fragmentOnly）"
     },
     {
       "type": "时间",
@@ -5540,7 +5564,8 @@
         "诈病"
       ],
       "fragmentOnly": [],
-      "organGuard": null
+      "organGuard": null,
+      "note": "bug-00036：诈病 ⊂ 诈病赚权 本行真子串短式，裁决保留（依赖邻接延伸检查兜底）"
     },
     {
       "type": "典故",
@@ -5629,11 +5654,12 @@
       "aliases": [
         "苦肉"
       ],
-      "rewriteKeys": [
+      "rewriteKeys": [],
+      "fragmentOnly": [
         "苦肉"
       ],
-      "fragmentOnly": [],
-      "organGuard": null
+      "organGuard": null,
+      "note": "bug-00036：苦肉 ⊂ 苦肉计 真子串，禁入改写键（移入 fragmentOnly）"
     },
     {
       "type": "典故",
@@ -5656,11 +5682,12 @@
       "aliases": [
         "就计"
       ],
-      "rewriteKeys": [
+      "rewriteKeys": [],
+      "fragmentOnly": [
         "就计"
       ],
-      "fragmentOnly": [],
-      "organGuard": null
+      "organGuard": null,
+      "note": "bug-00036：就计 ⊂ 将计就计 真子串，禁入改写键（移入 fragmentOnly）"
     },
     {
       "type": "典故",
@@ -5669,11 +5696,12 @@
       "aliases": [
         "缓兵"
       ],
-      "rewriteKeys": [
+      "rewriteKeys": [],
+      "fragmentOnly": [
         "缓兵"
       ],
-      "fragmentOnly": [],
-      "organGuard": null
+      "organGuard": null,
+      "note": "bug-00036：缓兵 ⊂ 缓兵计 真子串，禁入改写键（移入 fragmentOnly）"
     },
     {
       "type": "典故",
@@ -5686,7 +5714,8 @@
         "假途"
       ],
       "fragmentOnly": [],
-      "organGuard": null
+      "organGuard": null,
+      "note": "bug-00036：假途 ⊂ 假途灭虢 本行真子串短式，裁决保留（依赖邻接延伸检查兜底）"
     },
     {
       "type": "典故",
@@ -5699,7 +5728,8 @@
         "反客"
       ],
       "fragmentOnly": [],
-      "organGuard": null
+      "organGuard": null,
+      "note": "bug-00036：反客 ⊂ 反客为主 本行真子串短式，裁决保留（依赖邻接延伸检查兜底）"
     },
     {
       "type": "典故",
@@ -5774,11 +5804,10 @@
       "aliases": [
         "遁甲"
       ],
-      "rewriteKeys": [
-        "遁甲"
-      ],
+      "rewriteKeys": [],
       "fragmentOnly": [],
-      "organGuard": null
+      "organGuard": null,
+      "note": "bug-00036：遁甲 同时 ⊂奇门遁甲/遁甲天书（跨行真子串），改写目标歧义，禁入改写键且不入 fragmentOnly（防跨行双写污染）"
     },
     {
       "type": "身体",
@@ -6351,24 +6380,24 @@
         "出世"
       ],
       "fragmentOnly": [],
-      "organGuard": null
+      "organGuard": null,
+      "note": "bug-00036：登场/首次登场 ⊂ 人物首次登场 本行真子串短式，裁决保留（依赖邻接延伸检查兜底）"
     },
     {
       "type": "登场",
       "id": null,
-      "canonical": "出仕/出山",
+      "canonical": "出山",
       "aliases": [
         "出仕",
-        "出山",
         "入仕"
       ],
       "rewriteKeys": [
         "出仕",
-        "出山",
         "入仕"
       ],
       "fragmentOnly": [],
-      "organGuard": null
+      "organGuard": null,
+      "note": "bug-00036：原或式 canonical「出仕/出山」规范为 出山；出仕/入仕 → 出山 改写（邻接延伸检查兜底）"
     }
   ],
   "policy": {

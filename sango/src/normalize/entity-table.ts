@@ -4,6 +4,9 @@
  * 契约：docs/feat-A016-term-normalization-interface.md §1（单表文件契约）/ §2.1（归一化实现）；
  * 表结构见 docs/feat-A016-entity-table-design.md（§2 schema / §7 内存结构 / §8 加载校验）。
  * - 表内违规键（单字 / banned / 跨行重复 / canonical 自指等）→ 告警 + 剔键，不拒全表（接口 §1.6）；
+ * - 「键排斥规则」（bug-00036）：rewriteKeys 不得是表内他行 canonical 的真子串（跨行子串改写目标歧义）→ 告警 + 剔键；
+ *   本行 canonical 子串短式经逐键裁决保留，替换时依赖「邻接延伸检查」兜底（键命中处能延伸为表内已知词则不替换，
+ *   防 canonical 原文被二次扩张，如 长坂坡 不再出现 长坂坡坡）；
  * - 文件缺失 / JSON 损坏 / 结构非法 / 有效行数 0 → 告警 + normalize 退化为恒等（接口 §1.6）；
  * - 进程内单例：loadEntityTable 反复调用即整体覆盖（语义等价重启后重新加载），检索侧与工具侧口径恒同。
  */
@@ -46,6 +49,8 @@ function escapeRegExp(s: string): string {
  * - keyToCanon：改写键 → 规范形（替换映射，正则构造输入）；
  * - canonToRow：规范形 → { type, id, aliases, fragmentOnly, organGuard, note }；
  * - fragmentKeyToCanon：fragmentOnly 全表并集 → 规范形（索引侧双写扩展）；与 text 命中匹配用；
+ * - keyExtensions：改写键 → 表内已知词（任意行 canonical / aliases / rewriteKeys）中「更长含该键」词及其出现偏移，
+ *   邻接延伸检查用（bug-00036：键命中处能延伸为已知词则不替换，防 canonical 真子串键二次扩张）；
  * - bannedRewriteKeys / guards：policy 审计数据（加载校验 / organGuard 引用）；
  * - pattern：改写键按长度降序的 alternation 正则（最长匹配口径，与退役 alias.json 时代一致）。
  */
@@ -53,6 +58,7 @@ const tableState = {
   keyToCanon: new Map<string, string>(),
   canonToRow: new Map<string, CanonInfo>(),
   fragmentKeyToCanon: new Map<string, string>(),
+  keyExtensions: new Map<string, Array<{ word: string; offset: number }>>(),
   bannedRewriteKeys: new Set<string>(),
   guards: [] as Array<{
     term: string;
@@ -73,6 +79,7 @@ function resetToDegraded(reason: string): void {
   tableState.keyToCanon.clear();
   tableState.canonToRow.clear();
   tableState.fragmentKeyToCanon.clear();
+  tableState.keyExtensions.clear();
   tableState.bannedRewriteKeys.clear();
   tableState.guards = [];
   tableState.pattern = null;
@@ -290,6 +297,27 @@ export function loadEntityTable(dataDir: string = DEFAULT_DATA_DIR): boolean {
     x.row.rewriteKeys = [...rowRks];
   }
 
+  // §8 检查 9（键排斥规则，bug-00036）：rewriteKeys 不得是表内他行 canonical 的真子串——
+  // 跨行子串键的改写目标歧义（如 遁甲 同时 ⊂奇门遁甲 与 ⊂遁甲天书），告警 + 剔键（与 K1/K2 同类）；
+  // 本行 canonical 子串短式（博望⊂博望坡 等）经 bug-00036 逐键裁决保留，靠邻接延伸检查兜底。
+  const otherRowCanons = new Set(kept.flatMap((x) => [x.row.canonical]));
+  for (const x of kept) {
+    const rowRks = new Set(x.rewriteKeys);
+    for (const k of x.rewriteKeys) {
+      const cross = [...otherRowCanons].find(
+        (c) => c !== x.row.canonical && c.length > k.length && c.includes(k),
+      );
+      if (cross) {
+        warnOnce(
+          `${x.row.canonical} 的 rewriteKeys 是表内他行 canonical「${cross}」的真子串：${k}，剔键（K4，bug-00036）`,
+        );
+        rowRks.delete(k);
+      }
+    }
+    x.rewriteKeys = [...rowRks];
+    x.row.rewriteKeys = [...rowRks];
+  }
+
   // 重建单例状态（keyToCanon / canonToRow / fragmentKeyToCanon / pattern）
   const keyToCanon = new Map<string, string>();
   const canonToRow = new Map<string, CanonInfo>();
@@ -321,10 +349,36 @@ export function loadEntityTable(dataDir: string = DEFAULT_DATA_DIR): boolean {
     keyToCanon.delete(k);
   }
 
+  // 邻接延伸检查索引（bug-00036 机制层）：改写键 → 表内已知词（任意行 canonical / aliases / rewriteKeys）
+  // 中「更长且含该键」的词及其出现偏移；normalize 替换前先核对命中处能否延伸为已知词，能延伸则不替换，
+  // 防 canonical 原文被键二次扩张（长坂坡 不因 长坂 键变 长坂坡坡；独立语境 博望之战 照常改写）。
+  const knownWords = new Set<string>();
+  for (const x of kept) {
+    knownWords.add(x.row.canonical);
+    for (const a of x.row.aliases) knownWords.add(a);
+    for (const k of x.rewriteKeys) knownWords.add(k);
+  }
+  const keyExtensions = new Map<string, Array<{ word: string; offset: number }>>();
+  for (const k of keyToCanon.keys()) {
+    const ext: Array<{ word: string; offset: number }> = [];
+    for (const w of knownWords) {
+      if (w.length <= k.length || !w.includes(k)) continue;
+      let from = 0;
+      for (;;) {
+        const j = w.indexOf(k, from);
+        if (j < 0) break;
+        ext.push({ word: w, offset: j });
+        from = j + 1;
+      }
+    }
+    if (ext.length > 0) keyExtensions.set(k, ext);
+  }
+
   const aliasNames = [...keyToCanon.keys()].sort((a, b) => b.length - a.length || (a < b ? -1 : 1));
   tableState.keyToCanon = keyToCanon;
   tableState.canonToRow = canonToRow;
   tableState.fragmentKeyToCanon = fragmentKeyToCanon;
+  tableState.keyExtensions = keyExtensions;
   tableState.bannedRewriteKeys = banned;
   tableState.guards = guards;
   tableState.pattern = aliasNames.length > 0 ? new RegExp(aliasNames.map(escapeRegExp).join('|'), 'g') : null;
@@ -340,9 +394,21 @@ export function loadEntityTable(dataDir: string = DEFAULT_DATA_DIR): boolean {
 
 /**
  * 文本归一化：改写键按长度降序 alternation 全局替换为规范形（最长匹配口径不变）。
+ * 替换前做邻接延伸检查（bug-00036）：键命中处若与邻接字符能延伸为表内已知词（任意行 canonical /
+ * aliases / rewriteKeys 中最长命中），则不替换该键——防 canonical 原文被真子串键二次扩张
+ * （长坂坡 保持 长坂坡，不再出现 长坂坡坡）；独立语境（博望之战 中的 博望）照常改写。
  * 表加载失败 / 降级时退化为恒等（接口 §1.6：检索与工具继续工作）。
  */
 export function normalize(text: string): string {
   if (!tableState.pattern) return text;
-  return text.replace(tableState.pattern, (m) => tableState.keyToCanon.get(m) ?? m);
+  return text.replace(tableState.pattern, (m, offset: number) => {
+    const ext = tableState.keyExtensions.get(m);
+    if (ext) {
+      for (const { word, offset: j } of ext) {
+        const start = offset - j;
+        if (start >= 0 && text.startsWith(word, start)) return m;
+      }
+    }
+    return tableState.keyToCanon.get(m) ?? m;
+  });
 }
