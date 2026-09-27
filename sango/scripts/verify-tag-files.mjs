@@ -25,8 +25,7 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const CORPUS_BASE = path.resolve(HERE, '..', 'data', 'corpus');
 const CORPUS_DIR = path.join(CORPUS_BASE, 'sanguo-yanyi');
 const TAG_DIR = path.join(CORPUS_BASE, 'tags');
-const ALIAS_FILE = path.join(path.resolve(HERE, '..', 'data'), 'alias.json');
-const ALIAS_BUILD_SCRIPT = path.join(HERE, 'build_alias.py');
+const ENTITY_TABLE_FILE = path.join(path.resolve(HERE, '..', 'data'), 'entity-table.json');
 
 const BIRTH_RE = /^人物之生-(.+)登场$/;
 const DEATH_RE = /^人物之死-(.+)之死$/;
@@ -66,35 +65,35 @@ function loadCorpus() {
 }
 
 /**
- * 从 build_alias.py 的 PERSONS 表解析规范名（P001 起按表序）。
- * 规范名 = PERSONS 每行元组的首元素；别名经 data/alias.json 映射到 PID 后回查。
+ * 从 data/entity-table.json 的「人物」行解析规范名（P001 起，行 id 承载 PID）。
+ * 规范名 = 行 canonical；人名映射 = 行 canonical + aliases（同 FEAT-A016 单表口径，alias.json 已退役）。
  */
 function loadCanonicalNames() {
-  const src = fs.readFileSync(ALIAS_BUILD_SCRIPT, 'utf8');
-  const m = src.match(/PERSONS\s*=\s*\[([\s\S]*?)\n\]/);
-  if (!m) throw new Error('build_alias.py 中找不到 PERSONS 表');
-  const names = [];
-  for (const line of m[1].split('\n')) {
-    const hit = line.match(/^\s*\(\s*"([^"]+)"\s*,\s*\[/);
-    if (hit) names.push(hit[1]);
-  }
+  const table = JSON.parse(fs.readFileSync(ENTITY_TABLE_FILE, 'utf8'));
   const byPid = {};
-  names.forEach((name, i) => {
-    byPid[`P${String(i + 1).padStart(3, '0')}`] = name;
-  });
+  for (const row of table.rows) {
+    if (row.type !== '人物' || typeof row.id !== 'string') continue;
+    byPid[row.id] = row.canonical;
+  }
   return byPid;
 }
 
 const corpus = loadCorpus();
-const alias = JSON.parse(fs.readFileSync(ALIAS_FILE, 'utf8'));
+const table = JSON.parse(fs.readFileSync(ENTITY_TABLE_FILE, 'utf8'));
+const nameToId = new Map();
+for (const row of table.rows) {
+  if (row.type !== '人物') continue;
+  nameToId.set(row.canonical, row.id);
+  for (const a of row.aliases) nameToId.set(a, row.id);
+}
 const canonicalByPid = loadCanonicalNames();
 
-section('自检：alias 规范名表');
-assert(canonicalByPid.P001 === '刘备' && canonicalByPid.P002 === '关羽', 'P001=刘备、P002=关羽（build_alias.py 登记）');
+section('自检：entity-table 人物规范名表');
+assert(canonicalByPid.P001 === '刘备' && canonicalByPid.P002 === '关羽', 'P001=刘备、P002=关羽（entity-table 人物行登记）');
 
-/** 人名 → 规范名：alias 表覆盖的在册人物映射到规范名，未覆盖的按原名。 */
+/** 人名 → 规范名：在册人物（canonical ∪ aliases）映射到规范名，未覆盖的按原名。 */
 function canonicalPerson(name) {
-  const pid = alias[name];
+  const pid = nameToId.get(name);
   if (!pid) return name;
   return canonicalByPid[pid] ?? name;
 }
@@ -124,12 +123,12 @@ section('event.json');
         const pid = canonicalPerson(birthHit[1]);
         assert(!debutByPid.has(pid), `人物首次登场只记一次：${birthHit[1]}`);
         debutByPid.set(pid, key);
-        if (alias[birthHit[1]] && canonicalPerson(birthHit[1]) !== birthHit[1]) {
+        if (nameToId.has(birthHit[1]) && canonicalPerson(birthHit[1]) !== birthHit[1]) {
           badNames.push(`登场:${birthHit[1]}`);
         }
       } else if (deathHit) {
         death += 1;
-        if (alias[deathHit[1]] && canonicalPerson(deathHit[1]) !== deathHit[1]) {
+        if (nameToId.has(deathHit[1]) && canonicalPerson(deathHit[1]) !== deathHit[1]) {
           badNames.push(`之死:${deathHit[1]}`);
         }
       }
@@ -188,7 +187,7 @@ section('duel.json');
       if (m) {
         assert(m[1] !== m[2], `单挑双方非同一人：${key} => ${tag}`);
         for (const name of [m[1], m[2]]) {
-          if (alias[name] && canonicalPerson(name) !== name) {
+          if (nameToId.has(name) && canonicalPerson(name) !== name) {
             badNames.push(name);
           }
         }

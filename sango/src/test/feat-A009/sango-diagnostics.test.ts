@@ -4,7 +4,9 @@
  * nextRank/deathIntent）/ 漏斗管道约束 / 降级环境 / 死亡意图置顶 / 64KB 预算截断 / 工具层 traceId 透传回传
  * result._meta.diagnostics（content 契约零改动）/ 旁路（产出失败不影响 content）/ 候选命中的标签文本
  * （hitLabels：与 labelHit 自洽、标签表成员、双字词元求交，另用真实语料 data/corpus 核对一次）。
- * 夹具与 feat-A004 同源：4 chunk（第 1 回 1 个 / 第 73 回 3 个）、无向量文件（降级纯 BM25）、alias 5 条 / 2 PID。
+ * 夹具与 feat-A004 同源：4 chunk（第 1 回 1 个 / 第 73 回 3 个）、无向量文件（降级纯 BM25）、
+ * entity-table 2 条 rewriteKeys / 2 人物行（FEAT-A016 单表；rewriteKeyCount=2 为 env.aliasCount 新口径，
+ * env.normVersion=5f0a1c2d 为夹具表 meta；query.rewrites 为 query 侧实际改写命中明细）。
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -84,10 +86,10 @@ test('② 请求诊断：结构字段齐全（truncated/truncatedCount/query/env
   assert.ok(diagnostics, '请求诊断时应产出');
   assert.equal(diagnostics.truncated, false);
   assert.equal(diagnostics.truncatedCount, 0);
-  assert.deepEqual(Object.keys(diagnostics.query).sort(), ['normalized', 'raw', 'tokens']);
+  assert.deepEqual(Object.keys(diagnostics.query).sort(), ['normalized', 'raw', 'rewrites', 'tokens']);
   assert.deepEqual(
     Object.keys(diagnostics.env).sort(),
-    ['aliasCount', 'corpusChunks', 'degradedBm25Only', 'vectorDim', 'vectorScheme'],
+    ['aliasCount', 'corpusChunks', 'degradedBm25Only', 'normVersion', 'vectorDim', 'vectorScheme'],
   );
   assert.deepEqual(
     Object.keys(diagnostics.funnel).sort(),
@@ -101,16 +103,22 @@ test('② 请求诊断：结构字段齐全（truncated/truncatedCount/query/env
   assert.deepEqual(Object.keys(diagnostics).sort(), ['candidates', 'deathIntent', 'env', 'funnel', 'nextRank', 'query', 'timing', 'truncated', 'truncatedCount'], '诊断顶层字段齐全');
 });
 
-test('③ query 处理链：raw=入参、normalized=alias 归一化结果、tokens 非空（验收 9）', async () => {
+test('③ query 处理链：raw=入参、normalized=rewriteKeys 替换结果、tokens 非空（验收 9）', async () => {
   const index = loadFixtureIndex();
   const { diagnostics } = await index.search('云长', 5, { diagnostics: true });
   assert.ok(diagnostics);
   assert.equal(diagnostics.query.raw, '云长');
-  assert.equal(diagnostics.query.normalized, '关羽', '云长 经别名归一化为规范名 关羽');
+  assert.equal(diagnostics.query.normalized, '关羽', '云长 经 rewriteKeys 替换为规范形 关羽（人名与换说法同一口径）');
+  assert.deepEqual(
+    diagnostics.query.rewrites,
+    [{ from: '云长', to: '关羽' }],
+    'query.rewrites = query 侧实际改写命中明细（接口 §5，按替换顺序；无改写为 []）',
+  );
+  assert.equal(diagnostics.env.normVersion, '5f0a1c2d', 'env.normVersion = 表 meta.normVersion（夹具表，接口 §5）');
   assert.ok(Array.isArray(diagnostics.query.tokens) && diagnostics.query.tokens.length > 0);
 });
 
-test('④ 环境与降级：夹具无向量 → degradedBm25Only=true、vectorScheme/vectorDim 为 null、语料/alias 计数正确（验收 10）', async () => {
+test('④ 环境与降级：夹具无向量 → degradedBm25Only=true、vectorScheme/vectorDim 为 null、语料/rewriteKeys 计数正确（验收 10）', async () => {
   const index = loadFixtureIndex();
   const { diagnostics } = await index.search('关羽', 5, { diagnostics: true });
   assert.ok(diagnostics);
@@ -118,7 +126,7 @@ test('④ 环境与降级：夹具无向量 → degradedBm25Only=true、vectorSc
   assert.equal(diagnostics.env.vectorScheme, null);
   assert.equal(diagnostics.env.vectorDim, null);
   assert.equal(diagnostics.env.corpusChunks, 4);
-  assert.equal(diagnostics.env.aliasCount, 5);
+  assert.equal(diagnostics.env.aliasCount, 2, 'env.aliasCount = 表内 rewriteKeys 总数（人物 孟德 + 云长）');
   assert.equal(diagnostics.funnel.corpusChunks, 4);
   assert.equal(diagnostics.funnel.vectorTop50, 0, '降级时向量路为 0');
 });
@@ -233,8 +241,8 @@ test('⑨ 64KB 预算截断（硬约束 3）：超限诊断 truncated=true、tru
   const overBudget: RetrievalDiagnostics = {
     truncated: false,
     truncatedCount: 0,
-    query: { raw: 'q', normalized: 'q', tokens: ['q'] },
-    env: { vectorScheme: null, degradedBm25Only: true, corpusChunks: 4, aliasCount: 5, vectorDim: null },
+    query: { raw: 'q', normalized: 'q', rewrites: [], tokens: ['q'] },
+    env: { vectorScheme: null, degradedBm25Only: true, corpusChunks: 4, aliasCount: 5, normVersion: '', vectorDim: null },
     funnel: { corpusChunks: 4, lexicalHits: 1, vectorTop50: 0, labelHits: 0, mergedCandidates: 1000, topN: 10, injected: null, cited: null },
     timing: { bm25: 1.2, vector: 3.4, label: 0.5, merge: 2.1 },
     candidates: Array.from({ length: 1000 }, (_, i) => ({ ...candidate, rank: i + 1 })),
@@ -254,8 +262,8 @@ test('⑨ 64KB 预算截断（硬约束 3）：超限诊断 truncated=true、tru
   const tiny: RetrievalDiagnostics = {
     truncated: false,
     truncatedCount: 0,
-    query: { raw: 'q', normalized: 'q', tokens: ['q'] },
-    env: { vectorScheme: null, degradedBm25Only: true, corpusChunks: 4, aliasCount: 5, vectorDim: null },
+    query: { raw: 'q', normalized: 'q', rewrites: [], tokens: ['q'] },
+    env: { vectorScheme: null, degradedBm25Only: true, corpusChunks: 4, aliasCount: 5, normVersion: '', vectorDim: null },
     funnel: { corpusChunks: 4, lexicalHits: 1, vectorTop50: 0, labelHits: 0, mergedCandidates: 1, topN: 1, injected: null, cited: null },
     timing: { bm25: 0.4, vector: null, label: 0.1, merge: 0.8 },
     candidates: [candidate],
@@ -380,13 +388,14 @@ test('⑮ hitLabels 真实语料核对（data/corpus）：自洽 / 表成员 / �
   index.vec = new Float32Array(0); // 降级纯 BM25，避免真向量编码拖慢测试，且不影响标签路判定
   const tagsByChunk = loadTagTable(path.join(DATA_DIR, 'corpus', 'tags'));
 
-  // 轮 1（alias 归一化 query）：自洽 + 表成员 + 保序去重；含「关羽」与不含「关羽」的标签都要能被回传。
-  const aliased = await index.search('关羽', 5, { diagnostics: true });
+  // 轮 1（rewriteKeys 归一化 query「云长 → 关羽」）：自洽 + 表成员 + 保序去重；含「关羽」与不含「关羽」的标签都要能被回传。
+  const aliased = await index.search('云长', 5, { diagnostics: true });
   assert.ok(aliased.diagnostics);
   assert.ok(aliased.diagnostics.env.corpusChunks > 1000, '真实语料已加载');
   assert.equal(aliased.diagnostics.env.degradedBm25Only, true);
   assert.ok(aliased.diagnostics.funnel.labelHits > 0);
-  assert.notEqual(aliased.diagnostics.query.normalized, aliased.diagnostics.query.raw, '真实语料下 query 经 alias 归一化为规范名');
+  assert.notEqual(aliased.diagnostics.query.normalized, aliased.diagnostics.query.raw, '真实语料下 云长 经 rewriteKeys 替换为规范形 关羽');
+  assert.equal(aliased.diagnostics.query.normalized, '关羽', '表指定规范形：云长 → 关羽（取消 df 选名）');
   let aliasedLabelHit = 0;
   const allLabels: string[] = [];
   for (const c of aliased.diagnostics.candidates) {
@@ -400,17 +409,18 @@ test('⑮ hitLabels 真实语料核对（data/corpus）：自洽 / 表成员 / �
       allLabels.push(label);
     }
   }
-  assert.ok(aliasedLabelHit > 0, 'query「关羽」标签路有命中');
+  assert.ok(aliasedLabelHit > 0, 'query「云长」（归一化 关羽）标签路有命中');
   // 归一化后才命中的证据：回传的标签原文里存在不含「关羽」二字者（别名写法「美髯公」/「关云长」）
   assert.ok(
     allLabels.some((label) => !label.includes('关羽')),
     'hitLabels 回传标签原文（保留别名写法），不做归一化改写',
   );
 
-  // 轮 2（恒等归一化 query「白门楼」）：标签侧判定 == 测试侧直接 tokenize 标签原文，允许严格复算。
-  const plain = await index.search('白门楼', 5, { diagnostics: true });
+  // 轮 2（恒等归一化 query「华雄」——不在实体表（无别名不占位），非任何行改写键）：
+  // 标签侧判定 == 测试侧直接 tokenize 标签原文，允许严格复算。
+  const plain = await index.search('华雄', 5, { diagnostics: true });
   assert.ok(plain.diagnostics);
-  assert.equal(plain.diagnostics.query.normalized, plain.diagnostics.query.raw, 'alias 表无「白门楼」条目 → 归一化为恒等');
+  assert.equal(plain.diagnostics.query.normalized, plain.diagnostics.query.raw, '实体表无「华雄」改写键 → 归一化为恒等');
   assert.ok(plain.diagnostics.candidates.length > 0);
   const tokens2 = new Set(plain.diagnostics.query.tokens.filter((t) => t.length >= 2));
   let plainLabelHit = 0;
@@ -421,7 +431,7 @@ test('⑮ hitLabels 真实语料核对（data/corpus）：自洽 / 表成员 / �
     assert.equal(c.labelHit, expected.length > 0, 'rank' + c.rank + ' labelHit 与复算一致');
     if (c.labelHit) plainLabelHit++;
   }
-  assert.ok(plainLabelHit > 0, 'query「白门楼」标签路有命中');
+  assert.ok(plainLabelHit > 0, 'query「华雄」标签路有命中（人物之生-华雄登场 / 人物之死-华雄之死）');
 });
 
 test('⑯ 分阶段耗时：正常检索（真向量可用）四段 timing 均为 ≥0 的有限数、键齐全', async () => {

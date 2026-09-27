@@ -1,7 +1,9 @@
 /**
  * feat-A004 C4 活文档：sango-index 适配 chunks[]（schema v2）+ 出参结构化（去出处头）。
  *
- * 夹具语料 fixture/corpus/sanguo-yanyi/*.json 为 schema v2（chunks[]），字段口径与接口文档
+ * 夹具：fixture/entity-table.json（FEAT-A016 单表小样本：曹操 P001 改写键 孟德 / 片段侧 阿瞒，
+ * 关羽 P002 改写键 云长 / 片段侧 关公；bannedRewriteKeys=[关公]）；fixture/corpus/sanguo-yanyi/*.json
+ * 为 schema v2（chunks[]），字段口径与接口文档
  * 「输出（命中）」及 docs/sango-corpus-spec.md §5 逐字一致；用夹具而非真实语料，是因为磁盘上的
  * 真实语料此刻仍是旧格式（segments[]），待语料重建（C5）后再补跑端到端验证。
  * 夹具另含 corpus/tags/event.json：c0001/c0002 打「人物之死-关羽之死」（c0002 另带
@@ -17,6 +19,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { NO_HIT_TEXT, SangoIndex } from '../../search/sango-index.ts';
 import { matchDeathIntent } from '../../search/intent.ts';
 import { registerSangoNovelSearch } from '../../tools/sango-novel-search.ts';
+import { tokenize } from '../../utils/text.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const FIXTURE_DIR = path.join(__dirname, 'fixture');
@@ -307,4 +310,33 @@ test('⑲ 死亡年龄类问法（death_age）：死亡段与遗言/托孤段一
   assert.equal(entries[0].id, 'sanguo-yanyi:0073:c0001', '死亡段 0073:c0001 置顶第一');
   assert.equal(entries[1].id, 'sanguo-yanyi:0073:c0002', '遗言/托孤段 0073:c0002 同组置顶（年龄事实段与死亡段一并可及）');
   assert.ok(entries.slice(0, 10).some((e) => e.id === 'sanguo-yanyi:0073:c0001'), 'limit=10 内死亡段可及');
+});
+
+test('⑳ A016 双侧替换：rewriteKeys 在 query 侧 embed 前生效（孟德 → 曹操），fragmentOnly 不参与 query 改写（关公 保持原文）', async () => {
+  const index = loadFixtureIndex();
+  const { diagnostics } = await index.search('孟德', 5, { diagnostics: true });
+  assert.ok(diagnostics);
+  assert.equal(diagnostics.query.raw, '孟德');
+  assert.equal(diagnostics.query.normalized, '曹操', 'rewriteKeys 替换：孟德 → 曹操（人物行级）');
+  const noDiag = await index.search('关公', 5);
+  assert.ok(noDiag.entries.length > 0, 'fragmentOnly 词（关公）原文检索仍可命中 073:c0002（云长段原文无 关公，命中来自词法共现/标签路）');
+  const identity = await index.search('阿瞒', 5, { diagnostics: true });
+  assert.equal(identity.diagnostics?.query.normalized, '阿瞒', 'fragmentOnly（阿瞒）不参与 query 改写');
+});
+
+test('㉑ A016 片段侧双写（fragmentOnly）：原文命中追加写入规范形 token，df 略升、dl 不重算', async () => {
+  const index = loadFixtureIndex();
+  const internals = index as unknown as { postings: Map<string, Array<{ doc: number; tf: number }>> };
+  const doc0 = index.docs.find((d) => d.chunkId === 'sanguo-yanyi:0001:c0001');
+  assert.ok(doc0, '第 1 回 c0001 已加载');
+  // 001 文本「曹操字孟德，小字阿瞒。曹操少有才名，曹操任侠放荡。阿瞒者，操之小字也。」归一化后：
+  // 原文 曹操 x3 + 孟德替换 1 = 4，阿瞒 2 处逐处双写追加 2 = tf 6（接口 §2.3 逐处；once-per-doc 则为 5）。
+  // doc.len 仍为原文归一化 token 数（含双写前），双写只增倒排、不改 dl（接口 §2.3）。
+  const c001 = internals.postings.get('曹操')?.find((p) => p.doc === index.docs.indexOf(doc0));
+  assert.ok(c001, '\u201c曹操\u201d 应在 c0001 的 postings 中');
+  assert.equal(c001.tf, 6, '原文 3 + 孟德替换 1 + 阿瞒双写 2 处 = 6（逐处双写生效；once-per-doc 则为 5）');
+  const normText = '曹操字曹操，小字阿瞒。曹操少有才名，曹操任侠放荡。阿瞒者，操之小字也。';
+  assert.equal(doc0.len, tokenize(normText).length, 'doc.len = 原文归一化 token 数（双写不重算 dl）');
+  const { entries } = await index.search('曹操', 5);
+  assert.deepEqual(entries.map((e) => e.chapter).sort(), [1, 73], '曹操 跨回召回不受双写影响（第 1 回 + 第 73 回）');
 });

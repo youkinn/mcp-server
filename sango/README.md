@@ -82,4 +82,5 @@ npm run build      # TypeScript 构建
 npm test           # 检索索引单测（src/test/feat-A004）
 ```
 
-语料与向量构建命令见 `package.json`（`corpus` / `vectors` / `alias`）；语料 schema 见 `dev-docs/docs/sango-corpus-spec.md`。
+语料与向量构建命令见 `package.json`（`corpus` / `vectors`；别名 / 换说法单表由 `entity-table` 合并脚本产出
+`data/entity-table.json`，FEAT-A016，alias.json 已退役）；语料 schema 见 `dev-docs/docs/sango-corpus-spec.md`。
