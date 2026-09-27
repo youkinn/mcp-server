@@ -1,8 +1,8 @@
 {
  "meta": {
   "schemaVersion": 1,
-  "normVersion": "87dd8704",
-  "generatedAt": "2026-09-27T20:58:05.426Z",
+  "normVersion": "ab25ac91",
+  "generatedAt": "2026-09-27T21:21:06.830Z",
   "corpusChunkCount": 2344
  },
  "rows": [
@@ -11218,10 +11218,9 @@
    "eventId": "E06605",
    "eventName": "穆顺之死",
    "aliases": [
-    "穆顺之死",
-    "穆顺死亡",
-    "穆顺去世",
-    "宦官穆顺之死"
+    "宦官穆顺之死",
+    "宦官穆顺身亡",
+    "宦官穆顺遇害"
    ],
    "chunkIds": [
     "sanguo-yanyi:0066:c0002",
@@ -13991,10 +13990,9 @@
    "eventId": "E08406",
    "eventName": "张南之死",
    "aliases": [
-    "张南之死",
-    "张南死亡",
-    "张南去世",
-    "蜀将张南之死"
+    "蜀将张南之死",
+    "蜀将张南战死",
+    "随军张南之死"
    ],
    "chunkIds": [
     "sanguo-yanyi:0084:c0001",
