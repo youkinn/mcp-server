@@ -1,0 +1,100 @@
+{
+ "meta": {
+  "schemaVersion": 1,
+  "normVersion": "a1b2c3d4",
+  "generatedAt": "2026-09-28T00:00:00.000Z",
+  "corpusChunkCount": 9
+ },
+ "rows": [
+  {
+   "eventId": "E00101",
+   "eventName": "桃园结义",
+   "aliases": [
+    "桃园结义"
+   ],
+   "chunkIds": [
+    "sanguo-yanyi:0001:c0006"
+   ],
+   "type": "L1",
+   "exampleQuestion": "桃园结义是哪一回"
+  },
+  {
+   "eventId": "E00501",
+   "eventName": "温酒斩华雄",
+   "aliases": [
+    "温酒斩华雄",
+    "斩华雄"
+   ],
+   "chunkIds": [
+    "sanguo-yanyi:0002:c0001",
+    "sanguo-yanyi:0001:c0006"
+   ],
+   "type": "L1",
+   "exampleQuestion": "温酒斩华雄是怎么回事"
+  },
+  {
+   "eventId": "E00502",
+   "eventName": "三英战吕布",
+   "aliases": [
+    "三英战吕布"
+   ],
+   "chunkIds": [
+    "sanguo-yanyi:0001:c0007"
+   ],
+   "type": "L1",
+   "exampleQuestion": "三英战吕布是哪一回"
+  },
+  {
+   "eventId": "E00503",
+   "eventName": "虎牢关大战",
+   "aliases": [
+    "虎牢关三英战吕布"
+   ],
+   "chunkIds": [
+    "sanguo-yanyi:0002:c0001",
+    "sanguo-yanyi:0002:c0002"
+   ],
+   "type": "L1",
+   "exampleQuestion": "虎牢关三英战吕布怎么打的"
+  },
+  {
+   "eventId": "E00504",
+   "eventName": "谜团事件",
+   "aliases": [
+    "迷之事件",
+    "谜"
+   ],
+   "chunkIds": [
+    "sanguo-yanyi:0002:c0001",
+    "sanguo-yanyi:0002:c0002"
+   ],
+   "type": "L2",
+   "exampleQuestion": "谜团事件是什么"
+  },
+  {
+   "eventId": "E00505",
+   "eventName": "丙丁大事",
+   "aliases": [
+    "丙丁"
+   ],
+   "chunkIds": [
+    "sanguo-yanyi:0002:c0001",
+    "sanguo-yanyi:0002:c0002"
+   ],
+   "type": "L1",
+   "exampleQuestion": "丙丁大事是啥"
+  },
+  {
+   "eventId": "E00506",
+   "eventName": "丙丁新篇",
+   "aliases": [
+    "丙丁新篇"
+   ],
+   "chunkIds": [
+    "sanguo-yanyi:0001:c0001"
+   ],
+   "type": "L2",
+   "exampleQuestion": "丙丁新篇在哪"
+  }
+ ]
+}

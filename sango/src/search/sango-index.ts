@@ -14,6 +14,8 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { embedQuery } from '../embed/bge-m3-encoder.ts';
+import { eventsDegraded, eventsNormVersion, loadEventsTable, matchEvents } from './event-table.ts';
+import type { MatchedEventGroup } from './event-table.ts';
 import {
   fragmentKeyToCanon as entityFragmentKeyToCanon,
   loadEntityTable,
@@ -29,6 +31,7 @@ import type {
   DeathIntent,
   Doc,
   RetrievalCandidateDiagnostics,
+  RetrievalEventHitDiagnostics,
   RetrievalDiagnostics,
   RetrievalDiagnosticsTiming,
   RetrievalQueryRewrite,
@@ -90,6 +93,46 @@ export function roundGap(value: number): number {
   return Math.round(value * 1e6) / 1e6;
 }
 
+/**
+ * FEAT-A018 §3.3 组内闭环 topK 装配：
+ * ① naturalTop[0..4] 原序保底入 final（不足 5 全取）并记 placed；
+ * ② 事件组按组优先级依次、组内按事件内序逐 chunk 占 rank 6+ 插槽（已 placed 跳过），直至 limit 或组耗尽；
+ * ③ naturalTop[5..] 未 placed 按原序补足至 limit。
+ * naturalTop 为空而事件命中时（三路 combined 空兜底，§3.3 第二路召回）由事件组自 rank 1 起构成 final。
+ * 导出仅供 feat-A018 装配单测直测；检索入口经 SangoIndex.search + this.docIndexOf 调用。
+ */
+export function assembleTopK(
+  naturalTop: SearchHit[],
+  groups: MatchedEventGroup[],
+  limit: number,
+  docIndexOf: Map<string, number>,
+): SearchHit[] {
+  const final: SearchHit[] = [];
+  const placed = new Set<number>();
+  // ① 头保底同样受 limit 上界约束（输出 final 长度 ≤ limit；limit<5 时头保底即截断，与现状 slice 口径一致）
+  for (let i = 0; i < Math.min(5, naturalTop.length) && final.length < limit; i++) {
+    final.push(naturalTop[i]);
+    placed.add(naturalTop[i].doc);
+  }
+  for (const g of groups) {
+    if (final.length >= limit) break;
+    for (const chunkId of g.chunkIds) {
+      if (final.length >= limit) break;
+      const di = docIndexOf.get(chunkId);
+      if (di === undefined || placed.has(di)) continue;
+      placed.add(di);
+      final.push({ doc: di, score: 0 });
+    }
+  }
+  for (let i = 5; i < naturalTop.length && final.length < limit; i++) {
+    const h = naturalTop[i];
+    if (placed.has(h.doc)) continue;
+    placed.add(h.doc);
+    final.push(h);
+  }
+  return final;
+}
+
 /** 候选分数表条数上限（契约 §1.3：candidates ≤ 20 条）。 */
 const MAX_DIAGNOSTIC_CANDIDATES = 20;
 /** 诊断 JSON 序列化后 UTF-8 字节数预算（硬约束 3：64 KB，远低于 stdio 10 MB 上限）。 */
@@ -114,6 +157,10 @@ interface DiagnosticsBuildContext {
   vectorTop: number[];
   /** feat-A013：分阶段耗时（search 内实测毫秒）。 */
   timing: RetrievalDiagnosticsTiming;
+  /** FEAT-A018：事件名桥命中诊断（未命中时 degraded / normVersion 仍可读、groups 空）。 */
+  eventHit: RetrievalEventHitDiagnostics;
+  /** FEAT-A018：命中事件组全部有效 chunk 的文档下标集合（candidates[].sources 'event' 判定）。 */
+  eventDocSet: Set<number>;
 }
 
 /**
@@ -296,6 +343,17 @@ export class SangoIndex {
     this.avgLen = this.docs.reduce((s, d) => s + d.len, 0) / this.n;
     this.loadVectors(this.n);
     this.loadTags();
+    this.loadEvents();
+  }
+
+  /**
+   * FEAT-A018：事件表加载（事件名桥 + 组内闭环装配的数据源，接口 §2.1）。
+   * 漂移检测需要 chunkId → 文档下标反查（docIndexOf 现成成员）与当前语料 chunk 数，
+   * 必须在 docs 构建完成之后执行（与标签同阶段）。事件表失败仅告警降级为「无事件路由」，
+   * 不阻断启动（核心语料失败仍终止，现状不变）。
+   */
+  private loadEvents(): void {
+    loadEventsTable(this.dataDir, (chunkId) => this.docIndexOf.has(chunkId), this.n);
   }
 
   /**
@@ -581,11 +639,33 @@ export class SangoIndex {
     } else {
       // 纯向量兜底（仅真向量可用时；scheme=hash 无语义，纯 BM25 无词法命中即判无命中）
       if (!cosine) {
+        const fallback = this.eventFallbackResult(
+          query,
+          normalized,
+          normDetail.hits,
+          qTokens,
+          null,
+          deathIntent,
+          timing,
+          mergeT0,
+          limit,
+          wantDiag,
+        );
+        if (fallback) return fallback;
         return {
           entries: [],
           diagnostics: wantDiag
             ? this.safeDiagnostics(() =>
-                this.emptySearchDiagnostics(query, normalized, normDetail.hits, qTokens, null, deathIntent, timing),
+                this.emptySearchDiagnostics(
+                  query,
+                  normalized,
+                  normDetail.hits,
+                  qTokens,
+                  null,
+                  deathIntent,
+                  timing,
+                  this.emptyEventHit(),
+                ),
               )
             : null,
         };
@@ -594,11 +674,33 @@ export class SangoIndex {
       for (let d = 0; d < this.n; d++) if (cosine[d] > best) best = cosine[d];
       if (best < MIN_COSINE) {
         // 向量存在但全部低于阈值 → 无命中；向量有效候选记 0（不做额外计算，mergedCandidates=0 已可读）
+        const fallback = this.eventFallbackResult(
+          query,
+          normalized,
+          normDetail.hits,
+          qTokens,
+          cosine,
+          deathIntent,
+          timing,
+          mergeT0,
+          limit,
+          wantDiag,
+        );
+        if (fallback) return fallback;
         return {
           entries: [],
           diagnostics: wantDiag
             ? this.safeDiagnostics(() =>
-                this.emptySearchDiagnostics(query, normalized, normDetail.hits, qTokens, cosine, deathIntent, timing),
+                this.emptySearchDiagnostics(
+                  query,
+                  normalized,
+                  normDetail.hits,
+                  qTokens,
+                  cosine,
+                  deathIntent,
+                  timing,
+                  this.emptyEventHit(),
+                ),
               )
             : null,
         };
@@ -612,11 +714,33 @@ export class SangoIndex {
     }
 
     if (combined.length === 0) {
+      const fallback = this.eventFallbackResult(
+        query,
+        normalized,
+        normDetail.hits,
+        qTokens,
+        cosine,
+        deathIntent,
+        timing,
+        mergeT0,
+        limit,
+        wantDiag,
+      );
+      if (fallback) return fallback;
       return {
         entries: [],
         diagnostics: wantDiag
           ? this.safeDiagnostics(() =>
-              this.emptySearchDiagnostics(query, normalized, normDetail.hits, qTokens, cosine, deathIntent, timing),
+              this.emptySearchDiagnostics(
+                query,
+                normalized,
+                normDetail.hits,
+                qTokens,
+                cosine,
+                deathIntent,
+                timing,
+                this.emptyEventHit(),
+              ),
             )
           : null,
       };
@@ -635,8 +759,14 @@ export class SangoIndex {
       }
       return b.score - a.score;
     });
-    const hits = combined.slice(0, Math.min(limit, combined.length));
+    // FEAT-A018 §3.1 / §3.3：事件名桥在标签路由与死亡意图判定之后、合并排序之后、topK 装配之前执行
+    // （耗时并入 merge 段计时）。装配：naturalTop 前 5 保底原序原分 → 事件组按组优先级占 rank 6+
+    // 插槽（组内事件内序）→ naturalTop 6+ 未 placed 补足。
+    const eventGroups = matchEvents(normalized);
+    const hits = assembleTopK(combined, eventGroups, limit, this.docIndexOf);
     timing.merge = performance.now() - mergeT0;
+    const eventHit = this.buildEventHit(eventGroups, new Set(hits.map((h) => h.doc)));
+    const eventDocSet = this.eventDocSetOf(eventGroups);
     const entries = hits.map((h) => this.toEntry(this.docs[h.doc]));
     return {
       entries,
@@ -658,6 +788,8 @@ export class SangoIndex {
               cosine,
               vectorTop,
               timing,
+              eventHit,
+              eventDocSet,
             }),
           )
         : null,
@@ -683,6 +815,7 @@ export class SangoIndex {
     cosine: Float64Array | null,
     deathIntent: DeathIntent | null,
     timing: RetrievalDiagnosticsTiming,
+    eventHit: RetrievalEventHitDiagnostics,
   ): RetrievalDiagnostics {
     return this.buildDiagnostics({
       raw: query,
@@ -700,7 +833,101 @@ export class SangoIndex {
       cosine,
       vectorTop: [],
       timing,
+      eventHit,
+      eventDocSet: new Set(),
     });
+  }
+
+  /**
+   * FEAT-A018 第二路召回兜底（§3.3）：三路 combined 为空而事件命中时，final 由事件组构成
+   * （自 rank 1 起按组优先级 + 组内事件内序），供「无向量 / 向量全低于阈值 / combined 空」的
+   * 早退路径复用；返回 null = 事件路未命中（调用方维持现状空结果路径）。
+   */
+  private eventFallbackResult(
+    query: string,
+    normalized: string,
+    rewrites: RetrievalQueryRewrite[],
+    tokens: string[],
+    cosine: Float64Array | null,
+    deathIntent: DeathIntent | null,
+    timing: RetrievalDiagnosticsTiming,
+    mergeT0: number,
+    limit: number,
+    wantDiag: boolean,
+  ): SearchResult | null {
+    const groups = matchEvents(normalized);
+    if (groups.length === 0) return null;
+    const hits = assembleTopK([], groups, limit, this.docIndexOf);
+    timing.merge = performance.now() - mergeT0;
+    const eventHit = this.buildEventHit(groups, new Set(hits.map((h) => h.doc)));
+    const entries = hits.map((h) => this.toEntry(this.docs[h.doc]));
+    return {
+      entries,
+      diagnostics: wantDiag
+        ? this.safeDiagnostics(() =>
+            this.buildDiagnostics({
+              raw: query,
+              normalized,
+              rewrites,
+              tokens,
+              bm25: new Float64Array(0),
+              bm25Norm: new Float64Array(0),
+              lexicalHits: new Set(),
+              tagHits: new Set(),
+              deathIntent,
+              deathHits: new Set(),
+              combined: [],
+              hits,
+              cosine,
+              vectorTop: [],
+              timing,
+              eventHit,
+              eventDocSet: this.eventDocSetOf(groups),
+            }),
+          )
+        : null,
+    };
+  }
+
+  /** FEAT-A018：空事件路（表降级 / 未命中）时的最小 eventHit（degraded / normVersion 仍可读，groups 空）。 */
+  private emptyEventHit(): RetrievalEventHitDiagnostics {
+    return { degraded: eventsDegraded(), normVersion: eventsNormVersion(), groupCount: 0, groups: [] };
+  }
+
+  /** FEAT-A018：命中事件组 → eventHit 明细（placedChunkIds = 实际进出参条目的事件组 chunk，按事件内序）。 */
+  private buildEventHit(groups: MatchedEventGroup[], placedDocs: Set<number>): RetrievalEventHitDiagnostics {
+    return {
+      degraded: eventsDegraded(),
+      normVersion: eventsNormVersion(),
+      groupCount: groups.length,
+      groups: groups.map((g) => {
+        const placedChunkIds = g.chunkIds.filter((chunkId) => {
+          const di = this.docIndexOf.get(chunkId);
+          return di !== undefined && placedDocs.has(di);
+        });
+        return {
+          eventId: g.eventId,
+          eventName: g.eventName,
+          matchedAlias: g.matchedAlias,
+          type: g.type,
+          groupSize: g.groupSize,
+          placedCount: placedChunkIds.length,
+          placedChunkIds,
+        };
+      }),
+    };
+  }
+
+  /** FEAT-A018：命中事件组全部有效 chunk 的文档下标集合（candidates[].sources 'event' 判定用）。 */
+  private eventDocSetOf(groups: MatchedEventGroup[]): Set<number> {
+    const docs = new Set<number>();
+    for (const g of groups) {
+      for (const chunkId of g.chunkIds) {
+        const di = this.docIndexOf.get(chunkId);
+        if (di !== undefined) docs.add(di);
+      }
+    }
+    return docs;
   }
 
   /** 从 search 各中间量组装诊断（契约 §1.3）；注入 / 被引用占位 null，由总台回填。 */
@@ -751,6 +978,7 @@ export class SangoIndex {
         pinned: pinnedChunkIds.length > 0,
         chunkIds: pinnedChunkIds,
       },
+      eventHit: ctx.eventHit,
     };
   }
 
@@ -767,6 +995,8 @@ export class SangoIndex {
     if (ctx.lexicalHits.has(d)) sources.push('lexical');
     if (vectorTopSet.has(d)) sources.push('vector');
     if (ctx.tagHits.has(d)) sources.push('label');
+    // FEAT-A018 §5.3：可选来源 'event' = 候选同时属某命中事件组（便于漏斗核对；非事件命中请求恒不加，与现状逐字节一致）。
+    if (ctx.eventDocSet.has(d)) sources.push('event');
     // hitLabels：命中该 chunk 的标签原始文本（保序、去重）。判定口径与 tagPostings 构建 / tagHits 严格一致：
     // 标签经同口径 normalize + tokenize，与 query 词元中长度 ≥ 2 的词元求交（单字词元不参与，同标签路由）。
     // 跨主条目词经共享实体标签多挂命中后，同一标签词可能出现在多个主条目标签命中里，判定仍以原始标签文本为准。

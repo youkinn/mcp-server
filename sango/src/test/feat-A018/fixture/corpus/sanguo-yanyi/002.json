@@ -1,0 +1,25 @@
+{
+ "source": "sanguo-yanyi",
+ "chapter": 2,
+ "title": "第二回 试设计",
+ "chunks": [
+  {
+   "id": "sanguo-yanyi:0002:c0001",
+   "text": "戊己庚辛；辛壬癸甲。",
+   "type": "narration",
+   "segFrom": 1,
+   "segTo": 1,
+   "quoteBalanced": true,
+   "quotes": []
+  },
+  {
+   "id": "sanguo-yanyi:0002:c0002",
+   "text": "乾坤造化，日月长明。",
+   "type": "narration",
+   "segFrom": 1,
+   "segTo": 1,
+   "quoteBalanced": true,
+   "quotes": []
+  }
+ ]
+}

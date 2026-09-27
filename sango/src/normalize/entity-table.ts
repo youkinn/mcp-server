@@ -98,6 +98,10 @@ export function rewriteKeyCount(): number {
   return tableState.rewriteKeyCount;
 }
 
+export function rewriteKeys(): ReadonlySet<string> {
+  return new Set(tableState.keyToCanon.keys());
+}
+
 /** 表 meta.normVersion（8 位内容 hash）；表加载失败 / 降级为空串。工具出参与缓存 version_tag 复用。 */
 export function normVersion(): string {
   return tableState.normVersion;

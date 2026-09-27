@@ -1,0 +1,70 @@
+{
+ "source": "sanguo-yanyi",
+ "chapter": 1,
+ "title": "第一回 试设计",
+ "chunks": [
+  {
+   "id": "sanguo-yanyi:0001:c0001",
+   "text": "甲乙丙丁。",
+   "type": "narration",
+   "segFrom": 1,
+   "segTo": 1,
+   "quoteBalanced": true,
+   "quotes": []
+  },
+  {
+   "id": "sanguo-yanyi:0001:c0002",
+   "text": "丙丁甲乙。丙丁丙丁。",
+   "type": "narration",
+   "segFrom": 1,
+   "segTo": 1,
+   "quoteBalanced": true,
+   "quotes": []
+  },
+  {
+   "id": "sanguo-yanyi:0001:c0003",
+   "text": "丙丁。",
+   "type": "narration",
+   "segFrom": 1,
+   "segTo": 1,
+   "quoteBalanced": true,
+   "quotes": []
+  },
+  {
+   "id": "sanguo-yanyi:0001:c0004",
+   "text": "丙丁丙丁。",
+   "type": "narration",
+   "segFrom": 1,
+   "segTo": 1,
+   "quoteBalanced": true,
+   "quotes": []
+  },
+  {
+   "id": "sanguo-yanyi:0001:c0005",
+   "text": "丙丁与壬癸。丙丁。",
+   "type": "narration",
+   "segFrom": 1,
+   "segTo": 1,
+   "quoteBalanced": true,
+   "quotes": []
+  },
+  {
+   "id": "sanguo-yanyi:0001:c0006",
+   "text": "午未申酉；子丑寅卯。",
+   "type": "narration",
+   "segFrom": 1,
+   "segTo": 1,
+   "quoteBalanced": true,
+   "quotes": []
+  },
+  {
+   "id": "sanguo-yanyi:0001:c0007",
+   "text": "辰巳午未，申酉戌亥。",
+   "type": "narration",
+   "segFrom": 1,
+   "segTo": 1,
+   "quoteBalanced": true,
+   "quotes": []
+  }
+ ]
+}

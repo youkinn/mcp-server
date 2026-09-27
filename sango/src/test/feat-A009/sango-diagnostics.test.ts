@@ -100,7 +100,11 @@ test('② 请求诊断：结构字段齐全（truncated/truncatedCount/query/env
     Object.keys(diagnostics.deathIntent).sort(),
     ['chunkIds', 'detected', 'pinned'],
   );
-  assert.deepEqual(Object.keys(diagnostics).sort(), ['candidates', 'deathIntent', 'env', 'funnel', 'nextRank', 'query', 'timing', 'truncated', 'truncatedCount'], '诊断顶层字段齐全');
+  assert.deepEqual(
+    Object.keys(diagnostics).sort(),
+    ['candidates', 'deathIntent', 'env', 'eventHit', 'funnel', 'nextRank', 'query', 'timing', 'truncated', 'truncatedCount'],
+    '诊断顶层字段齐全（FEAT-A018 增 eventHit）',
+  );
 });
 
 test('③ query 处理链：raw=入参、normalized=rewriteKeys 替换结果、tokens 非空（验收 9）', async () => {
@@ -248,6 +252,7 @@ test('⑨ 64KB 预算截断（硬约束 3）：超限诊断 truncated=true、tru
     candidates: Array.from({ length: 1000 }, (_, i) => ({ ...candidate, rank: i + 1 })),
     nextRank: { ...candidate, rank: 11, gapToTopN: 0.1 },
     deathIntent: { detected: false, pinned: false, chunkIds: [] },
+    eventHit: { degraded: true, normVersion: '', groupCount: 0, groups: [] },
   };
   const trimmed = enforceDiagnosticsBudget(overBudget);
   assert.equal(trimmed.truncated, true);
@@ -269,6 +274,7 @@ test('⑨ 64KB 预算截断（硬约束 3）：超限诊断 truncated=true、tru
     candidates: [candidate],
     nextRank: null,
     deathIntent: { detected: false, pinned: false, chunkIds: [] },
+    eventHit: { degraded: true, normVersion: '', groupCount: 0, groups: [] },
   };
   const kept = enforceDiagnosticsBudget(tiny);
   assert.equal(kept.truncated, false, '未超限不截断');

@@ -187,7 +187,7 @@ export interface RetrievalFunnelDiagnostics {
 }
 
 export interface RetrievalCandidateDiagnostics {
-  /** 排名（1 起，按最终返回序）。 */
+  /** 排名（1 起，三路合并候选池序 = topK 装配前；FEAT-A018 §4：事件命中时与最终出参序可能错位，最终序可由 candidates + eventHit.placedChunkIds 重建）。 */
   rank: number;
   /** chunk 唯一 ID。 */
   chunkId: string;
@@ -207,7 +207,7 @@ export interface RetrievalCandidateDiagnostics {
   hitLabels: string[];
   /** 最终分（合并排序分）。 */
   finalScore: number;
-  /** 命中来源子集：lexical / vector / label。 */
+  /** 命中来源子集：lexical / vector / label；FEAT-A018 可选增 event（该候选同时属某命中事件组）。 */
   sources: string[];
   /** 是否进注入视图；sango 占位 null，总台回填。 */
   injected: boolean | null;
@@ -224,6 +224,33 @@ export interface RetrievalDeathIntentDiagnostics {
   pinned: boolean;
   /** 被置顶的候选 chunkId；未置顶为 []。 */
   chunkIds: string[];
+}
+
+/** FEAT-A018 §5.2：事件名桥命中诊断（事件路是否生效 / norm 版本 / 命中组明细）。 */
+export interface RetrievalEventHitDiagnostics {
+  /** 事件路是否生效；false = 表加载失败或整表漂移降级（此时 groups 恒 []）。 */
+  degraded: boolean;
+  /** 事件表 meta.normVersion；未加载 / 降级为空串（对齐 env.normVersion 降级口径）。 */
+  normVersion: string;
+  /** 命中事件组数；0 = 未命中事件路。 */
+  groupCount: number;
+  /** 命中组明细，按组优先级（命中 alias 长度降序，同长 eventId 升序）。 */
+  groups: RetrievalEventHitGroup[];
+}
+
+/** FEAT-A018 §5.2：单命中事件组诊断。 */
+export interface RetrievalEventHitGroup {
+  eventId: string;
+  eventName: string;
+  /** 本组命中的 alias（归一化后 query 中子串命中者，组内最长）。 */
+  matchedAlias: string;
+  type: 'L1' | 'L2' | 'L3';
+  /** 组内有效 chunk 引用总数（漂移剔除后）。 */
+  groupSize: number;
+  /** 实际进出参条目的事件组 chunk 数（事件内序前缀；= placedChunkIds.length）。 */
+  placedCount: number;
+  /** 进出参条目的事件组 chunkId（事件内序）。 */
+  placedChunkIds: string[];
 }
 
 /** 检索分阶段耗时（毫秒，feat-A013 验收修正；检索耗时展示支撑）。null = 该段未执行：
@@ -255,6 +282,8 @@ export interface RetrievalDiagnostics {
   /** 第 N+1 名（未进 top-N）；候选不足为 null。 */
   nextRank: RetrievalCandidateDiagnostics | null;
   deathIntent: RetrievalDeathIntentDiagnostics;
+  /** FEAT-A018：事件名桥命中诊断（新增顶层字段，老字段不动；非事件命中时 groups 空、degraded / normVersion 仍可读）。 */
+  eventHit: RetrievalEventHitDiagnostics;
 }
 
 /** feat-A009：search 统一返回 出参条目 + 检索诊断（诊断仅在请求时产出，否则为 null）。 */
