@@ -258,12 +258,32 @@ export interface RetrievalEventHitGroup {
  * - vector = 向量编码（embedQuery）+ cosineAll 段；useVectors=false 降级（scheme=hash / 无向量文件）时为 null，
  *   编码失败也计入耗时（降级状态由 env.degradedBm25Only 表达）；
  * - label = 标签路由循环段；
- * - merge = 多路候选合并 + 重排（含 topK / sort，到 hits 切片）段；空结果早退路径未执行到产出时为 null。 */
+ * - merge = 多路候选合并 + 事件路并池增强查询重排 + 规则排序（到规则序定型为止），不含 cross-encoder 重排；
+ *   空结果早退路径未执行到产出时为 null；
+ * - rerank = cross-encoder 池内重排段耗时（毫秒，test-2031 提测反馈补独立分段）；未接入打分器 / 窗口内无参与
+ *   候选 / 跳过时为 null（原因见 RetrievalRerankDiagnostics.reason）。 */
 export interface RetrievalDiagnosticsTiming {
   bm25: number | null;
   vector: number | null;
   label: number | null;
   merge: number | null;
+  rerank: number | null;
+}
+
+/** FEAT-A030：检索重排诊断（test-2031 提测反馈补可观测：重排阶段 / 窗口 / 参与 / 降级原因）。 */
+export interface RetrievalRerankDiagnostics {
+  /** 本请求是否接入重排打分器（装配层注入且权重可用）。 */
+  enabled: boolean;
+  /** 重排窗口（规则序后前 N 名进重排；SANGO_RERANKER_WINDOW 覆盖，默认 50）。 */
+  window: number;
+  /** 实际参与重排条数（窗口内非保证区）。 */
+  considered: number;
+  /** 因在保证区置顶（死亡意图 ∪ L3 锚点）而跳过重排条数。 */
+  skippedPinned: number;
+  /** 是否按重排分实际改写池序。 */
+  applied: boolean;
+  /** 未重排的中文原因；applied=true 时为 null。取值：未接入重排打分器 / 窗口内无参与候选 / 重排打分异常 / 重排分数非法。 */
+  reason: string | null;
 }
 
 /** 检索诊断：召回漏斗 / 候选分数表 / query 处理链 / 环境与降级 / 死亡意图 / 分阶段耗时（契约 §1.3）。 */
@@ -277,6 +297,8 @@ export interface RetrievalDiagnostics {
   funnel: RetrievalFunnelDiagnostics;
   /** 分阶段耗时（毫秒，检索耗时展示支撑）；null = 该段未执行（语义见 RetrievalDiagnosticsTiming）。 */
   timing: RetrievalDiagnosticsTiming;
+  /** FEAT-A030：检索重排诊断（新增顶层字段，老字段不动；未接入 / 空结果早退路径也产出默认值）。 */
+  rerank: RetrievalRerankDiagnostics;
   /** 候选分数表，按最终返回序，≤20 条。 */
   candidates: RetrievalCandidateDiagnostics[];
   /** 第 N+1 名（未进 top-N）；候选不足为 null。 */

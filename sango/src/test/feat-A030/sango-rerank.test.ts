@@ -174,3 +174,108 @@ test('⑤ 重排不可用降级：打分器返回 null 时保持规则序、不�
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test('⑥ 诊断可观测（生效）：applied=true、reason=null、窗口/参与/跳过置顶与 timing.rerank 读数正确', async () => {
+  const dir = tempDir();
+  try {
+    const scorer: RerankScorer = async (_q, passages) => passages.map((_p, i) => i);
+    const index = load(dir, scorer);
+    const { diagnostics } = await index.search(Q_RULE, 10, { diagnostics: true });
+    const d = diagnostics as RetrievalDiagnostics;
+    assert.ok(d);
+    assert.deepEqual(
+      d.rerank,
+      {
+        enabled: true,
+        window: 50,
+        considered: 50,
+        skippedPinned: 0,
+        applied: true,
+        reason: null,
+      },
+      '生效：整窗 50 条非保证区全部参与并改写池序',
+    );
+    assert.ok(
+      typeof d.timing.rerank === 'number' && Number.isFinite(d.timing.rerank) && d.timing.rerank >= 0,
+      `接入打分器 → timing.rerank 非负数字（实际 ${String(d.timing.rerank)}）`,
+    );
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('⑦ 保证区整窗跳过（§3.3②/⑤）：窗口全为置顶段 → 不调打分器、reason=窗口内无参与候选、skippedPinned=窗口', async () => {
+  const dir = tempDir(true);
+  const prev = process.env.SANGO_RERANKER_WINDOW;
+  process.env.SANGO_RERANKER_WINDOW = '1';
+  try {
+    const seen: string[][] = [];
+    const scorer: RerankScorer = async (_q, passages) => {
+      seen.push(passages);
+      return passages.map(() => 0);
+    };
+    const index = load(dir, scorer);
+    const { entries, diagnostics } = await index.search(Q_L3, 10, { diagnostics: true });
+    const d = diagnostics as RetrievalDiagnostics;
+    assert.ok(d);
+    assert.deepEqual(
+      d.rerank,
+      {
+        enabled: true,
+        window: 1,
+        considered: 0,
+        skippedPinned: 1,
+        applied: false,
+        reason: '窗口内无参与候选',
+      },
+      '窗口 1 全为 L3 保证区 → 跳过重排',
+    );
+    assert.equal(entries[0].id, PIN_ID, '跳过重排 → 规则序保持（保证区置顶段 rank1）');
+    assert.equal(seen.length, 0, '窗口内无参与候选 → 打分器不被调用');
+    assert.equal(d.timing.rerank, null, '重排段未执行 → timing.rerank null');
+  } finally {
+    if (prev === undefined) delete process.env.SANGO_RERANKER_WINDOW;
+    else process.env.SANGO_RERANKER_WINDOW = prev;
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('⑧ 打分器抛错降级：applied=false、reason=重排打分异常、退回规则序、不抛错', async () => {
+  const dir = tempDir();
+  try {
+    const rule = await ruleOrder(dir, Q_RULE, 10);
+    const index = load(
+      dir,
+      async () => {
+        throw new Error('boom');
+      },
+    );
+    const { entries, diagnostics } = await index.search(Q_RULE, 10, { diagnostics: true });
+    const d = diagnostics as RetrievalDiagnostics;
+    assert.deepEqual(entries.map((e) => e.id), rule, '打分异常 → 出参与无重排基线逐条一致');
+    assert.ok(d);
+    assert.equal(d.rerank.applied, false);
+    assert.equal(d.rerank.reason, '重排打分异常');
+    assert.equal(d.rerank.considered, 50);
+    assert.ok(typeof d.timing.rerank === 'number' && d.timing.rerank >= 0, '打分异常也计入重排段耗时');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('⑨ 分数长度非法降级：applied=false、reason=重排分数非法、退回规则序', async () => {
+  const dir = tempDir();
+  try {
+    const rule = await ruleOrder(dir, Q_RULE, 10);
+    const index = load(dir, async () => [1, 2, 3]); // 长度 3 ≠ 参与条数 50
+    const { entries, diagnostics } = await index.search(Q_RULE, 10, { diagnostics: true });
+    const d = diagnostics as RetrievalDiagnostics;
+    assert.deepEqual(entries.map((e) => e.id), rule, '分数非法 → 出参与无重排基线逐条一致');
+    assert.ok(d);
+    assert.equal(d.rerank.applied, false);
+    assert.equal(d.rerank.reason, '重排分数非法');
+    assert.ok(typeof d.timing.rerank === 'number' && d.timing.rerank >= 0, '分数非法也计入重排段耗时');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});

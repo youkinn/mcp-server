@@ -36,6 +36,7 @@ import type {
   RetrievalEventHitDiagnostics,
   RetrievalDiagnostics,
   RetrievalDiagnosticsTiming,
+  RetrievalRerankDiagnostics,
   RetrievalQueryRewrite,
   SearchEntry,
   SearchHit,
@@ -152,12 +153,14 @@ interface DiagnosticsBuildContext {
   eventHit: RetrievalEventHitDiagnostics;
   /** FEAT-A018：命中事件组全部有效 chunk 的文档下标集合（candidates[].sources 'event' 判定）。 */
   eventDocSet: Set<number>;
+  /** FEAT-A030：检索重排诊断（rerankWindow 产出；空结果早退路径用默认值）。 */
+  rerank: RetrievalRerankDiagnostics;
 }
 
 /**
  * 64 KB 预算截断（硬约束 3）：按优先级从后往前丢——① candidates 尾部（保头部名次）② nextRank
  * ③ deathIntent.chunkIds（保留 detected / pinned）；query / env / funnel / timing 恒保留
- * （timing 是低位固定 4 字段，截断不丢——检索耗时展示依赖它）。
+ * （timing 是低位固定 5 字段，截断不丢——检索耗时展示依赖它）。
  * 截断后 truncated=true、truncatedCount=被丢弃的候选条数；正常载荷远低于预算，不触发。
  */
 export function enforceDiagnosticsBudget(diagnostics: RetrievalDiagnostics): RetrievalDiagnostics {
@@ -557,7 +560,7 @@ export class SangoIndex {
     const qTokens = tokenize(normalized);
     // feat-A013：检索分阶段耗时（毫秒）。各段按「---- 阶段 ----」分界独立计时；
     // 空结果早退路径下未执行的段保持 null（语义见 RetrievalDiagnosticsTiming）。
-    const timing: RetrievalDiagnosticsTiming = { bm25: null, vector: null, label: null, merge: null };
+    const timing: RetrievalDiagnosticsTiming = { bm25: null, vector: null, label: null, merge: null, rerank: null };
 
     // ---- BM25 打分 ----
     const bm25T0 = performance.now();
@@ -758,12 +761,12 @@ export class SangoIndex {
       return b.score - a.score;
     });
 
+    timing.merge = performance.now() - mergeT0;
     // ---- FEAT-A030 cross-encoder 重排：规则重排后 top50 → 重排（保证区置顶段不参与）----
-    await this.rerankWindow(combined, pinDocs, normalized);
+    const rerankDiag = await this.rerankWindow(combined, pinDocs, normalized, timing);
 
     // ⑤ 取窗：cross-encoder 重排后 combined[0..limit)（重排不可用时退回规则重排序）。
     const hits = combined.slice(0, limit);
-    timing.merge = performance.now() - mergeT0;
     const eventHit = this.buildEventHit(eventGroups, hits, l3Segments);
     const eventDocSet = this.eventDocSetOf(eventGroups, l3Segments);
     const entries = hits.map((h) => this.toEntry(this.docs[h.doc]));
@@ -791,6 +794,7 @@ export class SangoIndex {
               timing,
               eventHit,
               eventDocSet,
+              rerank: rerankDiag,
             }),
           )
         : null,
@@ -838,6 +842,7 @@ export class SangoIndex {
       timing,
       eventHit,
       eventDocSet: new Set(),
+      rerank: this.emptyRerankDiagnostics(),
     });
   }
 
@@ -927,22 +932,49 @@ export class SangoIndex {
    * 保持 A018 §3.3② 承诺「进保证区、不参与池重排」，不参与重排。
    *
    * 重排不可用（未接 / 权重缺失 / 推理失败）时保持规则序、不抛异常（不 mock、不伪造分数）。
+   * 返回检索重排诊断（test-2031 提测反馈补可观测），并按契约输出一行中文日志。
    */
-  private async rerankWindow(pool: SearchHit[], pinDocs: Set<number>, query: string): Promise<void> {
-    if (!this.rerankScorer || pool.length === 0) return;
+  private async rerankWindow(
+    pool: SearchHit[],
+    pinDocs: Set<number>,
+    query: string,
+    timing: RetrievalDiagnosticsTiming,
+  ): Promise<RetrievalRerankDiagnostics> {
+    const t0 = performance.now();
     const windowSize = rerankWindowSize();
     const window = pool.slice(0, windowSize);
     const head = window.filter((h) => pinDocs.has(h.doc));
     const tail = window.filter((h) => !pinDocs.has(h.doc));
-    if (tail.length === 0) return;
+    const diag: RetrievalRerankDiagnostics = {
+      enabled: this.rerankScorer !== null,
+      window: windowSize,
+      considered: tail.length,
+      skippedPinned: head.length,
+      applied: false,
+      reason: null,
+    };
+    if (!this.rerankScorer || pool.length === 0 || tail.length === 0) {
+      diag.reason = !this.rerankScorer ? '未接入重排打分器' : '窗口内无参与候选';
+      timing.rerank = null;
+      this.logRerank(diag, null);
+      return diag;
+    }
     let scores: number[] | null;
     try {
       scores = await this.rerankScorer(query, tail.map((h) => this.docs[h.doc].text));
     } catch (error) {
       console.error('[sango] 重排打分异常（旁路，退回规则序）:', error);
-      return;
+      diag.reason = '重排打分异常';
+      timing.rerank = performance.now() - t0;
+      this.logRerank(diag, timing.rerank);
+      return diag;
     }
-    if (!scores || scores.length !== tail.length) return;
+    if (!scores || scores.length !== tail.length) {
+      diag.reason = '重排分数非法';
+      timing.rerank = performance.now() - t0;
+      this.logRerank(diag, timing.rerank);
+      return diag;
+    }
     const list = scores;
     const ranked = tail
       .map((h, i) => ({ h, s: list[i] }))
@@ -950,6 +982,32 @@ export class SangoIndex {
       .map((x) => x.h);
     const merged = [...head, ...ranked, ...pool.slice(windowSize)];
     for (let i = 0; i < merged.length; i++) pool[i] = merged[i];
+    diag.applied = true;
+    timing.rerank = performance.now() - t0;
+    this.logRerank(diag, timing.rerank);
+    return diag;
+  }
+
+  /** 每请求一行中文日志（可观测：重排阶段 / 窗口 / 参与 / 降级原因；耗时=— 表示重排段未执行）。 */
+  private logRerank(diag: RetrievalRerankDiagnostics, elapsedMs: number | null): void {
+    const elapsed = elapsedMs === null ? '—' : `${elapsedMs.toFixed(1)}ms`;
+    const result = diag.applied ? '已按重排分改写池序' : `跳过（原因：${diag.reason}）`;
+    console.error(
+      `[sango] 检索重排（阶段：规则序并池之后、保证区不参与）：窗口=${diag.window} 参与=${diag.considered} 跳过置顶=${diag.skippedPinned} 耗时=${elapsed} 结果=${result}`,
+    );
+  }
+
+  /** 空结果早退 / 无命中路径的重排诊断默认值（重排段未执行：considered=0 / skippedPinned=0 / applied=false）。 */
+  private emptyRerankDiagnostics(): RetrievalRerankDiagnostics {
+    const enabled = this.rerankScorer !== null;
+    return {
+      enabled,
+      window: rerankWindowSize(),
+      considered: 0,
+      skippedPinned: 0,
+      applied: false,
+      reason: enabled ? '窗口内无参与候选' : '未接入重排打分器',
+    };
   }
 
   /** FEAT-A018：空事件路（表降级 / 未命中）时的最小 eventHit（degraded / normVersion 仍可读，groups 空）。 */
@@ -1060,6 +1118,7 @@ export class SangoIndex {
         cited: null,
       },
       timing: { ...ctx.timing },
+      rerank: ctx.rerank,
       candidates,
       nextRank,
       deathIntent: {

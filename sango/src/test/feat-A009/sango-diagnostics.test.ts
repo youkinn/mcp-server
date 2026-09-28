@@ -102,8 +102,8 @@ test('② 请求诊断：结构字段齐全（truncated/truncatedCount/query/env
   );
   assert.deepEqual(
     Object.keys(diagnostics).sort(),
-    ['candidates', 'deathIntent', 'env', 'eventHit', 'funnel', 'nextRank', 'query', 'timing', 'truncated', 'truncatedCount'],
-    '诊断顶层字段齐全（FEAT-A018 增 eventHit）',
+    ['candidates', 'deathIntent', 'env', 'eventHit', 'funnel', 'nextRank', 'query', 'rerank', 'timing', 'truncated', 'truncatedCount'],
+    '诊断顶层字段齐全（FEAT-A018 增 eventHit；FEAT-A030 增 rerank）',
   );
 });
 
@@ -248,11 +248,12 @@ test('⑨ 64KB 预算截断（硬约束 3）：超限诊断 truncated=true、tru
     query: { raw: 'q', normalized: 'q', rewrites: [], tokens: ['q'] },
     env: { vectorScheme: null, degradedBm25Only: true, corpusChunks: 4, aliasCount: 5, normVersion: '', vectorDim: null },
     funnel: { corpusChunks: 4, lexicalHits: 1, vectorTop50: 0, labelHits: 0, mergedCandidates: 1000, topN: 10, injected: null, cited: null },
-    timing: { bm25: 1.2, vector: 3.4, label: 0.5, merge: 2.1 },
+    timing: { bm25: 1.2, vector: 3.4, label: 0.5, merge: 2.1, rerank: null },
     candidates: Array.from({ length: 1000 }, (_, i) => ({ ...candidate, rank: i + 1 })),
     nextRank: { ...candidate, rank: 11, gapToTopN: 0.1 },
     deathIntent: { detected: false, pinned: false, chunkIds: [] },
     eventHit: { degraded: true, normVersion: '', groupCount: 0, groups: [] },
+    rerank: { enabled: false, window: 50, considered: 0, skippedPinned: 0, applied: false, reason: '未接入重排打分器' },
   };
   const trimmed = enforceDiagnosticsBudget(overBudget);
   assert.equal(trimmed.truncated, true);
@@ -270,11 +271,12 @@ test('⑨ 64KB 预算截断（硬约束 3）：超限诊断 truncated=true、tru
     query: { raw: 'q', normalized: 'q', rewrites: [], tokens: ['q'] },
     env: { vectorScheme: null, degradedBm25Only: true, corpusChunks: 4, aliasCount: 5, normVersion: '', vectorDim: null },
     funnel: { corpusChunks: 4, lexicalHits: 1, vectorTop50: 0, labelHits: 0, mergedCandidates: 1, topN: 1, injected: null, cited: null },
-    timing: { bm25: 0.4, vector: null, label: 0.1, merge: 0.8 },
+    timing: { bm25: 0.4, vector: null, label: 0.1, merge: 0.8, rerank: null },
     candidates: [candidate],
     nextRank: null,
     deathIntent: { detected: false, pinned: false, chunkIds: [] },
     eventHit: { degraded: true, normVersion: '', groupCount: 0, groups: [] },
+    rerank: { enabled: false, window: 50, considered: 0, skippedPinned: 0, applied: false, reason: '未接入重排打分器' },
   };
   const kept = enforceDiagnosticsBudget(tiny);
   assert.equal(kept.truncated, false, '未超限不截断');
@@ -447,8 +449,9 @@ test('⑯ 分阶段耗时：正常检索（真向量可用）四段 timing 均�
   assert.ok(entries.length > 0, '真实语料正常召回');
   assert.ok(diagnostics);
   const t = diagnostics.timing;
-  assert.deepEqual(Object.keys(t).sort(), ['bm25', 'label', 'merge', 'vector'], 'timing 键齐全');
-  for (const key of Object.keys(t) as Array<keyof typeof t>) {
+  assert.deepEqual(Object.keys(t).sort(), ['bm25', 'label', 'merge', 'rerank', 'vector'], 'timing 键齐全（FEAT-A030 增 rerank）');
+  assert.equal(t.rerank, null, '库层默认不接入重排打分器 → timing.rerank null（重排段未执行）');
+  for (const key of ['bm25', 'label', 'merge', 'vector'] as const) {
     const v = t[key];
     assert.ok(typeof v === 'number' && Number.isFinite(v) && v >= 0, `timing.${key} 为该段实测耗时（毫秒）≥0 有限数（实际 ${String(v)}）`);
   }
@@ -464,4 +467,57 @@ test('⑰ 分阶段耗时：向量降级路径（无向量文件，useVectors=fa
     const v = diagnostics.timing[key];
     assert.ok(typeof v === 'number' && Number.isFinite(v) && v >= 0, `timing.${key} ≥0（实际 ${String(v)}）`);
   }
+});
+
+test('⑱ 检索重排诊断：库层未接入打分器 → timing.rerank=null、rerank.reason=未接入重排打分器、applied=false', async () => {
+  const index = loadFixtureIndex();
+  const { diagnostics } = await index.search('关羽', 5, { diagnostics: true });
+  assert.ok(diagnostics);
+  assert.equal(diagnostics.timing.rerank, null, '未接入打分器 → 重排段未执行 null');
+  assert.equal(diagnostics.rerank.enabled, false, '库层默认不接入打分器 → enabled=false');
+  assert.equal(diagnostics.rerank.reason, '未接入重排打分器', '未接入打分器 → 中文原因明确');
+  assert.equal(diagnostics.rerank.applied, false, '未接入打分器 → 不改写池序');
+  assert.ok(diagnostics.rerank.considered >= 1, '主路径（非空结果）considered 报窗口内实际条数');
+  assert.equal(diagnostics.rerank.skippedPinned, 0, '夹具无保证区置顶段');
+});
+
+test('⑲ 检索重排诊断：接入打分器 → timing.rerank 为非负数字、applied=true、reason=null', async () => {
+  const index = new SangoIndex(FIXTURE_DIR, {
+    rerankScorer: async (_q: string, passages: string[]) => passages.map((_p, i) => i),
+  });
+  index.load();
+  const { entries, diagnostics } = await index.search('关羽', 5, { diagnostics: true });
+  assert.ok(entries.length > 0, '夹具正常召回');
+  assert.ok(diagnostics);
+  assert.equal(diagnostics.rerank.enabled, true, '注入打分器 → enabled=true');
+  assert.equal(diagnostics.rerank.applied, true, '打分器返回合法分数 → 实际改写池序');
+  assert.equal(diagnostics.rerank.reason, null, 'applied=true → reason null');
+  assert.equal(diagnostics.rerank.skippedPinned, 0, '夹具无保证区置顶段 → 跳过置顶 0');
+  assert.equal(diagnostics.rerank.considered, entries.length, '窗口内无保证区候选 → 命中候选全部参与重排（= 出参条数）');
+  assert.ok(
+    typeof diagnostics.timing.rerank === 'number' &&
+      Number.isFinite(diagnostics.timing.rerank) &&
+      diagnostics.timing.rerank >= 0,
+    `接入打分器 → timing.rerank 非负数字（实际 ${String(diagnostics.timing.rerank)}）`,
+  );
+});
+
+test('⑳ 检索重排诊断：空结果早退路径 → rerank 默认值（considered=0 / skippedPinned=0 / applied=false、reason 按口径）', async () => {
+  const index = loadFixtureIndex();
+  const { entries, diagnostics } = await index.search('北极熊', 5, { diagnostics: true });
+  assert.deepEqual(entries, [], '夹具无命中 → 空结果');
+  assert.ok(diagnostics);
+  assert.equal(diagnostics.timing.rerank, null, '空结果早退 → 重排段未执行 null');
+  assert.deepEqual(
+    diagnostics.rerank,
+    {
+      enabled: false,
+      window: 50,
+      considered: 0,
+      skippedPinned: 0,
+      applied: false,
+      reason: '未接入重排打分器',
+    },
+    '空结果早退 → rerank 诊断默认值（结构完整）',
+  );
 });
