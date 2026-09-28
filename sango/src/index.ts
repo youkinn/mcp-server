@@ -10,7 +10,7 @@
 import { createRequire } from 'node:module';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { SangoIndex } from './search/sango-index.ts';
+import { DEFAULT_DATA_DIR, SangoIndex } from './search/sango-index.ts';
 import { registerSangoNovelChapter } from './tools/sango-novel-chapter.ts';
 import { registerSangoNovelSearch } from './tools/sango-novel-search.ts';
 import { registerSangoQueryEmbed } from './tools/sango-query-embed.ts';
@@ -19,7 +19,11 @@ import { startBenchmarkServer } from './benchmark/server.ts';
 const require = createRequire(import.meta.url);
 const { version } = require('../package.json') as { version: string };
 
-const index = new SangoIndex();
+// FEAT-A030：cross-encoder 重排已实现并可一行接入（createDataRerankScorer），但定点评测结论为「本期不启用」：
+// int8 bge-reranker-base 50 路重排 P50 ≈ 4.1s / P95 ≈ 4.7s（远超检索预算），且定点华雄「拒答#5」证据段
+// 由 rank6 跌出 top10（不倒车未达标）；评测证据见 scripts/verify-rerank.mjs 产出。
+// 启用方式：new SangoIndex(DEFAULT_DATA_DIR, { rerankScorer: createDataRerankScorer() })（需重建/下发权重）。
+const index = new SangoIndex(DEFAULT_DATA_DIR);
 
 const server = new McpServer({ name: 'sango', version });
 

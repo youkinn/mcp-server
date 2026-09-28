@@ -16,6 +16,8 @@ import { fileURLToPath } from 'node:url';
 import { embedQuery } from '../embed/bge-m3-encoder.ts';
 import { eventsDegraded, eventsNormVersion, loadEventsTable, matchEvents } from './event-table.ts';
 import type { MatchedEventGroup } from './event-table.ts';
+import { createCrossEncoderScorer, resolveRerankModelFile } from './reranker.ts';
+import type { RerankScorer } from './reranker.ts';
 import {
   fragmentKeyToCanon as entityFragmentKeyToCanon,
   loadEntityTable,
@@ -43,7 +45,7 @@ import { tokenize } from '../utils/text.ts';
 import { matchDeathIntent } from './intent.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DEFAULT_DATA_DIR = path.resolve(__dirname, '..', '..', 'data');
+export const DEFAULT_DATA_DIR = path.resolve(__dirname, '..', '..', 'data');
 
 /** 无命中固定话术：检索无结果时返回，供模型走兜底回答。 */
 export const NO_HIT_TEXT = '未召回任何原文段落';
@@ -64,6 +66,9 @@ const MIN_COSINE = 0.3; // Step 4 待按真向量分布重定（现值为哈希�
 
 /** FEAT-A018 §3.3③：L1/L2 并池后合并候选池硬上限兜底（超限按重排分裁；正常场景触不到）。 */
 const EVENT_MERGE_POOL_CAP = 120;
+
+/** FEAT-A030：规则重排后进入 cross-encoder 的候选窗口（池 50 路 → 重排 → 返回 limit ≤ 10）。 */
+const RERANK_WINDOW = 50;
 
 // 遗言类标签关键词：标签文本含这些词即视为某人的临终嘱托/遗诏段（数据口径：0085:c0008-0011
 // 刘备托孤、0029:c0014 孙策托孤、0040:c0005 刘表托孤）。
@@ -177,18 +182,43 @@ export function enforceDiagnosticsBudget(diagnostics: RetrievalDiagnostics): Ret
   }
   return slim;
 }
+/**
+ * FEAT-A030：SangoIndex 可选注入项。rerankScorer 显式指定重排打分器（null / 省略 = 不重排）。
+ * 库层默认不启用（保持确定性、不依赖 ~266MB 权重）；由装配层 / 评测显式接入 createDataRerankScorer()。
+ */
+export interface SangoIndexOptions {
+  rerankScorer?: RerankScorer | null;
+}
+
+/**
+ * FEAT-A030：按 dataDir/models/bge-reranker-base 解析生产重排打分器（装配层显式接入用）。
+ * 权重缺失返回 null（自动跳过、退回规则序）；SANGO_RERANKER=off 关闭、SANGO_RERANKER_DIR 换目录。
+ */
+export function createDataRerankScorer(dataDir: string = DEFAULT_DATA_DIR): RerankScorer | null {
+  if (process.env.SANGO_RERANKER === 'off') return null;
+  const modelDir = process.env.SANGO_RERANKER_DIR ?? path.join(dataDir, 'models', 'bge-reranker-base');
+  return resolveRerankModelFile(modelDir) ? createCrossEncoderScorer(modelDir) : null;
+}
+
 export class SangoIndex {
   private readonly dataDir: string;
   private readonly corpusDir: string;
   private readonly vectorsFile: string;
   private readonly tagsDir: string;
 
+  /**
+   * FEAT-A030：cross-encoder 重排打分器（null = 不重排）。库层默认不启用（保持确定性、不依赖模型权重），
+   * 由装配层（src/index.ts / 评测脚本）经 createDataRerankScorer() 显式接入；测试可注入。
+   */
+  private readonly rerankScorer: RerankScorer | null;
+
   /** dataDir 仅用于夹具测试注入语料目录；生产用默认 data/ 目录。 */
-  constructor(dataDir: string = DEFAULT_DATA_DIR) {
+  constructor(dataDir: string = DEFAULT_DATA_DIR, options: SangoIndexOptions = {}) {
     this.dataDir = dataDir;
     this.corpusDir = path.join(dataDir, 'corpus', 'sanguo-yanyi');
     this.vectorsFile = path.join(dataDir, 'vectors', 'sanguo-yanyi.bin');
     this.tagsDir = path.join(dataDir, 'corpus', 'tags');
+    this.rerankScorer = options.rerankScorer ?? null;
   }
 
   docs: Doc[] = [];
@@ -722,7 +752,10 @@ export class SangoIndex {
       return b.score - a.score;
     });
 
-    // ⑤ 取窗：规则重排后 combined[0..limit)（top50 为 A030 cross-encoder 输入，接入前过渡期直接取 limit）。
+    // ---- FEAT-A030 cross-encoder 重排：规则重排后 top50 → 重排（保证区置顶段不参与）----
+    await this.rerankWindow(combined, pinDocs, normalized);
+
+    // ⑤ 取窗：cross-encoder 重排后 combined[0..limit)（重排不可用时退回规则重排序）。
     const hits = combined.slice(0, limit);
     timing.merge = performance.now() - mergeT0;
     const eventHit = this.buildEventHit(eventGroups, hits, l3Segments);
@@ -880,6 +913,36 @@ export class SangoIndex {
       bm25NormOverride.set(h.doc, b);
     }
     return bm25NormOverride;
+  }
+
+  /**
+   * FEAT-A030：规则重排后取 top50 作 cross-encoder 输入，对**非保证区**候选按 query 相关性重排，
+   * 原地改写 combined 前段顺序（出参与诊断 candidates 同序，可读证）；保证区置顶段（死亡意图 ∪ L3 锚点）
+   * 保持 A018 §3.3② 承诺「进保证区、不参与池重排」，不参与重排。
+   *
+   * 重排不可用（未接 / 权重缺失 / 推理失败）时保持规则序、不抛异常（不 mock、不伪造分数）。
+   */
+  private async rerankWindow(pool: SearchHit[], pinDocs: Set<number>, query: string): Promise<void> {
+    if (!this.rerankScorer || pool.length === 0) return;
+    const window = pool.slice(0, RERANK_WINDOW);
+    const head = window.filter((h) => pinDocs.has(h.doc));
+    const tail = window.filter((h) => !pinDocs.has(h.doc));
+    if (tail.length === 0) return;
+    let scores: number[] | null;
+    try {
+      scores = await this.rerankScorer(query, tail.map((h) => this.docs[h.doc].text));
+    } catch (error) {
+      console.error('[sango] 重排打分异常（旁路，退回规则序）:', error);
+      return;
+    }
+    if (!scores || scores.length !== tail.length) return;
+    const list = scores;
+    const ranked = tail
+      .map((h, i) => ({ h, s: list[i] }))
+      .sort((a, b) => b.s - a.s) // 稳定排序：同分保持规则序
+      .map((x) => x.h);
+    const merged = [...head, ...ranked, ...pool.slice(RERANK_WINDOW)];
+    for (let i = 0; i < merged.length; i++) pool[i] = merged[i];
   }
 
   /** FEAT-A018：空事件路（表降级 / 未命中）时的最小 eventHit（degraded / normVersion 仍可读，groups 空）。 */
