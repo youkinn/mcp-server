@@ -1,7 +1,7 @@
 {
  "meta": {
   "schemaVersion": 1,
-  "normVersion": "ab25ac91",
+  "normVersion": "5d9a56f8",
   "generatedAt": "2026-09-27T21:21:06.830Z",
   "corpusChunkCount": 2344
  },
@@ -27,6 +27,7 @@
    ],
    "chunkIds": [
     "sanguo-yanyi:0001:c0002",
+    "sanguo-yanyi:0001:c0005",
     "sanguo-yanyi:0001:c0006",
     "sanguo-yanyi:0001:c0008",
     "sanguo-yanyi:0001:c0011",
