@@ -1,6 +1,7 @@
 /**
- * FEAT-A018 活文档：事件表加载（V1–V7 校验 / 降级 / 漂移检测）+ 事件名桥匹配 + §3.3 topK 装配直测。
- * 契约：docs/feat-A018-event-table-interface.md §1 / §2 / §3（验证方式）；夹具 fixtures 与集成侧同源。
+ * FEAT-A018 活文档：事件表加载（V1–V7 校验 / 降级 / 漂移检测）+ 事件名桥匹配。
+ * 契约：docs/feat-A018-event-table-interface.md §1 / §2 / §3.2（验证方式）；夹具 fixtures 与集成侧同源。
+ * §3.3 并池 / 增强查询重排 / L3 锚点置顶装配与 §3.3③ 池上限直测见 sango-event-bridge.test.ts。
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -9,7 +10,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadEntityTable } from '../../normalize/entity-table.ts';
-import { assembleTopK, SangoIndex } from '../../search/sango-index.ts';
+import { capMergedPool, SangoIndex } from '../../search/sango-index.ts';
 import {
   eventsDegraded,
   eventsNormVersion,
@@ -90,13 +91,13 @@ test('① 夹具表加载：启动日志行（rows/aliases/chunkRefs/normVersion
     assert.ok(log, '应输出 [sango] event-table loaded 日志行');
     assert.match(
       log,
-      /event-table loaded: rows=7 aliases=8 chunkRefs=11 normVersion=a1b2c3d4/,
-      'rows=7（含仅剩 1 个有效 alias 的 E00504）、aliases=8（剔除「谜」）、chunkRefs=11',
+      /event-table loaded: rows=8 aliases=10 chunkRefs=14 normVersion=a1b2c3d4/,
+      'rows=8（含 L3 行 E00199）、aliases=10（剔除单字「谜」）、chunkRefs=14',
     );
     assert.ok(cap.lines.some((l) => l.includes('V3 单字禁入，剔 alias「谜」')), '单字 alias 剔除告警');
     assert.equal(eventsDegraded(), false);
     assert.equal(eventsNormVersion(), 'a1b2c3d4');
-    assert.equal(eventsRowCount(), 7);
+    assert.equal(eventsRowCount(), 8);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -304,48 +305,21 @@ test('⑤ 事件名桥匹配（接口 §3.2）：子串命中 / 最长 alias 选
   }
 });
 
-test('⑥ §3.3 topK 装配直测（assembleTopK）：top5 保底 / 事件组插槽 / limit 约束 / 已 placed 跳过 / combined 空兜底', () => {
-  // docIndexOf：doc 下标 0..6 对应 chunkId a..g
-  const docIndexOf = new Map<string, number>([
-    ['a', 0], ['b', 1], ['c', 2], ['d', 3], ['e', 4], ['f', 5], ['g', 6],
-  ]);
-  const hit = (doc: number): SearchHit => ({ doc, score: doc });
-  const group = (chunkIds: string[]): MatchedEventGroup => ({
-    eventId: 'E1',
-    eventName: '组',
-    matchedAlias: '组词',
-    type: 'L1',
-    groupSize: chunkIds.length,
-    chunkIds,
-  });
-
-  const docs = (hits: SearchHit[]): number[] => hits.map((h) => h.doc);
-  // 6.1 事件路未命中：恒等于现状 slice（头保底按 limit 截断），limit=1 只回 1 条
-  assert.deepEqual(docs(assembleTopK([hit(0), hit(1), hit(2)], [], 1, docIndexOf)), [0], 'limit=1 头保底截断');
-  assert.deepEqual(docs(assembleTopK([hit(0), hit(1), hit(2)], [], 3, docIndexOf)), [0, 1, 2]);
-
-  // 6.2 limit ≥ 5：top5 保底原序原分 + 事件组占 rank 6+ 插槽 + naturalTop 6+ 补足
-  const natural = [hit(0), hit(1), hit(2), hit(3), hit(4), hit(9), hit(10)];
-  const g = group(['f', 'g']);
-  const final = assembleTopK(natural, [g], 7, docIndexOf);
-  assert.deepEqual(docs(final), [0, 1, 2, 3, 4, 5, 6], 'top5 + 事件组插槽');
-
-  // 6.3 已 placed 跳过：组 chunk 与 naturalTop 前 5 重叠
-  const overlap = assembleTopK(natural, [group(['b', 'f'])], 7, docIndexOf);
-  assert.deepEqual(docs(overlap), [0, 1, 2, 3, 4, 5, 9], 'b 已在头保底，插槽只补 f，随后 naturalTop 6+ 补足至 limit');
-
-  // 6.4 limit=5：插槽容量 0，事件组仅诊断匹配、不进 final
-  assert.deepEqual(docs(assembleTopK(natural, [g], 5, docIndexOf)), [0, 1, 2, 3, 4]);
-
-  // 6.5 combined 空兜底（第二路召回）：final 自 rank 1 全由事件组构成
-  assert.deepEqual(docs(assembleTopK([], [g], 3, docIndexOf)), [5, 6]);
-
-  // 6.6 naturalTop 不足 5：头保底全取后事件组 + 补足
-  const short = assembleTopK([hit(0), hit(1), hit(2)], [g], 6, docIndexOf);
-  assert.deepEqual(docs(short), [0, 1, 2, 5, 6], '头保底 3 条 + 事件组 2 条');
+test('⑥ 并池硬上限直测（capMergedPool，§3.3③）：超限按重排分降序裁到 120，未超限原样返回', () => {
+  const pool: SearchHit[] = Array.from({ length: 130 }, (_, i) => ({ doc: i, score: i }));
+  capMergedPool(pool);
+  assert.equal(pool.length, 120, '超限裁到硬上限 120');
+  assert.deepEqual(
+    pool.map((h) => h.doc),
+    Array.from({ length: 120 }, (_, i) => 129 - i),
+    '保留重排分最高的 120 条（降序）',
+  );
+  const small: SearchHit[] = [{ doc: 0, score: 1 }, { doc: 1, score: 2 }];
+  capMergedPool(small);
+  assert.deepEqual(small.map((h) => h.doc), [0, 1], '未超限不重排、不截断');
 });
 
-test('⑦ 定点四问（真实表 + 真实语料）：eventHit.groups 非空、placedChunkIds 与事件回区间吻合（BM25-only，不触发向量编码）', async () => {
+test('⑦ 定点四问（真实表 + 真实语料）：eventHit.groups 非空、placedChunkIds 与事件回区间吻合、L1/L2 按出参序（BM25-only）', async () => {
   const cases: Array<{ query: string; eventId: string }> = [
     { query: '温酒斩华雄', eventId: 'E00501' },
     { query: '三英战吕布', eventId: 'E00502' },
@@ -384,13 +358,64 @@ test('⑦ 定点四问（真实表 + 真实语料）：eventHit.groups 非空、
       const [expectedCh] = innerOrderKey(row.chunkIds[0]);
       assert.equal(ch, expectedCh, `${c.query} placed ${id} 回区间吻合（第 ${expectedCh} 回）`);
     }
-    // 事件内序：placedChunkIds 按 (回号, 回内序号) 严格升序
-    for (let i = 1; i < group.placedChunkIds.length; i++) {
-      const [a1, a2] = innerOrderKey(group.placedChunkIds[i - 1]);
-      const [b1, b2] = innerOrderKey(group.placedChunkIds[i]);
-      assert.ok(a1 < b1 || (a1 === b1 && a2 < b2), `${c.query} placedChunkIds 事件内序升序`);
-    }
+    // L1/L2 口径（§5.2）：placedChunkIds 按重排后出参序（= 出参中该组 chunk 的子序列）
+    const entryIds = result.entries.map((e) => e.id);
+    assert.deepEqual(
+      group.placedChunkIds,
+      entryIds.filter((id) => expectedSet.has(id)),
+      `${c.query} L1/L2 placedChunkIds 按出参序`,
+    );
     assert.equal(group.placedCount, group.placedChunkIds.length);
     assert.ok(result.entries.length >= 1, `${c.query} 出参非空`);
   }
+});
+
+test('⑧ 真实 L3 锚点置顶（§3.3②）：落表「锚点 ±N」小位点组整组进保证区（事件内序）、不参与池重排', async () => {
+  const table = JSON.parse(readFileSync(path.join(REAL_DATA_DIR, 'corpus', 'events.json'), 'utf8')) as {
+    meta: { normVersion: string };
+    rows: Array<{ eventId: string; eventName: string; aliases: string[]; chunkIds: string[]; type: string }>;
+  };
+  const innerOrderKey = (id: string): [number, number] => {
+    const m = /^[^:]+:(\d{4}):c(\d{4})$/.exec(id);
+    return m ? [Number(m[1]), Number(m[2])] : [Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER];
+  };
+  const l3row = table.rows.find((r) => r.type === 'L3' && r.aliases.length > 0);
+  assert.ok(l3row, '真实表含 L3 行');
+  const index = new SangoIndex(REAL_DATA_DIR);
+  index.load();
+  index.vec = new Float32Array(0);
+  const result = await index.search(l3row.aliases[0], 10, { diagnostics: true });
+  const group = result.diagnostics?.eventHit.groups.find((g) => g.eventId === l3row.eventId);
+  assert.ok(group, `${l3row.eventName} 命中 L3 组`);
+  assert.equal(group.type, 'L3');
+  assert.deepEqual(
+    [...group.placedChunkIds].sort(),
+    [...l3row.chunkIds].sort(),
+    '落表小位点组整组进窗（运行期不二次扩展、不丢段）',
+  );
+  for (let i = 1; i < group.placedChunkIds.length; i++) {
+    const [a1, a2] = innerOrderKey(group.placedChunkIds[i - 1]);
+    const [b1, b2] = innerOrderKey(group.placedChunkIds[i]);
+    assert.ok(a1 < b1 || (a1 === b1 && a2 < b2), 'L3 placedChunkIds 按事件内序升序');
+  }
+  // 保证区：置顶小位点组占据出参最前 rank（不参与池重排，按 pin 通道）
+  const head = result.entries.slice(0, group.placedChunkIds.length).map((e) => e.id);
+  assert.deepEqual([...head].sort(), [...group.placedChunkIds].sort(), 'L3 小位点组进保证区（rank 1..k）');
+});
+
+test('⑨ 真实事件问法「赤壁之战发生在哪里」：增强查询重排使答案段前移（bridge on 优于 off，§3.3④ 读数）', async () => {
+  const index = new SangoIndex(REAL_DATA_DIR);
+  index.load();
+  index.vec = new Float32Array(0);
+  const question = '赤壁之战发生在哪里';
+  const answer = 'sanguo-yanyi:0049:c0018'; // A015 题库该题证据段（黄盖「望赤壁进发」，第 49 回）
+  const on = await index.search(question, 50, { diagnostics: true });
+  const rankOn = on.entries.map((e) => e.id).indexOf(answer);
+  assert.ok(rankOn >= 0, 'bridge on：答案段在出参内');
+  // 事件表降级 → bridge off 基线（同索引 / 同向量状态，仅桥开关不同）
+  loadEventsTable(path.join(tmpdir(), 'a018-no-events'), () => false, index.n);
+  const off = await index.search(question, 50, { diagnostics: true });
+  const rankOff = off.entries.map((e) => e.id).indexOf(answer);
+  assert.ok(rankOff >= 0, 'bridge off：答案段亦在出参内');
+  assert.ok(rankOn < rankOff, `增强查询重排使答案段前移（on rank ${rankOn + 1} < off rank ${rankOff + 1}）`);
 });

@@ -95,6 +95,21 @@
    ],
    "type": "L2",
    "exampleQuestion": "丙丁新篇在哪"
+  },
+  {
+   "eventId": "E00199",
+   "eventName": "刘备之死",
+   "aliases": [
+    "刘备之死",
+    "刘备死亡"
+   ],
+   "chunkIds": [
+    "sanguo-yanyi:0001:c0003",
+    "sanguo-yanyi:0001:c0004",
+    "sanguo-yanyi:0001:c0005"
+   ],
+   "type": "L3",
+   "exampleQuestion": "刘备是怎么死的"
   }
  ]
 }
