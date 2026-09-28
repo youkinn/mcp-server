@@ -10,6 +10,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
+  collectExpansions,
   loadEntityTable,
   normalize,
   normalizeDetail,
@@ -49,14 +50,14 @@ test('① 真实表加载：启动日志行 + rewriteKeyCount / normVersion / ro
   }
   const log = cap.lines.find((l) => l.includes('entity-table loaded'));
   assert.ok(log, '应输出 [sango] entity-table loaded 日志行');
-  assert.match(log, /rows=407 keys=703 normVersion=\w{8}/, 'rows / keys / normVersion 齐全（bug-00041 关公 回 rewriteKey 后 keys=703）');
+  assert.match(log, /rows=407 keys=689 normVersion=\w{8}/, 'rows / keys / normVersion 齐全（bug-00046 登场行 14 键删除后 keys=689）');
   assert.equal(rowsCount(), 407, 'person 193 + nonPerson 214');
   assert.equal(normVersion().length, 8, 'normVersion 为 8 位内容 hash');
   const table = JSON.parse(readFileSync(path.join(REAL_DATA_DIR, 'entity-table.json'), 'utf8')) as {
-    rows: Array<{ rewriteKeys: string[] }>;
+    rows: Array<{ rewriteKeys?: string[] }>;
   };
-  const rawKeyCount = new Set(table.rows.flatMap((r) => r.rewriteKeys)).size;
-  assert.equal(rawKeyCount, 705, '原始表键数（锚点，bug-00036 两轮 + bug-00041 关公 回键后：705）');
+  const rawKeyCount = new Set(table.rows.flatMap((r) => r.rewriteKeys ?? [])).size;
+  assert.equal(rawKeyCount, 691, '原始表键数（锚点，703 - 14：bug-00046 登场行 rewriteKeys 整列删除）');
   assert.equal(rewriteKeyCount(), rawKeyCount - 2, '模块生效计数 = 原始键 - 2 条 ambiguityGuard 禁入（晋王 / 舌战）');
 });
 
@@ -98,7 +99,7 @@ test('② 行为样例（接口 §6 / 表设计 §8 验证方式）：rewriteKey
   assert.equal(normalize('传国玉玺'), '传国玉玺', '玉玺 移出后长词不扩张');
   assert.equal(normalize('就会就计'), '就会就计', '就计 移出后不改写');
   assert.equal(normalize('遁甲'), '遁甲', '遁甲 跨行真子串（⊂奇门遁甲/遁甲天书）移出，恒等');
-  // bug-00036：登场行或式 canonical 规范为 出山
+  // 登场类·出山行（bug-00036 或式 canonical 规范为 出山；bug-00046 本票不动该行）
   assert.equal(normalize('出仕'), '出山', '或式 canonical 规范后 出仕 → 出山');
   assert.equal(normalize('入仕'), '出山', '入仕 → 出山');
   assert.equal(normalize('出山'), '出山', '出山 为 canonical，恒等');
@@ -116,6 +117,27 @@ test('③ fragmentOnly 双写素材（表设计 §6 消费矩阵）：fragmentKe
   assert.equal(fk.get('玉玺'), '传国玉玺', 'bug-00036：玉玺 移入 fragmentOnly');
   assert.equal(fk.get('木牛'), '木牛流马', 'bug-00036：木牛 移入 fragmentOnly');
   assert.equal(fk.get('就计'), '将计就计', 'bug-00036：就计 移入 fragmentOnly');
+});
+
+test('③b bug-00046 表订正 + 双写扩展判定：登场行 rewriteKeys 整列删除（canonical 不入问句）、collectExpansions 覆盖 rewriteKeys ∪ fragmentOnly', () => {
+  loadEntityTable(REAL_DATA_DIR);
+  // 现象用例（展开验收词）：裸「出场/登场」不再被压成规范形「人物首次登场」，问句不被改坏
+  assert.equal(normalize('出场'), '出场', '出场 不再改写（bug-00046：刘备首次出场 曾被改为 刘备首次人物首次登场）');
+  assert.equal(normalize('登场'), '登场', '登场 不再改写');
+  assert.equal(normalize('出世'), '出世', '出世 不再改写');
+  assert.equal(
+    normalize('刘备第一次出场是什么时候'),
+    '刘备第一次出场是什么时候',
+    '现象复现用例：问句原文不改写',
+  );
+  // 同 type 的「出山」行保持不动（本票只清登场概念行的 rewriteKeys）
+  assert.equal(normalize('出仕'), '出山', '出山行 rewriteKeys 保持（本票不动）');
+  // 双写扩展判定（索引侧 / 诊断侧共用）：rewriteKeys 与 fragmentOnly 同口径，规范形本身非键
+  assert.deepEqual(collectExpansions('云长'), [{ from: '云长', to: '关羽', count: 1 }], 'rewriteKeys 命中');
+  assert.deepEqual(collectExpansions('天子'), [{ from: '天子', to: '皇帝', count: 1 }], 'fragmentOnly 同口径命中');
+  assert.deepEqual(collectExpansions('五关斩六将'), [{ from: '五关斩六将', to: '过五关斩六将', count: 1 }]);
+  assert.deepEqual(collectExpansions('关羽'), [], '规范形本身非键 → 无扩展（不会是任何行的 rewriteKeys）');
+  assert.deepEqual(collectExpansions('出场'), [], '登场族词面已非键 → 无扩展（走事件桥 + birthByPerson 结构路）');
 });
 
 test('④ 加载失败降级（接口 §1.6）：文件缺失 / JSON 损坏 / schemaVersion 非法 / 有效行数 0 → normalize 恒等', () => {
@@ -254,6 +276,14 @@ test('⑦ 键排斥规则 + 邻接延伸检查（bug-00036）：跨行 canonical
       assert.equal(normalize('长坂桥'), '长坂桥', '延伸检查覆盖 aliases（长坂桥 为表内已知词）');
       assert.equal(normalize('遁甲'), '遁甲', '跨行 canonical 真子串键被剔（K4），恒等');
       assert.equal(normalize('遁甲天书'), '遁甲天书', '他行 longer canonical 不受影响');
+      // 双写扩展与替换同判（collectExpansions 复用邻接延伸检查）：被保护的键不出现在扩展命中里
+      assert.deepEqual(
+        collectExpansions('博望之战'),
+        [{ from: '博望', to: '博望坡', count: 1 }],
+        '独立语境 博望 → 双写扩展命中 博望坡',
+      );
+      assert.deepEqual(collectExpansions('长坂坡'), [], '延伸保护：长坂 不计入扩展');
+      assert.deepEqual(collectExpansions('长坂桥'), [], '延伸保护覆盖 aliases：长坂 不计入扩展');
       const warnings = cap.lines.filter((l) => l.includes('entity-table 校验'));
       assert.ok(
         warnings.some((l) => l.includes('真子串') && l.includes('K4')),

@@ -138,10 +138,13 @@ export type DeathIntent =
 export interface RetrievalQueryDiagnostics {
   /** 工具入参 query 原文。 */
   raw: string;
-  /** entity-table rewriteKeys 替换后文本（人名与换说法同一口径；表加载失败时恒等）。 */
+  /** 检索用文本：检索侧不改写 => 恒等于 raw（09-29 定案，接口 §2.2）。 */
   normalized: string;
-  /** query 侧实际改写命中明细（接口 §5）：按替换发生顺序；邻接延伸保护未替换 / fragmentOnly 不计入；无改写为 []。 */
+  /** 检索侧不再改写：恒 []（字段保留，兼容历史消费方；接口 §5）。 */
   rewrites: RetrievalQueryRewrite[];
+  /** 索引侧双写扩展命中（接口 §5）：query 原文命中可双写键 → 规范形，[{from,to}]；
+   *  语义 = 该词在语料 / 标签侧已按等价写法双写覆盖，不改写检索输入；无命中为 []。 */
+  expansionHits: RetrievalQueryRewrite[];
   /** 分词 tokens。 */
   tokens: string[];
 }
@@ -161,7 +164,7 @@ export interface RetrievalEnvDiagnostics {
   vectorDim: number | null;
 }
 
-/** query 侧一次实际改写命中明细（接口 §5 query.rewrites 元素）：from=原文片段、to=规范形。 */
+/** 一条 query 扩展 / 改写明细（接口 §5 query.rewrites / query.expansionHits 元素）：from=原文片段、to=规范形。 */
 export interface RetrievalQueryRewrite {
   from: string;
   to: string;

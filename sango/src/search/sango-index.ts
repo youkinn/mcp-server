@@ -19,10 +19,9 @@ import type { MatchedEventGroup } from './event-table.ts';
 import { createCrossEncoderScorer, resolveRerankModelFile } from './reranker.ts';
 import type { RerankScorer } from './reranker.ts';
 import {
-  fragmentKeyToCanon as entityFragmentKeyToCanon,
+  collectExpansions,
   loadEntityTable,
   normalize as entityNormalize,
-  normalizeDetail as entityNormalizeDetail,
   rewriteKeyCount as entityRewriteKeyCount,
   normVersion as entityNormVersion,
 } from '../normalize/entity-table.ts';
@@ -43,7 +42,7 @@ import type {
   SearchResult,
 } from '../types.ts';
 import { tokenize } from '../utils/text.ts';
-import { matchDeathIntent } from './intent.ts';
+import { matchBirthIntent, matchDeathIntent } from './intent.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export const DEFAULT_DATA_DIR = path.resolve(__dirname, '..', '..', 'data');
@@ -127,8 +126,10 @@ const DIAGNOSTICS_BUDGET_BYTES = 64 * 1024;
 interface DiagnosticsBuildContext {
   raw: string;
   normalized: string;
-  /** query 侧实际改写命中明细（entityNormalizeDetail().hits，接口 §5 query.rewrites）。 */
+  /** 检索侧不再改写：恒 []（字段保留，兼容历史消费方；接口 §5）。 */
   rewrites: RetrievalQueryRewrite[];
+  /** 索引侧双写扩展命中（原文命中键 → 规范形；接口 §5 query.expansionHits，只报告不改写）。 */
+  expansionHits: RetrievalQueryRewrite[];
   tokens: string[];
   bm25: Float64Array;
   bm25Norm: Float64Array;
@@ -244,9 +245,6 @@ export class SangoIndex {
   avgLen = 0;
   n = 0;
 
-  /** fragmentOnly 键 → 规范形（表设计 §6 / 接口 §2.3：索引侧双写扩展，加载时从实体表模块取快照）。 */
-  private fragmentKeyToCanon: ReadonlyMap<string, string> = new Map();
-
   vec: Float32Array = new Float32Array(0);
   vecDim = 0;
   vecCount = 0;
@@ -268,6 +266,12 @@ export class SangoIndex {
    * 临终遗言/托孤类问法命中用（如「刘备托孤」段先于「刘备之死」段，答案在托孤段）。
    */
   private deathSpeechByPerson = new Map<string, number[]>();
+  /**
+   * 登场标签人名词典（标签「人物之生-XXX登场」中的 XXX，归一化后）→ 该人登场 chunk 下标。
+   * 登场意图强命中按人匹配（与 deathByPerson 同款结构路，接口 §2.4 / bug-00046 定案）：
+   * 「刘备第一次出场是什么时候」走 birthByPerson 置顶，不依赖 alias 词面命中。
+   */
+  private birthByPerson = new Map<string, number[]>();
   /** chunkId → 文档下标：标签键校验与死键跳过。 */
   private docIndexOf = new Map<string, number>();
 
@@ -275,9 +279,9 @@ export class SangoIndex {
    * 语料缺失 / 读取 / JSON 解析失败时抛错终止启动；向量加载失败仅告警并降级为纯 BM25；
    * 实体表加载失败仅告警并降级为「不做归一化」（normalize 恒等），不影响启动（接口 §1.6）。
    *
-   * 一遍构建（FEAT-A016 §1.3 取消 df 选名）：规范形由表直接指定（canonical 列），对归一化文本直接建
-   * postings / df；fragmentOnly 片段侧素材在索引侧双写扩展（原文 token 保留、dl 不重算，接口 §2.3）。
-   * docs[].text 始终保留原始文本（出参与评测答案正则都依赖原文），只归一化索引侧 token。 */
+   * 一遍构建（FEAT-A016 §1.3 取消 df 选名）：规范形由表直接指定（canonical 列），对**语料原文**建
+   * postings / df；原文命中的 rewriteKeys 与 fragmentOnly 一律双写扩展（原文 token 保留、只增倒排条目、
+   * dl 不重算，接口 §2.2 / §2.3）。docs[].text 与检索 token 均取原文，等价写法只体现在倒排条目上。 */
   load(): void {
     if (!existsSync(this.corpusDir)) {
       const msg = `[sango] corpus 目录不存在：${this.corpusDir}（无语料无法检索，终止启动）`;
@@ -324,26 +328,22 @@ export class SangoIndex {
       throw new Error(msg);
     }
 
-    // 实体表加载：成功则 rewriteKeys 替换生效（铲除两遍构建的 df 选名）；失败则 normalize 退化为恒等。
+    // 实体表加载：成功则索引侧按原文双写扩展（原文 token + 命中键规范形 token，不改写语料文本）；
+    // 失败则 normalize 退化为恒等、无扩展（接口 §1.6）。
     loadEntityTable(this.dataDir);
-    this.fragmentKeyToCanon = entityFragmentKeyToCanon();
 
     for (let di = 0; di < chunks.length; di++) {
       const { chapter, title, chunk } = chunks[di];
-      const normText = entityNormalize(chunk.text);
-      const tokens = tokenize(normText);
+      // 检索 token = 语料原文 token（检索侧不改写；接口 §2.2）；等价写法由下方「双写扩展」覆盖。
+      const tokens = tokenize(chunk.text);
       const tf = new Map<string, number>();
       for (const t of tokens) tf.set(t, (tf.get(t) ?? 0) + 1);
-      // fragmentOnly 双写扩展（接口 §2.3）：片段短语命中「处」逐一追加写入其规范形 token——
-      // tf 按命中处数计（如 0076:c0014「关公」x6 → 关羽 tf +6，等价于旧 alias 逐处折算的 tf 贡献）。
-      // 只增倒排条目；docs[].len 仍取原文 token 数（dl 不重算），双写引致的 df 略升为已知可接受偏差。
+      // 索引侧双写扩展（接口 §2.3，rewriteKeys 与 fragmentOnly 同口径）：原文命中的键逐一追加其规范形
+      // token——tf 按命中处数计（如 0076:c0014「关公」x6 → 关羽 tf +6）。原文 token 保留、只增倒排条目；
+      // docs[].len 仍取原文 token 数（dl 不重算），双写引致的规范形 df 略升为已知可接受偏差。
       const len = tokens.length;
-      if (this.fragmentKeyToCanon.size > 0) {
-        for (const [fragment, canonical] of this.fragmentKeyToCanon) {
-          if (!normText.includes(fragment)) continue;
-          const count = normText.split(fragment).length - 1;
-          for (const t of new Set(tokenize(canonical))) tf.set(t, (tf.get(t) ?? 0) + count);
-        }
+      for (const { to, count } of collectExpansions(chunk.text)) {
+        for (const t of new Set(tokenize(to))) tf.set(t, (tf.get(t) ?? 0) + count);
       }
       this.docs.push({
         chunkId: chunk.id,
@@ -424,7 +424,7 @@ export class SangoIndex {
         .split('|')
         .map((tag) => tag.trim())
         .filter((tag) => tag.length > 0);
-      // 死亡 / 遗言人名词典与 hitLabels 判定均基于原始标签文本（仅同口径归一化人名），剥壳不作用于这些路径。
+      // 死亡 / 登场人名词典基于原始标签文本（仅同口径归一化人名取规范形），剥壳不作用于该路径。
       const normTags = this.multiHangTags(this.tagTextsByDoc[di].map((tag) => entityNormalize(tag)));
       for (const tag of normTags) {
         if (tag.startsWith('人物之死-')) {
@@ -433,11 +433,23 @@ export class SangoIndex {
           const arr = this.deathByPerson.get(person) ?? [];
           arr.push(di);
           this.deathByPerson.set(person, arr);
+        } else if (tag.startsWith('人物之生-') && tag.endsWith('登场')) {
+          const person = tag.slice('人物之生-'.length, -2);
+          if (person.length > 0) {
+            const arr = this.birthByPerson.get(person) ?? [];
+            arr.push(di);
+            this.birthByPerson.set(person, arr);
+          }
         }
       }
-      // 索引剥壳（feat-A014）：tagPostings 只入库剥离类型信息后的文本，类型词不再进第三路候选面。
-      const strippedTags = normTags.map((tag) => this.stripTagType(tag));
-      for (const t of new Set(tokenize(strippedTags.join('|')))) {
+      // 标签侧双写（接口 §2.4，与语料同口径）：标签原文 token + 命中键（rewriteKeys ∪ fragmentOnly）的
+      // 规范形 token。原「先 normalize 再入 tagPostings」的替换口径作废；剥壳（feat-A014）仍在原文本上做，
+      // 类型词不进候选面。每 doc 一份词元集（跨标签去重，同一 token 每 doc 只入一条倒排）。
+      const docTokens = new Set<string>();
+      for (const tag of this.tagTextsByDoc[di]) {
+        for (const t of this.tagTokensOf(tag)) docTokens.add(t);
+      }
+      for (const t of docTokens) {
         const arr = this.tagPostings.get(t) ?? [];
         arr.push(di);
         this.tagPostings.set(t, arr);
@@ -479,6 +491,20 @@ export class SangoIndex {
       if (normTag.startsWith(prefix)) return normTag.slice(prefix.length);
     }
     return normTag;
+  }
+
+  /**
+   * 单个标签的入库词元集（接口 §2.4，与语料同口径）：剥壳后的**原文** token（检索侧不改写标签原文）
+   * ∪ 原文命中键（rewriteKeys ∪ fragmentOnly）的规范形 token（双写扩展，collectExpansions 同裁判定）。
+   * tagPostings 构建与 hitLabels 判定共用本方法，保证「倒排命中」与「回传标签文本」口径严格一致。
+   */
+  private tagTokensOf(rawTag: string): Set<string> {
+    const stripped = this.stripTagType(rawTag);
+    const tokens = new Set(tokenize(stripped));
+    for (const { to } of collectExpansions(stripped)) {
+      for (const t of tokenize(to)) tokens.add(t);
+    }
+    return tokens;
   }
 
   /**
@@ -544,13 +570,15 @@ export class SangoIndex {
    * 仅 scheme=model 的真向量参与检索：scheme=hash 的哈希向量无语义，完全不参与加权也不参与兜底，
    * 此时退化为纯 BM25；纯 BM25 且词法无命中时直接判无命中。
    *
-   * 死亡类问法（怎么死的/被谁杀/死了吗…，见 search/intent.ts）按归一化人名匹配死亡标签人名词典
+   * 死亡类问法（怎么死的/被谁杀/死了吗…，见 search/intent.ts）按人名匹配死亡标签人名词典
    * （「人物之死-XXX之死」），命中 chunk 在排序阶段置顶为高置信候选（分数仍为 [0,1] 的三路加权，
    * 不加分）；该人物死亡多 chunk 时，死因/凶手/地点/时间/确认类问法取靠前段（死因段），
    * 事后类取靠后段（追述/续事段）。临终遗言/托孤类问法优先命中该人物的托孤/遗诏段
    * （deathSpeechByPerson，如 0085:c0009-0010 白帝城托孤），无遗言段时退回死亡段。
    * 死亡年龄类问法（死的时候多少岁/享年/卒年/去世时多大…）取靠前段，且死亡段与遗言/遗诏段一并置顶
    * （年龄事实段常落在遗言/遗诏段）。
+   * 登场类问法（出场/登场/出世/第一次出场…，见 search/intent.ts）按人名匹配登场标签人名词典
+   * （「人物之生-XXX登场」），命中 chunk 走与死亡意图同一条保证区置顶通道（不新增召回路、零 LLM）。
    *
    * 异步：scheme=model 时需运行期编码 query（BGE-M3 ONNX 推理，见 embed/bge-m3-encoder.ts）。
    */
@@ -561,10 +589,12 @@ export class SangoIndex {
   ): Promise<SearchResult> {
     const wantDiag = options?.diagnostics === true;
     if (this.n === 0) return { entries: [], diagnostics: null };
-    // §2.2 硬约束（FEAT-A016）：query 改写必须在 embed 之前 —— normalized 恒为 embed 输入。
-    // query 与语料侧 / 标签侧同口径归一化（entity-table rewriteKeys 替换；表缺失时退化为恒等）。
-    const normDetail = entityNormalizeDetail(query);
-    const normalized = normDetail.text;
+    // §2.2（FEAT-A016 09-29 定案）：检索侧不改写 query —— query 原文入 BM25 / 向量 / 标签 / 事件桥；
+    // query.normalized ≡ 原文（embed 输入同为原文，缓存侧口径不变见 tools/sango-query-embed.ts）。
+    // 等价写法由索引侧双写覆盖（§2.3），诊断经 query.expansionHits 报告（§5，只报告不改写）。
+    const normalized = query;
+    const expansions = collectExpansions(query);
+    const expansionCanons = new Set(expansions.map((e) => e.to));
     const qTokens = tokenize(normalized);
     // feat-A013：检索分阶段耗时（毫秒）。各段按「---- 阶段 ----」分界独立计时；
     // 空结果早退路径下未执行的段保持 null（语义见 RetrievalDiagnosticsTiming）。
@@ -627,12 +657,15 @@ export class SangoIndex {
     }
     timing.label = performance.now() - labelT0;
 
-    // ---- 死亡意图强命中（不新增召回）：死亡类问法 + 归一化 query 含死亡人名 → 该人相关 chunk 置顶 ----
+    // ---- 死亡意图强命中（不新增召回）：死亡类问法 + query（原文 ∪ 双写扩展规范形）含死亡人名 → 置顶 ----
+    // 人名匹配用原文 ∪ 扩展规范形：问句用别名（云长怎么死的）时靠扩展命中 关羽（人名不落回改写输入）。
+    const personInQuery = (person: string): boolean =>
+      query.includes(person) || expansionCanons.has(person);
     const deathIntent: DeathIntent | null = matchDeathIntent(query);
     const deathHits = new Set<number>();
     if (deathIntent && this.deathByPerson.size > 0) {
       for (const [person, docs] of this.deathByPerson) {
-        if (!normalized.includes(person)) continue;
+        if (!personInQuery(person)) continue;
         // 临终遗言类问法优先取该人物遗言段（托孤/遗诏…），无遗言段时退回死亡段，保证行为不劣化；
         // 死亡年龄类问法取「死亡段 ∪ 遗言/遗诏段」一并置顶（年龄事实段常落在遗言/遗诏段）。
         const picked =
@@ -642,6 +675,18 @@ export class SangoIndex {
               ? [...new Set([...(this.deathSpeechByPerson.get(person) ?? []), ...docs])]
               : docs;
         for (const d of picked) deathHits.add(d);
+      }
+    }
+
+    // ---- 登场意图强命中（照死亡同款，不新增召回路、零 LLM）：登场类问法 + query 含登场人名 → 置顶 ----
+    // 结构路（bug-00046 定案）：任意问法（刘备第一次出场/刘备出场/刘备出世…）按 birthByPerson 人名词典
+    // 命中「人物之生-刘备登场」标签 chunk；与 deathHits 同进保证区，不依赖 entity 表 alias 词面命中。
+    const birthIntent: boolean = matchBirthIntent(query);
+    const birthHits = new Set<number>();
+    if (birthIntent && this.birthByPerson.size > 0) {
+      for (const [person, docs] of this.birthByPerson) {
+        if (!personInQuery(person)) continue;
+        for (const d of docs) birthHits.add(d);
       }
     }
 
@@ -741,7 +786,7 @@ export class SangoIndex {
               this.emptySearchDiagnostics(
                 query,
                 normalized,
-                normDetail.hits,
+                expansions.map((e) => ({ from: e.from, to: e.to })),
                 qTokens,
                 cosine,
                 deathIntent,
@@ -753,10 +798,11 @@ export class SangoIndex {
       };
     }
 
-    // 死亡强命中不改分数（三路加权恒在 [0,1]），改为排序两级：保证区（死亡意图命中 ∪ L3 锚点段）整体
-    // 置顶，组内按意图选段（死因/凶手/地点/时间/年龄/确认类取靠前段，事后类取靠后段，遗言类不打段序按
-    // 加权分），其余候选仍按加权分降序。非事件请求 pinDocs ≡ deathHits，排序与现状一致。
-    const pinDocs = l3AnchorDocs.size > 0 ? new Set([...deathHits, ...l3AnchorDocs]) : deathHits;
+    // 死亡 / 登场强命中不改分数（三路加权恒在 [0,1]），改为排序两级：保证区（死亡意图命中 ∪ 登场意图
+    // 命中 ∪ L3 锚点段）整体置顶，组内按意图选段（死因/凶手/地点/时间/年龄/确认类取靠前段，事后类取靠后
+    // 段，遗言类不打段序按加权分；登场无段序语义，走默认靠前段 = 语料序），其余候选仍按加权分降序。
+    // 非事件、非死亡、非登场请求 pinDocs 为空集，排序与现状一致。
+    const pinDocs = new Set<number>([...deathHits, ...birthHits, ...l3AnchorDocs]);
     const segPick: 'earlier' | 'later' | 'none' =
       deathIntent === 'death_aftermath' ? 'later' : deathIntent === 'death_last_words' ? 'none' : 'earlier';
     combined.sort((a, b) => {
@@ -785,7 +831,8 @@ export class SangoIndex {
             this.buildDiagnostics({
               raw: query,
               normalized,
-              rewrites: normDetail.hits,
+              rewrites: [],
+              expansionHits: expansions.map((e) => ({ from: e.from, to: e.to })),
               tokens: qTokens,
               bm25,
               bm25Norm,
@@ -823,7 +870,7 @@ export class SangoIndex {
   private emptySearchDiagnostics(
     query: string,
     normalized: string,
-    rewrites: RetrievalQueryRewrite[],
+    expansionHits: RetrievalQueryRewrite[],
     tokens: string[],
     cosine: Float64Array | null,
     deathIntent: DeathIntent | null,
@@ -833,7 +880,8 @@ export class SangoIndex {
     return this.buildDiagnostics({
       raw: query,
       normalized,
-      rewrites,
+      rewrites: [],
+      expansionHits,
       tokens,
       bm25: new Float64Array(0),
       bm25Norm: new Float64Array(0),
@@ -1106,7 +1154,13 @@ export class SangoIndex {
     return {
       truncated: false,
       truncatedCount: 0,
-      query: { raw: ctx.raw, normalized: ctx.normalized, rewrites: ctx.rewrites, tokens: ctx.tokens },
+      query: {
+        raw: ctx.raw,
+        normalized: ctx.normalized,
+        rewrites: ctx.rewrites,
+        expansionHits: ctx.expansionHits,
+        tokens: ctx.tokens,
+      },
       env: {
         vectorScheme: degraded ? null : this.vecScheme === VEC_SCHEME_MODEL ? 'bge-m3' : null,
         degradedBm25Only: degraded,
@@ -1154,13 +1208,14 @@ export class SangoIndex {
     // FEAT-A018 §5.3：可选来源 'event' = 候选同时属某命中事件组（便于漏斗核对；非事件命中请求恒不加，与现状逐字节一致）。
     if (ctx.eventDocSet.has(d)) sources.push('event');
     // hitLabels：命中该 chunk 的标签原始文本（保序、去重）。判定口径与 tagPostings 构建 / tagHits 严格一致：
-    // 标签经同口径 normalize + tokenize，与 query 词元中长度 ≥ 2 的词元求交（单字词元不参与，同标签路由）。
+    // 复用 tagTokensOf（标签原文剥壳 token ∪ 命中键规范形 token，接口 §2.4），与 query 中长度 ≥ 2 的词元
+    // 求交（单字词元不参与，同标签路由）。
     // 跨主条目词经共享实体标签多挂命中后，同一标签词可能出现在多个主条目标签命中里，判定仍以原始标签文本为准。
     const hitLabels: string[] = [];
     if (ctx.tagHits.has(d)) {
       const qTokens = new Set(ctx.tokens.filter((t) => t.length >= 2));
       for (const tag of this.tagTextsByDoc[d] ?? []) {
-        const tagTokens = new Set(tokenize(entityNormalize(tag)));
+        const tagTokens = this.tagTokensOf(tag);
         let hit = false;
         for (const t of tagTokens) {
           if (qTokens.has(t)) {

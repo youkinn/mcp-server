@@ -86,7 +86,10 @@ test('② 请求诊断：结构字段齐全（truncated/truncatedCount/query/env
   assert.ok(diagnostics, '请求诊断时应产出');
   assert.equal(diagnostics.truncated, false);
   assert.equal(diagnostics.truncatedCount, 0);
-  assert.deepEqual(Object.keys(diagnostics.query).sort(), ['normalized', 'raw', 'rewrites', 'tokens']);
+  assert.deepEqual(
+    Object.keys(diagnostics.query).sort(),
+    ['expansionHits', 'normalized', 'raw', 'rewrites', 'tokens'],
+  );
   assert.deepEqual(
     Object.keys(diagnostics.env).sort(),
     ['aliasCount', 'corpusChunks', 'degradedBm25Only', 'normVersion', 'vectorDim', 'vectorScheme'],
@@ -107,17 +110,25 @@ test('② 请求诊断：结构字段齐全（truncated/truncatedCount/query/env
   );
 });
 
-test('③ query 处理链：raw=入参、normalized=rewriteKeys 替换结果、tokens 非空（验收 9）', async () => {
+test('③ query 处理链：检索侧不改写（normalized≡raw、rewrites≡[]）、expansionHits 报告双写覆盖（验收 9）', async () => {
   const index = loadFixtureIndex();
   const { diagnostics } = await index.search('云长', 5, { diagnostics: true });
   assert.ok(diagnostics);
   assert.equal(diagnostics.query.raw, '云长');
-  assert.equal(diagnostics.query.normalized, '关羽', '云长 经 rewriteKeys 替换为规范形 关羽（人名与换说法同一口径）');
+  assert.equal(diagnostics.query.normalized, '云长', '检索侧不改写：normalized ≡ raw（接口 §2.2 09-29 定案）');
   assert.deepEqual(
     diagnostics.query.rewrites,
-    [{ from: '云长', to: '关羽' }],
-    'query.rewrites = query 侧实际改写命中明细（接口 §5，按替换顺序；无改写为 []）',
+    [],
+    'query.rewrites 恒 []（字段保留兼容历史消费方；接口 §5）',
   );
+  assert.deepEqual(
+    diagnostics.query.expansionHits,
+    [{ from: '云长', to: '关羽' }],
+    'query.expansionHits：原文命中可双写键 → 规范形（语义=索引侧已双写覆盖，不改写输入）',
+  );
+  // 不命中一例：规范形 / 非键词 → expansionHits 空
+  const plain = await index.search('关羽', 5, { diagnostics: true });
+  assert.deepEqual(plain.diagnostics?.query.expansionHits, [], '无命中扩展时为 []');
   assert.equal(diagnostics.env.normVersion, '5f0a1c2d', 'env.normVersion = 表 meta.normVersion（夹具表，接口 §5）');
   assert.ok(Array.isArray(diagnostics.query.tokens) && diagnostics.query.tokens.length > 0);
 });
@@ -245,7 +256,7 @@ test('⑨ 64KB 预算截断（硬约束 3）：超限诊断 truncated=true、tru
   const overBudget: RetrievalDiagnostics = {
     truncated: false,
     truncatedCount: 0,
-    query: { raw: 'q', normalized: 'q', rewrites: [], tokens: ['q'] },
+    query: { raw: 'q', normalized: 'q', rewrites: [], expansionHits: [], tokens: ['q'] },
     env: { vectorScheme: null, degradedBm25Only: true, corpusChunks: 4, aliasCount: 5, normVersion: '', vectorDim: null },
     funnel: { corpusChunks: 4, lexicalHits: 1, vectorTop50: 0, labelHits: 0, mergedCandidates: 1000, topN: 10, injected: null, cited: null },
     timing: { bm25: 1.2, vector: 3.4, label: 0.5, merge: 2.1, rerank: null },
@@ -268,7 +279,7 @@ test('⑨ 64KB 预算截断（硬约束 3）：超限诊断 truncated=true、tru
   const tiny: RetrievalDiagnostics = {
     truncated: false,
     truncatedCount: 0,
-    query: { raw: 'q', normalized: 'q', rewrites: [], tokens: ['q'] },
+    query: { raw: 'q', normalized: 'q', rewrites: [], expansionHits: [], tokens: ['q'] },
     env: { vectorScheme: null, degradedBm25Only: true, corpusChunks: 4, aliasCount: 5, normVersion: '', vectorDim: null },
     funnel: { corpusChunks: 4, lexicalHits: 1, vectorTop50: 0, labelHits: 0, mergedCandidates: 1, topN: 1, injected: null, cited: null },
     timing: { bm25: 0.4, vector: null, label: 0.1, merge: 0.8, rerank: null },
@@ -376,34 +387,38 @@ test('⑭ 复算恒等式（bug-00013）：cosine / bm25Norm 全精度、bm25Nor
 });
 
 /**
- * 真实语料核对（hitLabels 口径，非夹具）：用 sango/data 的真实语料 + 真实标签表跑两轮 query，逐条核对 ——
- * （1）与 labelHit 自洽、未命中为 []；（2）每一项都是该 chunk 标签表成员
- * （回传标签原始文本，不是归一化后的文本）；（3）严格复算：标签表 ∩ query 双字词元同口径分词求交、保序去重。
- * 实测结论（本次核对）：
- *   - query「关羽」：真实语料里经 alias 归一化为规范名「云长」（规范名按语料内 df 选定），候选 20 条全部
- *     labelHit=true、hitLabels 非空；其中 3 条标签原文（「政治事件-美髯公」/「美髯公」/「关云长义释曹操」）
- *     并不含「关羽」二字，是经 alias 归一化（关羽 / 美髯公 / 关云长 → 云长）才命中的 —— 即 hitLabels 回传
- *     标签表原文（保留「美髯公」等可读写法），判定走归一化文本，两者口径不同但各自正确。此轮只核
- *     「自洽 + 表成员 + 保序去重」，严格复算留给恒等归一化的 query（否则要在测试里复刻 alias 规范名选取规则）。
- *   - query「白门楼」：alias 归一化为恒等（normalized === raw，alias 表里没有含「白门楼」的条目），
- *     标签侧判定与测试侧直接 tokenize 标签原文完全等价，故可做严格复算：候选 20 条中 labelHit=true 的
- *     hitLabels 恒为 ['白门楼']（第 19 回四处 chunk 带该标签），labelHit=false 的恒为 []。
+ * 真实语料核对（hitLabels 口径，非夹具）：用 sango/data 的真实语料 + 真实标签表跑两轮 query。
+ * 口径（09-29 bug-00046 定案）：检索侧不改写 query；标签侧 = 标签原文 token + 命中键的规范形 token 双写
+ * （接口 §2.4）。故 hitLabels 判定 = 「标签原文（剥壳后）token ∪ 双写规范形 token」∩ query 双字词元。
+ * 本轮断言（与下方逐条断言一一对应）：
+ *   - 轮 1 query「云长」：normalized ≡ raw、rewrites=[]、expansionHits=[{云长→关羽}]、funnel.labelHits>0；
+ *     候选逐条：labelHit ⇔ hitLabels 非空（自洽）、hitLabels 保序去重且每项都是该 chunk 标签表成员、
+ *     存在不含「关羽」三字的命中标签原文（证 hitLabels 未回传改写文本）、命中的候选数 > 0。
+ *   - 轮 2 query「华雄」：normalized ≡ raw、expansionHits=[]（「华雄」在 entity-table 内只作为
+ *     「温酒斩华雄」行的 canonical 组成与别名键「斩华雄」出现，无独立行、非任何 rewriteKeys / fragmentOnly）；
+ *     候选逐条：hitLabels 与测试侧独立复算（tokenize(标签原文) ∩ query 双字词元，保序去重）逐字相等、
+ *     labelHit 与复算一致；命中的候选数 > 0（人物之生-华雄登场 / 人物之死-华雄之死 等标签）。
  * 向量对标签路无影响（tagHits 只由 tagPostings 决定），故默认构造后本地清空 vec 即为确定的降级纯 BM25 场景。
  */
-test('⑮ hitLabels 真实语料核对（data/corpus）：自洽 / 表成员 / 保序去重，恒等归一化 query 严格复算', async () => {
+test('⑮ hitLabels 真实语料核对（data/corpus）：云长 自洽 + 表成员 + 保序去重 + 原文口径；华雄 逐候选独立复算', async () => {
   const index = new SangoIndex(DATA_DIR);
   index.load();
   index.vec = new Float32Array(0); // 降级纯 BM25，避免真向量编码拖慢测试，且不影响标签路判定
   const tagsByChunk = loadTagTable(path.join(DATA_DIR, 'corpus', 'tags'));
 
-  // 轮 1（rewriteKeys 归一化 query「云长 → 关羽」）：自洽 + 表成员 + 保序去重；含「关羽」与不含「关羽」的标签都要能被回传。
+  // 轮 1（检索侧不改写 + 索引双写诊断 query「云长」）：自洽 + 表成员 + 保序去重 + 原文口径。
   const aliased = await index.search('云长', 5, { diagnostics: true });
   assert.ok(aliased.diagnostics);
   assert.ok(aliased.diagnostics.env.corpusChunks > 1000, '真实语料已加载');
   assert.equal(aliased.diagnostics.env.degradedBm25Only, true);
   assert.ok(aliased.diagnostics.funnel.labelHits > 0);
-  assert.notEqual(aliased.diagnostics.query.normalized, aliased.diagnostics.query.raw, '真实语料下 云长 经 rewriteKeys 替换为规范形 关羽');
-  assert.equal(aliased.diagnostics.query.normalized, '关羽', '表指定规范形：云长 → 关羽（取消 df 选名）');
+  assert.equal(aliased.diagnostics.query.normalized, aliased.diagnostics.query.raw, '检索侧不改写：normalized ≡ raw');
+  assert.deepEqual(aliased.diagnostics.query.rewrites, [], 'rewrites 恒 []');
+  assert.deepEqual(
+    aliased.diagnostics.query.expansionHits,
+    [{ from: '云长', to: '关羽' }],
+    'expansionHits 报告索引侧已双写覆盖（from → to），不改写输入',
+  );
   let aliasedLabelHit = 0;
   const allLabels: string[] = [];
   for (const c of aliased.diagnostics.candidates) {
@@ -417,18 +432,19 @@ test('⑮ hitLabels 真实语料核对（data/corpus）：自洽 / 表成员 / �
       allLabels.push(label);
     }
   }
-  assert.ok(aliasedLabelHit > 0, 'query「云长」（归一化 关羽）标签路有命中');
-  // 归一化后才命中的证据：回传的标签原文里存在不含「关羽」二字者（别名写法「美髯公」/「关云长」）
+  assert.ok(aliasedLabelHit > 0, 'query「云长」标签路有命中');
+  // 原文口径证据：回传的标签原文里存在不含「关羽」二字者（「关云长义释曹操」）——证明未回传改写文本。
   assert.ok(
     allLabels.some((label) => !label.includes('关羽')),
     'hitLabels 回传标签原文（保留别名写法），不做归一化改写',
   );
 
-  // 轮 2（恒等归一化 query「华雄」——不在实体表（无别名不占位），非任何行改写键）：
-  // 标签侧判定 == 测试侧直接 tokenize 标签原文，允许严格复算。
+  // 轮 2（query「华雄」——在 entity-table 内仅作「温酒斩华雄」行 canonical 的组成与别名键「斩华雄」，
+  // 无独立行、非任何 rewriteKeys / fragmentOnly → 无扩展）：标签侧判定 == 测试侧直接 tokenize 标签原文。
   const plain = await index.search('华雄', 5, { diagnostics: true });
   assert.ok(plain.diagnostics);
-  assert.equal(plain.diagnostics.query.normalized, plain.diagnostics.query.raw, '实体表无「华雄」改写键 → 归一化为恒等');
+  assert.equal(plain.diagnostics.query.normalized, plain.diagnostics.query.raw, '检索侧不改写：normalized ≡ raw');
+  assert.deepEqual(plain.diagnostics.query.expansionHits, [], '「华雄」非任何可双写键 → 无扩展');
   assert.ok(plain.diagnostics.candidates.length > 0);
   const tokens2 = new Set(plain.diagnostics.query.tokens.filter((t) => t.length >= 2));
   let plainLabelHit = 0;

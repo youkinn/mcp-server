@@ -1,8 +1,8 @@
 {
   "meta": {
     "schemaVersion": 1,
-    "normVersion": "b93c5ca9",
-    "generatedAt": "2026-09-26T12:16:00.722Z"
+    "normVersion": "5252f5bc",
+    "generatedAt": "2026-09-28T17:26:58.248Z"
   },
   "rows": [
     {
@@ -6364,25 +6364,9 @@
         "出场",
         "出世"
       ],
-      "rewriteKeys": [
-        "首次登场",
-        "初次登场",
-        "第一次出现",
-        "首次出现",
-        "初次出现",
-        "第一次登场",
-        "初登场",
-        "初现身",
-        "始现",
-        "始出",
-        "始登场",
-        "登场",
-        "出场",
-        "出世"
-      ],
       "fragmentOnly": [],
       "organGuard": null,
-      "note": "bug-00036：登场/首次登场 ⊂ 人物首次登场 本行真子串短式，裁决保留（依赖邻接延伸检查兜底）"
+      "note": "bug-00046（09-29 定案）：canonical 不得进入用户问句，整行 rewriteKeys 删除——登场族词面走事件桥（events.json「X登场」族 alias 原文口径），任意问法（X第一次出场）走 birthByPerson 结构路；别名保留仅作参照。出山行不动。"
     },
     {
       "type": "登场",

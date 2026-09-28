@@ -438,7 +438,56 @@ export function loadEntityTable(dataDir: string = DEFAULT_DATA_DIR): boolean {
    return { text: out, hits };
  }
 
- /** 文本归一化：签名与行为不变（内部委托 normalizeDetail().text），既有调用点零改动。 */
- export function normalize(text: string): string {
-   return normalizeDetail(text).text;
- }
+/** 文本归一化：签名与行为不变（内部委托 normalizeDetail().text），既有调用点零改动。 */
+export function normalize(text: string): string {
+  return normalizeDetail(text).text;
+}
+
+/** 一次「双写扩展」命中：from=原文命中的键、to=规范形、count=原文出现处数。 */
+export interface ExpansionEntry {
+  from: string;
+  to: string;
+  count: number;
+}
+
+/**
+ * 双写扩展命中（接口 §2.3 / §5，bug-00046 09-29 定案）：返回 text 原文命中的「可双写键」
+ * （rewriteKeys ∪ fragmentOnly）→ 规范形，附该键在 text 中的出现处数。
+ * - 索引侧（语料 / 标签原文）据此追加规范形 token：原文 token 保留、只增倒排条目、dl 不重算；
+ * - 诊断侧（query.expansionHits）取 {from,to}：语义 = 该词在语料 / 标签侧已按等价写法双写覆盖，
+ *   **不改写检索输入**（与 normalize 的替换口径严格区分）。
+ * 判定口径与 normalize 替换前一致：rewriteKeys 沿用邻接延伸检查（bug-00036，命中处能延伸为表内
+ * 已知词则不计入）；fragmentOnly 按出现即命中（片段侧素材无替换语义，is 出现即双写）。
+ * 表未加载 / 降级时恒返回 []。
+ */
+export function collectExpansions(text: string): ExpansionEntry[] {
+  const order: string[] = [];
+  const counts = new Map<string, number>();
+  const canonOf = new Map<string, string>();
+  const note = (key: string, canonical: string, count: number): void => {
+    if (!counts.has(key)) {
+      order.push(key);
+      canonOf.set(key, canonical);
+    }
+    counts.set(key, (counts.get(key) ?? 0) + count);
+  };
+  if (tableState.pattern) {
+    text.replace(tableState.pattern, (m, offset: number) => {
+      const ext = tableState.keyExtensions.get(m);
+      if (ext) {
+        for (const { word, offset: j } of ext) {
+          const start = offset - j;
+          if (start >= 0 && text.startsWith(word, start)) return m;
+        }
+      }
+      const to = tableState.keyToCanon.get(m);
+      if (to !== undefined && to !== m) note(m, to, 1);
+      return m;
+    });
+  }
+  for (const [fragment, canonical] of tableState.fragmentKeyToCanon) {
+    const count = text.split(fragment).length - 1;
+    if (count > 0) note(fragment, canonical, count);
+  }
+  return order.map((from) => ({ from, to: canonOf.get(from)!, count: counts.get(from)! }));
+}

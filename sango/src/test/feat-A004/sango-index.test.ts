@@ -94,7 +94,7 @@ test('③ 条目文本内无出处头、无回目、无段号、无类型、无�
 test('④ 按相关度降序返回，limit 生效', async () => {
   const index = loadFixtureIndex();
   const { entries: all } = await index.search('关羽', 5);
-  assert.equal(all.length, 3, '第 73 回中词法命中 2 个 chunk（云长经别名归一化）+ 标签路命中 1 个（关羽入川）');
+  assert.equal(all.length, 3, '第 73 回中词法命中 2 个 chunk（云长经索引侧双写覆盖出 关羽 token）+ 标签路命中 1 个（关羽入川）');
   assert.equal(all[0].id, 'sanguo-yanyi:0073:c0001', '相关度更高者在前');
   assert.equal((await index.search('关羽', 1)).entries.length, 1);
 });
@@ -312,31 +312,43 @@ test('⑲ 死亡年龄类问法（death_age）：死亡段与遗言/托孤段一
   assert.ok(entries.slice(0, 10).some((e) => e.id === 'sanguo-yanyi:0073:c0001'), 'limit=10 内死亡段可及');
 });
 
-test('⑳ A016 双侧替换：rewriteKeys 在 query 侧 embed 前生效（孟德 → 曹操），fragmentOnly 不参与 query 改写（关公 保持原文）', async () => {
+test('⑳ A016 检索侧不改写 + 索引侧双写：孟德 原文入检索、expansionHits 报告 孟德→曹操；fragmentOnly 同样只双写不改写', async () => {
   const index = loadFixtureIndex();
   const { diagnostics } = await index.search('孟德', 5, { diagnostics: true });
   assert.ok(diagnostics);
   assert.equal(diagnostics.query.raw, '孟德');
-  assert.equal(diagnostics.query.normalized, '曹操', 'rewriteKeys 替换：孟德 → 曹操（人物行级）');
+  assert.equal(diagnostics.query.normalized, '孟德', '检索侧不改写：query 原文入检索（接口 §2.2）');
+  assert.deepEqual(diagnostics.query.rewrites, [], 'rewrites 恒 []');
+  assert.deepEqual(
+    diagnostics.query.expansionHits,
+    [{ from: '孟德', to: '曹操' }],
+    'expansionHits = 原文命中 rewriteKeys → 规范形（索引侧已双写覆盖）',
+  );
   const noDiag = await index.search('关公', 5);
-  assert.ok(noDiag.entries.length > 0, 'fragmentOnly 词（关公）原文检索仍可命中 073:c0002（云长段原文无 关公，命中来自词法共现/标签路）');
+  assert.ok(noDiag.entries.length > 0, 'fragmentOnly 词（关公）原文检索仍可命中 073:c0002（命中来自词法共现/标签路）');
   const identity = await index.search('阿瞒', 5, { diagnostics: true });
-  assert.equal(identity.diagnostics?.query.normalized, '阿瞒', 'fragmentOnly（阿瞒）不参与 query 改写');
+  assert.equal(identity.diagnostics?.query.normalized, '阿瞒', '检索侧不改写：fragmentOnly 原文照入');
+  assert.deepEqual(
+    identity.diagnostics?.query.expansionHits,
+    [{ from: '阿瞒', to: '曹操' }],
+    'fragmentOnly 也进 expansionHits 报告（只报告不改写）',
+  );
 });
 
-test('㉑ A016 片段侧双写（fragmentOnly）：原文命中追加写入规范形 token，df 略升、dl 不重算', async () => {
+test('㉑ A016 索引侧双写（rewriteKeys 与 fragmentOnly 同口径）：原文命中追加规范形 token，df 略升、dl 不重算', async () => {
   const index = loadFixtureIndex();
   const internals = index as unknown as { postings: Map<string, Array<{ doc: number; tf: number }>> };
   const doc0 = index.docs.find((d) => d.chunkId === 'sanguo-yanyi:0001:c0001');
   assert.ok(doc0, '第 1 回 c0001 已加载');
-  // 001 文本「曹操字孟德，小字阿瞒。曹操少有才名，曹操任侠放荡。阿瞒者，操之小字也。」归一化后：
-  // 原文 曹操 x3 + 孟德替换 1 = 4，阿瞒 2 处逐处双写追加 2 = tf 6（接口 §2.3 逐处；once-per-doc 则为 5）。
-  // doc.len 仍为原文归一化 token 数（含双写前），双写只增倒排、不改 dl（接口 §2.3）。
+  // 001 原文「曹操字孟德，小字阿瞒。曹操少有才名，曹操任侠放荡。阿瞒者，操之小字也。」：
+  // 原文 曹操 x3 + 孟德（rewriteKey）双写 1 处 + 阿瞒（fragmentOnly）双写 2 处 = tf 6（接口 §2.3 逐处；
+  // once-per-doc 则为 5）。规范形 曹操 的 df 因双写略升。
+  // doc.len 仍为原文 token 数（双写只增倒排条目、不改 dl，接口 §2.3）。
   const c001 = internals.postings.get('曹操')?.find((p) => p.doc === index.docs.indexOf(doc0));
   assert.ok(c001, '\u201c曹操\u201d 应在 c0001 的 postings 中');
-  assert.equal(c001.tf, 6, '原文 3 + 孟德替换 1 + 阿瞒双写 2 处 = 6（逐处双写生效；once-per-doc 则为 5）');
-  const normText = '曹操字曹操，小字阿瞒。曹操少有才名，曹操任侠放荡。阿瞒者，操之小字也。';
-  assert.equal(doc0.len, tokenize(normText).length, 'doc.len = 原文归一化 token 数（双写不重算 dl）');
+  assert.equal(c001.tf, 6, '原文 曹操 x3 + 孟德双写 1 + 阿瞒双写 2 = 6（逐处双写生效；once-per-doc 则为 5）');
+  const rawText = '曹操字孟德，小字阿瞒。曹操少有才名，曹操任侠放荡。阿瞒者，操之小字也。';
+  assert.equal(doc0.len, tokenize(rawText).length, 'doc.len = 原文 token 数（双写不重算 dl）');
   const { entries } = await index.search('曹操', 5);
   assert.deepEqual(entries.map((e) => e.chapter).sort(), [1, 73], '曹操 跨回召回不受双写影响（第 1 回 + 第 73 回）');
 });

@@ -38,3 +38,19 @@ export function matchDeathIntent(raw: string): DeathIntent | null {
   }
   return null;
 }
+
+/**
+ * 登场意图问法枚举（bug-00046 定案，照死亡同款）：出场 / 登场 / 出世 / 首次登场 / 第一次出场 /
+ * 第一次出现 …（含 出现/现身 的近义说法）。命中后人名由检索侧按 birthByPerson 人名词典置顶，
+ * 不再依赖 entity 表 alias 词面替换（「刘备第一次出场」无需被压成裸「登场」）。
+ */
+const BIRTH_GATE = /(出场|登场|出世|现身|出现)/;
+
+/**
+ * 判定用户输入是否属于登场类意图（纯规则、零 LLM）；非登场问法返回 false。
+ * 与死亡意图一致的封闭语域策略：判定失败不阻断检索，只退回普通多路排序。
+ * 命中仅作为「结构路置顶」的开关，人名仍需在 query 中出现（原文或双写扩展规范形，检索侧决定）。
+ */
+export function matchBirthIntent(raw: string): boolean {
+  return BIRTH_GATE.test(raw);
+}
