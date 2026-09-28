@@ -67,8 +67,14 @@ const MIN_COSINE = 0.3; // Step 4 待按真向量分布重定（现值为哈希�
 /** FEAT-A018 §3.3③：L1/L2 并池后合并候选池硬上限兜底（超限按重排分裁；正常场景触不到）。 */
 const EVENT_MERGE_POOL_CAP = 120;
 
-/** FEAT-A030：规则重排后进入 cross-encoder 的候选窗口（池 50 路 → 重排 → 返回 limit ≤ 10）。 */
-const RERANK_WINDOW = 50;
+/** FEAT-A030：规则重排后进入 cross-encoder 的候选窗口默认值（池 50 路 → 重排 → 返回 limit ≤ 10）。 */
+const RERANK_WINDOW_DEFAULT = 50;
+
+/** 重排窗口档位：SANGO_RERANKER_WINDOW 覆盖（评测期 20 / 50 对照），非法值回落默认。 */
+function rerankWindowSize(): number {
+  const raw = Number(process.env.SANGO_RERANKER_WINDOW);
+  return Number.isFinite(raw) && raw >= 1 ? Math.floor(raw) : RERANK_WINDOW_DEFAULT;
+}
 
 // 遗言类标签关键词：标签文本含这些词即视为某人的临终嘱托/遗诏段（数据口径：0085:c0008-0011
 // 刘备托孤、0029:c0014 孙策托孤、0040:c0005 刘表托孤）。
@@ -924,7 +930,8 @@ export class SangoIndex {
    */
   private async rerankWindow(pool: SearchHit[], pinDocs: Set<number>, query: string): Promise<void> {
     if (!this.rerankScorer || pool.length === 0) return;
-    const window = pool.slice(0, RERANK_WINDOW);
+    const windowSize = rerankWindowSize();
+    const window = pool.slice(0, windowSize);
     const head = window.filter((h) => pinDocs.has(h.doc));
     const tail = window.filter((h) => !pinDocs.has(h.doc));
     if (tail.length === 0) return;
@@ -941,7 +948,7 @@ export class SangoIndex {
       .map((h, i) => ({ h, s: list[i] }))
       .sort((a, b) => b.s - a.s) // 稳定排序：同分保持规则序
       .map((x) => x.h);
-    const merged = [...head, ...ranked, ...pool.slice(RERANK_WINDOW)];
+    const merged = [...head, ...ranked, ...pool.slice(windowSize)];
     for (let i = 0; i < merged.length; i++) pool[i] = merged[i];
   }
 
