@@ -209,6 +209,14 @@ export function createDataRerankScorer(dataDir: string = DEFAULT_DATA_DIR): Rera
   return resolveRerankModelFile(modelDir) ? createCrossEncoderScorer(modelDir) : null;
 }
 
+/**
+ * FEAT-A030 装配开关：SANGO_RERANKER=on 才尝试接入生产重排打分器（权重缺失返回 null、走既有降级，不抛错）；
+ * 未设 / off / 其他值一律不接入（默认行为与现状逐字节一致，不触发权重解析）。装配层（src/index.ts）经此接入。
+ */
+export function resolveRerankScorer(dataDir: string = DEFAULT_DATA_DIR): RerankScorer | null {
+  return process.env.SANGO_RERANKER === 'on' ? createDataRerankScorer(dataDir) : null;
+}
+
 export class SangoIndex {
   private readonly dataDir: string;
   private readonly corpusDir: string;

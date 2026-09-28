@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { SangoIndex } from '../../search/sango-index.ts';
+import { SangoIndex, resolveRerankScorer } from '../../search/sango-index.ts';
 import type { RerankScorer } from '../../search/reranker.ts';
 import type { RetrievalDiagnostics } from '../../types.ts';
 
@@ -277,5 +277,51 @@ test('⑨ 分数长度非法降级：applied=false、reason=重排分数非法�
     assert.ok(typeof d.timing.rerank === 'number' && d.timing.rerank >= 0, '分数非法也计入重排段耗时');
   } finally {
     rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('⑩ 重排开关（装配层）：未设 / off / on 三态解析', async () => {
+  const prevMode = process.env.SANGO_RERANKER;
+  const prevDir = process.env.SANGO_RERANKER_DIR;
+  try {
+    delete process.env.SANGO_RERANKER;
+    assert.equal(resolveRerankScorer(), null, '未设 → 不接入（默认行为与现状一致）');
+
+    process.env.SANGO_RERANKER = 'off';
+    assert.equal(resolveRerankScorer(), null, 'off → 不接入');
+
+    process.env.SANGO_RERANKER = 'on';
+    process.env.SANGO_RERANKER_DIR = path.join(tmpdir(), 'no-such-rerank-dir');
+    assert.equal(resolveRerankScorer(), null, 'on + 权重目录不存在 → 权重缺失不接入（不抛错）');
+  } finally {
+    if (prevMode === undefined) delete process.env.SANGO_RERANKER;
+    else process.env.SANGO_RERANKER = prevMode;
+    if (prevDir === undefined) delete process.env.SANGO_RERANKER_DIR;
+    else process.env.SANGO_RERANKER_DIR = prevDir;
+  }
+});
+
+test('⑪ 重排开关：on 但权重缺失 → 装配层不接入，检索诊断 reason 如实写明', async () => {
+  const dir = tempDir();
+  const prevMode = process.env.SANGO_RERANKER;
+  const prevDir = process.env.SANGO_RERANKER_DIR;
+  try {
+    process.env.SANGO_RERANKER = 'on';
+    process.env.SANGO_RERANKER_DIR = path.join(tmpdir(), 'no-such-rerank-dir');
+    // 模拟装配层（src/index.ts）决策：on → resolveRerankScorer()；null → 不注入
+    const scorer = resolveRerankScorer(dir);
+    const index = new SangoIndex(dir, scorer ? { rerankScorer: scorer } : {});
+    index.load();
+    const { diagnostics } = await index.search(Q_RULE, 10, { diagnostics: true });
+    const d = diagnostics as RetrievalDiagnostics;
+    assert.ok(d);
+    assert.equal(d.rerank.enabled, false, 'on 但权重缺失 → 实际未接入打分器');
+    assert.equal(d.rerank.reason, '未接入重排打分器', '未接入原因如实写入诊断');
+    assert.equal(d.timing.rerank, null, '未接入 → 重排段耗时 null');
+  } finally {
+    if (prevMode === undefined) delete process.env.SANGO_RERANKER;
+    else process.env.SANGO_RERANKER = prevMode;
+    if (prevDir === undefined) delete process.env.SANGO_RERANKER_DIR;
+    else process.env.SANGO_RERANKER_DIR = prevDir;
   }
 });
