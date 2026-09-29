@@ -19,6 +19,24 @@ import { writeRun } from './snapshot.ts';
 /** 检索深度：与 CLI inferLimit 一致（契约 §4 candidates 即该 top50 池）。 */
 export const INFER_LIMIT = 50;
 
+/**
+ * 停止能力（FEAT-A015 test-2241 追加）：调用方传入 shouldStop，runner 在逐题之间检查；
+ * 命中即抛本错误中止，不打快照、不算 failed（server 层据此映射终态 aborted）。
+ */
+export class BenchmarkAbortedError extends Error {
+  readonly runId: string;
+  constructor(runId: string) {
+    super(`benchmark aborted: ${runId}`);
+    this.name = 'BenchmarkAbortedError';
+    this.runId = runId;
+  }
+}
+
+/** runBenchmark 可选行为：shouldStop 为「停止请求已受理」的查询回调（逐题之间检查）。 */
+export interface RunOptions {
+  shouldStop?: () => boolean;
+}
+
 export type RunStatus = 'top5' | 'tail' | 'miss';
 
 /** 命中证据段：text 截 80 字（与 CLI 产物一致，页面核对原文走 candidates 的 chunkId）。 */
@@ -171,12 +189,14 @@ export function findNoAnchorItems(index: SangoIndex, items: BenchmarkItem[]): st
 }
 
 /** 执行完整回归：解析评测集 → 锚校验 → 逐题检索判分 → 汇总 → 快照落盘，返回本次运行。 */
-export async function runBenchmark(index: SangoIndex, benchmarkFile: string, resultsDir: string, runId: string): Promise<BenchmarkRun> {
+export async function runBenchmark(index: SangoIndex, benchmarkFile: string, resultsDir: string, runId: string, options: RunOptions = {}): Promise<BenchmarkRun> {
   const t0 = performance.now();
   const items = parseBenchmark(benchmarkFile);
   const noAnchor = findNoAnchorItems(index, items);
   const results: RunResult[] = [];
   for (const it of items) {
+    // 停止请求在逐题之间检查：当前题照常跑完，命中则抛专用中止错误（不落快照、不落 failed）。
+    if (options.shouldStop?.()) throw new BenchmarkAbortedError(runId);
     const res = await index.search(it.question, INFER_LIMIT);
     const m = matchEvidence(res.entries, it.textAnchors, it.titleAnchors);
     let status: RunStatus = 'miss';

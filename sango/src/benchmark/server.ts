@@ -7,7 +7,7 @@
 import { createServer } from 'node:http';
 import type { IncomingMessage, Server, ServerResponse } from 'node:http';
 import type { SangoIndex } from '../search/sango-index.ts';
-import { makeRunId, runBenchmark } from './runner.ts';
+import { BenchmarkAbortedError, makeRunId, runBenchmark } from './runner.ts';
 import { listRunIds, readSnapshot } from './snapshot.ts';
 import type { Snapshot } from './snapshot.ts';
 
@@ -24,6 +24,8 @@ export function startBenchmarkServer(index: SangoIndex, options: { port: number 
    * 本变量只保留「最近一次 job」的内存态（单进程 dev 工具，重启即丢；running 期间收到新 POST 直接 409）。
    */
   let lastJob: RunJob | null = null;
+  /** 停止请求标志（FEAT-A015 test-2241）：受理后置 true，run 在逐题之间检查并抛 BenchmarkAbortedError。 */
+  let abortRequested = false;
 
   const server = createServer((req, res) => {
     route(req, res).catch((error: unknown) => {
@@ -41,10 +43,11 @@ export function startBenchmarkServer(index: SangoIndex, options: { port: number 
         return;
       }
       const runId = makeRunId();
+      abortRequested = false;
       lastJob = { state: 'running', runId };
       console.error(`[benchmark] run 开始：${runId}`);
       // 立即回 202（不再同步等待）；run 结果写入 lastJob，失败只留 error 摘要、不回大段堆栈。
-      void runBenchmark(index, benchmarkFile, resultsDir, runId)
+      void runBenchmark(index, benchmarkFile, resultsDir, runId, { shouldStop: () => abortRequested })
         .then((run) => {
           lastJob = { state: 'done', runId: run.runId, elapsedMs: run.summary.elapsedMs };
           console.error(
@@ -53,10 +56,27 @@ export function startBenchmarkServer(index: SangoIndex, options: { port: number 
         })
         .catch((error: unknown) => {
           const message = error instanceof Error ? error.message : String(error);
+          if (error instanceof BenchmarkAbortedError) {
+            // 停止请求：终态 aborted（非 failed），不落快照（runBenchmark 中止于 writeRun 之前）。
+            lastJob = { state: 'aborted', runId: error.runId };
+            console.error(`[benchmark] run 已中止：${error.runId}`);
+            return;
+          }
           lastJob = { state: 'failed', runId, error: message };
           console.error(`[benchmark] run 失败：${message}`);
         });
       sendJson(res, 202, { code: 202, message: 'ok', data: { runId, state: 'running' } });
+      return;
+    }
+    if (req.method === 'POST' && url.pathname === '/dev/benchmark/run-abort') {
+      // 停止请求：仅「有在跑」时受理（200），run 在当前题结束后中断；未在跑 / 已 done 一律 409（不幂等）。
+      if (lastJob?.state !== 'running') {
+        sendJson(res, 409, { code: 409, message: 'no running benchmark', data: { runId: null } });
+        return;
+      }
+      abortRequested = true;
+      console.error(`[benchmark] run 中止请求已受理：${lastJob.runId}`);
+      sendJson(res, 200, { code: 200, message: 'ok', data: { state: 'aborted' } });
       return;
     }
     if (req.method === 'GET') {
@@ -112,13 +132,15 @@ function snapshotData(snap: Snapshot): { runId: string; time: string; summary: S
 type RunJob =
   | { state: 'running'; runId: string }
   | { state: 'done'; runId: string; elapsedMs: number }
-  | { state: 'failed'; runId: string; error: string };
+  | { state: 'failed'; runId: string; error: string }
+  | { state: 'aborted'; runId: string };
 
 /** GET /run-status 出参 data：无在跑且无最近记录 → idle（runId=null）；elapsedMs 取自 summary.elapsedMs。 */
 function runStatusData(job: RunJob | null): { state: string; runId: string | null; elapsedMs?: number; error?: string } {
   if (!job) return { state: 'idle', runId: null };
   if (job.state === 'done') return { state: 'done', runId: job.runId, elapsedMs: job.elapsedMs };
   if (job.state === 'failed') return { state: 'failed', runId: job.runId, error: job.error };
+  if (job.state === 'aborted') return { state: 'aborted', runId: job.runId };
   return { state: 'running', runId: job.runId };
 }
 
