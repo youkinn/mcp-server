@@ -1,8 +1,8 @@
 {
   "meta": {
     "schemaVersion": 1,
-    "normVersion": "1a5c8f7d",
-    "generatedAt": "2026-09-28T08:08:23.220Z",
+    "normVersion": "2e5f4f9d",
+    "generatedAt": "2026-09-29T10:01:24.950Z",
     "corpusChunkCount": 2344
   },
   "rows": [
@@ -27,7 +27,6 @@
       ],
       "chunkIds": [
         "sanguo-yanyi:0001:c0002",
-        "sanguo-yanyi:0001:c0005",
         "sanguo-yanyi:0001:c0006",
         "sanguo-yanyi:0001:c0008",
         "sanguo-yanyi:0001:c0011",
@@ -151,9 +150,9 @@
         "曹操首次登场"
       ],
       "chunkIds": [
+        "sanguo-yanyi:0001:c0016",
         "sanguo-yanyi:0001:c0017",
-        "sanguo-yanyi:0001:c0018",
-        "sanguo-yanyi:0001:c0019"
+        "sanguo-yanyi:0001:c0018"
       ],
       "type": "L3",
       "exampleQuestion": "曹操是什么时候出场的",
@@ -544,25 +543,6 @@
     },
     {
       "eventId": "E00307",
-      "eventName": "吕布登场",
-      "aliases": [
-        "吕布登场",
-        "吕布出场",
-        "吕布首次登场"
-      ],
-      "chunkIds": [
-        "sanguo-yanyi:0003:c0012",
-        "sanguo-yanyi:0003:c0013",
-        "sanguo-yanyi:0003:c0014"
-      ],
-      "type": "L3",
-      "exampleQuestion": "吕布是什么时候出场的",
-      "characters": [
-        "吕布"
-      ]
-    },
-    {
-      "eventId": "E00308",
       "eventName": "蔡邕登场",
       "aliases": [
         "蔡邕登场",
@@ -578,6 +558,25 @@
       "exampleQuestion": "蔡邕是什么时候出场的",
       "characters": [
         "蔡邕"
+      ]
+    },
+    {
+      "eventId": "E00308",
+      "eventName": "吕布登场",
+      "aliases": [
+        "吕布登场",
+        "吕布出场",
+        "吕布首次登场"
+      ],
+      "chunkIds": [
+        "sanguo-yanyi:0003:c0014",
+        "sanguo-yanyi:0003:c0015",
+        "sanguo-yanyi:0003:c0016"
+      ],
+      "type": "L3",
+      "exampleQuestion": "吕布是什么时候出场的",
+      "characters": [
+        "吕布"
       ]
     },
     {
@@ -1750,6 +1749,25 @@
     },
     {
       "eventId": "E00707",
+      "eventName": "孙权登场",
+      "aliases": [
+        "孙权登场",
+        "孙权出场",
+        "孙权首次登场"
+      ],
+      "chunkIds": [
+        "sanguo-yanyi:0007:c0010",
+        "sanguo-yanyi:0007:c0011",
+        "sanguo-yanyi:0007:c0012"
+      ],
+      "type": "L3",
+      "exampleQuestion": "孙权是什么时候出场的",
+      "characters": [
+        "孙权"
+      ]
+    },
+    {
+      "eventId": "E00708",
       "eventName": "孙策登场",
       "aliases": [
         "孙策登场",
@@ -1768,7 +1786,7 @@
       ]
     },
     {
-      "eventId": "E00708",
+      "eventId": "E00709",
       "eventName": "陈生之死",
       "aliases": [
         "陈生之死",
@@ -1787,7 +1805,7 @@
       ]
     },
     {
-      "eventId": "E00709",
+      "eventId": "E00710",
       "eventName": "张虎之死",
       "aliases": [
         "张虎之死",
@@ -1806,7 +1824,7 @@
       ]
     },
     {
-      "eventId": "E00710",
+      "eventId": "E00711",
       "eventName": "孙坚之死",
       "aliases": [
         "孙坚之死",
@@ -1825,7 +1843,7 @@
       ]
     },
     {
-      "eventId": "E00711",
+      "eventId": "E00712",
       "eventName": "吕公之死",
       "aliases": [
         "吕公之死",
@@ -1844,7 +1862,7 @@
       ]
     },
     {
-      "eventId": "E00712",
+      "eventId": "E00713",
       "eventName": "桓阶登场",
       "aliases": [
         "桓阶登场",
@@ -2815,9 +2833,9 @@
         "张辽首次登场"
       ],
       "chunkIds": [
+        "sanguo-yanyi:0011:c0016",
         "sanguo-yanyi:0011:c0017",
-        "sanguo-yanyi:0011:c0018",
-        "sanguo-yanyi:0011:c0019"
+        "sanguo-yanyi:0011:c0018"
       ],
       "type": "L3",
       "exampleQuestion": "张辽是什么时候出场的",
@@ -2916,9 +2934,9 @@
         "许褚首次登场"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0012:c0011",
-        "sanguo-yanyi:0012:c0012",
-        "sanguo-yanyi:0012:c0013"
+        "sanguo-yanyi:0012:c0013",
+        "sanguo-yanyi:0012:c0014",
+        "sanguo-yanyi:0012:c0015"
       ],
       "type": "L3",
       "exampleQuestion": "许褚是什么时候出场的",
@@ -4442,25 +4460,6 @@
     },
     {
       "eventId": "E02207",
-      "eventName": "许攸登场",
-      "aliases": [
-        "许攸登场",
-        "许攸出场",
-        "许攸首次登场"
-      ],
-      "chunkIds": [
-        "sanguo-yanyi:0022:c0003",
-        "sanguo-yanyi:0022:c0004",
-        "sanguo-yanyi:0022:c0005"
-      ],
-      "type": "L3",
-      "exampleQuestion": "许攸是什么时候出场的",
-      "characters": [
-        "许攸"
-      ]
-    },
-    {
-      "eventId": "E02208",
       "eventName": "荀谌登场",
       "aliases": [
         "荀谌登场",
@@ -4532,9 +4531,9 @@
         "祢衡首次登场"
       ],
       "chunkIds": [
+        "sanguo-yanyi:0023:c0002",
         "sanguo-yanyi:0023:c0003",
-        "sanguo-yanyi:0023:c0004",
-        "sanguo-yanyi:0023:c0005"
+        "sanguo-yanyi:0023:c0004"
       ],
       "type": "L3",
       "exampleQuestion": "祢衡是什么时候出场的",
@@ -5124,6 +5123,25 @@
       ]
     },
     {
+      "eventId": "E02907",
+      "eventName": "鲁肃登场",
+      "aliases": [
+        "鲁肃登场",
+        "鲁肃出场",
+        "鲁肃首次登场"
+      ],
+      "chunkIds": [
+        "sanguo-yanyi:0029:c0016",
+        "sanguo-yanyi:0029:c0017",
+        "sanguo-yanyi:0029:c0018"
+      ],
+      "type": "L3",
+      "exampleQuestion": "鲁肃是什么时候出场的",
+      "characters": [
+        "鲁肃"
+      ]
+    },
+    {
       "eventId": "E03001",
       "eventName": "官渡之战",
       "aliases": [
@@ -5202,6 +5220,44 @@
     },
     {
       "eventId": "E03004",
+      "eventName": "张郃登场",
+      "aliases": [
+        "张郃登场",
+        "张郃出场",
+        "张郃首次登场"
+      ],
+      "chunkIds": [
+        "sanguo-yanyi:0030:c0001",
+        "sanguo-yanyi:0030:c0002",
+        "sanguo-yanyi:0030:c0003"
+      ],
+      "type": "L3",
+      "exampleQuestion": "张郃是什么时候出场的",
+      "characters": [
+        "张郃"
+      ]
+    },
+    {
+      "eventId": "E03005",
+      "eventName": "许攸登场",
+      "aliases": [
+        "许攸登场",
+        "许攸出场",
+        "许攸首次登场"
+      ],
+      "chunkIds": [
+        "sanguo-yanyi:0030:c0008",
+        "sanguo-yanyi:0030:c0009",
+        "sanguo-yanyi:0030:c0010"
+      ],
+      "type": "L3",
+      "exampleQuestion": "许攸是什么时候出场的",
+      "characters": [
+        "许攸"
+      ]
+    },
+    {
+      "eventId": "E03006",
       "eventName": "沮授之死",
       "aliases": [
         "沮授之死",
@@ -5817,6 +5873,44 @@
     },
     {
       "eventId": "E03803",
+      "eventName": "诸葛亮登场",
+      "aliases": [
+        "诸葛亮登场",
+        "诸葛亮出场",
+        "诸葛亮首次登场"
+      ],
+      "chunkIds": [
+        "sanguo-yanyi:0038:c0002",
+        "sanguo-yanyi:0038:c0003",
+        "sanguo-yanyi:0038:c0004"
+      ],
+      "type": "L3",
+      "exampleQuestion": "诸葛亮是什么时候出场的",
+      "characters": [
+        "诸葛亮"
+      ]
+    },
+    {
+      "eventId": "E03804",
+      "eventName": "陆逊登场",
+      "aliases": [
+        "陆逊登场",
+        "陆逊出场",
+        "陆逊首次登场"
+      ],
+      "chunkIds": [
+        "sanguo-yanyi:0038:c0011",
+        "sanguo-yanyi:0038:c0012",
+        "sanguo-yanyi:0038:c0013"
+      ],
+      "type": "L3",
+      "exampleQuestion": "陆逊是什么时候出场的",
+      "characters": [
+        "陆逊"
+      ]
+    },
+    {
+      "eventId": "E03805",
       "eventName": "孙翊之死",
       "aliases": [
         "孙翊之死",
@@ -5835,7 +5929,7 @@
       ]
     },
     {
-      "eventId": "E03804",
+      "eventId": "E03806",
       "eventName": "妫览之死",
       "aliases": [
         "妫览之死",
@@ -5855,7 +5949,7 @@
       ]
     },
     {
-      "eventId": "E03805",
+      "eventId": "E03807",
       "eventName": "戴员之死",
       "aliases": [
         "戴员之死",
@@ -5875,7 +5969,7 @@
       ]
     },
     {
-      "eventId": "E03806",
+      "eventId": "E03808",
       "eventName": "徐氏登场",
       "aliases": [
         "徐氏登场",
@@ -5894,7 +5988,7 @@
       ]
     },
     {
-      "eventId": "E03807",
+      "eventId": "E03809",
       "eventName": "吴太夫人之死",
       "aliases": [
         "吴太夫人之死",
@@ -5913,7 +6007,7 @@
       ]
     },
     {
-      "eventId": "E03808",
+      "eventId": "E03810",
       "eventName": "甘宁登场",
       "aliases": [
         "甘宁登场",
@@ -8063,6 +8157,25 @@
     },
     {
       "eventId": "E06005",
+      "eventName": "杨修登场",
+      "aliases": [
+        "杨修登场",
+        "杨修出场",
+        "杨修首次登场"
+      ],
+      "chunkIds": [
+        "sanguo-yanyi:0060:c0002",
+        "sanguo-yanyi:0060:c0003",
+        "sanguo-yanyi:0060:c0004"
+      ],
+      "type": "L3",
+      "exampleQuestion": "杨修是什么时候出场的",
+      "characters": [
+        "杨修"
+      ]
+    },
+    {
+      "eventId": "E06006",
       "eventName": "法正登场",
       "aliases": [
         "法正登场",
@@ -8081,7 +8194,7 @@
       ]
     },
     {
-      "eventId": "E06006",
+      "eventId": "E06007",
       "eventName": "孟达登场",
       "aliases": [
         "孟达登场",
@@ -8100,7 +8213,7 @@
       ]
     },
     {
-      "eventId": "E06007",
+      "eventId": "E06008",
       "eventName": "黄权登场",
       "aliases": [
         "黄权登场",
@@ -8119,7 +8232,7 @@
       ]
     },
     {
-      "eventId": "E06008",
+      "eventId": "E06009",
       "eventName": "王累登场",
       "aliases": [
         "王累登场",
@@ -8138,7 +8251,7 @@
       ]
     },
     {
-      "eventId": "E06009",
+      "eventId": "E06010",
       "eventName": "王累之死",
       "aliases": [
         "王累之死",

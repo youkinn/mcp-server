@@ -44,7 +44,7 @@ export function matchDeathIntent(raw: string): DeathIntent | null {
  * 第一次出现 …（含 出现/现身 的近义说法）。命中后人名由检索侧按 birthByPerson 人名词典置顶，
  * 不再依赖 entity 表 alias 词面替换（「刘备第一次出场」无需被压成裸「登场」）。
  */
-const BIRTH_GATE = /(出场|登场|出世|现身|出现)/;
+const BIRTH_GATE = /(出场|登场|出世|露面|亮相|舞台|现身|出现)/;
 
 /**
  * 判定用户输入是否属于登场类意图（纯规则、零 LLM）；非登场问法返回 false。

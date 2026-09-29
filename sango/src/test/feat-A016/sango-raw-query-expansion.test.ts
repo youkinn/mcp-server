@@ -115,3 +115,57 @@ test(
     assert.ok(rank !== null && rank <= 3, `重排开：0035:c0005 名次 ≤ 3（实测 ${rank}）`);
   },
 );
+
+/** 锚点段 ±1 相邻段集合（同一回 chunk 序号），供首出段命中断言（±1 容差口径）。 */
+function nearChunkIds(anchor: string): Set<string> {
+  const m = /^([^:]+):(\d{4}):c(\d{4})$/.exec(anchor);
+  if (!m) return new Set([anchor]);
+  const num = Number(m[3]);
+  const set = new Set<string>();
+  for (const off of [-1, 0, 1]) {
+    set.add(`${m[1]}:${m[2]}:c${String(num + off).padStart(4, '0')}`);
+  }
+  return set;
+}
+
+test('⑧ 登场词表补「露面/亮相/舞台」（bug-00051 口径）：同义问法均命中；「提及/被提到/被点名」不误触（只认第一次出场语义）', () => {
+  // 正例：露面/亮相/舞台 与 出现/现身 同义，进登场意图
+  assert.equal(matchBirthIntent('华雄初次露面是在哪一回'), true, '露面 与 出现/现身 同义');
+  assert.equal(matchBirthIntent('关羽首次亮相是在哪一回'), true, '亮相 收「首次亮相」');
+  assert.equal(matchBirthIntent('司马懿初次登上演义舞台是在哪一回'), true, '舞台 覆盖「登上…舞台」');
+  // 反例：提及/被提到/被点名 属另一语义（锁定口径，防后人扩表）
+  assert.equal(matchBirthIntent('典韦首次被提及是在哪一回'), false, '被提及 不属登场语义');
+  assert.equal(matchBirthIntent('华佗初次被提及是在哪一回'), false, '被提及 不属登场语义');
+  assert.equal(matchBirthIntent('祢衡初次被提到是在哪一回'), false, '被提到 不属登场语义');
+  assert.equal(matchBirthIntent('诸葛亮最早被点名是在哪一回'), false, '被点名 不属登场语义');
+});
+
+test('⑨ 登场标签锚点（bug-00051，基准 §十一 出场族）：13 问 top10 含各自期望段或其 ±1 相邻段', async () => {
+  const index = loadBm25Only();
+  // 期望段以 docs/sango-rag-regression-benchmark_v0.1.md §十一「出场」为准：
+  // 补录/订正：孙权/鲁肃/陆逊/张郃（前次）+ 吕布/许褚/许攸/杨修（位点订正，跨回许攸）
+  //   + 曹操/张辽（段差 1 订正：置顶只盖 tags 位点段本身，段差 1 判未命中）；
+  // 关羽/姜维/司马懿 为既有标签，验证 亮相/舞台 词表与结构路。
+  const cases = [
+    { query: '曹操最早出现在哪一回', anchor: 'sanguo-yanyi:0001:c0017' }, // 基准 #4 第1回（段差订正）
+    { query: '张辽最早出现在哪一回', anchor: 'sanguo-yanyi:0011:c0017' }, // 基准 #18 第11回（段差订正）
+    { query: '孙权初次登场是在哪一回', anchor: 'sanguo-yanyi:0007:c0011' }, // 基准 #7 第7回
+    { query: '鲁肃初次登场是在哪一回', anchor: 'sanguo-yanyi:0029:c0017' }, // 基准 #9 第29回
+    { query: '陆逊最早出现在哪一回', anchor: 'sanguo-yanyi:0038:c0012' }, // 基准 #15 第38回
+    { query: '张郃首次登场是在哪一回', anchor: 'sanguo-yanyi:0030:c0002' }, // 基准 #25 第30回
+    { query: '吕布最早登场于哪一回', anchor: 'sanguo-yanyi:0003:c0015' }, // 基准 #5 第3回（位点订正）
+    { query: '许褚初次亮相是在哪一回', anchor: 'sanguo-yanyi:0012:c0014' }, // 基准 #19 第12回（位点订正）
+    { query: '许攸最早出现在哪一回', anchor: 'sanguo-yanyi:0030:c0009' }, // 基准 #24 第30回（跨回订正）
+    { query: '杨修首次出场是在哪一回', anchor: 'sanguo-yanyi:0060:c0003' }, // 基准 #27 第60回（本次补录）
+    { query: '关羽首次亮相是在哪一回', anchor: 'sanguo-yanyi:0001:c0009' }, // 基准 #2 第1回
+    { query: '姜维首度亮相是在哪一回', anchor: 'sanguo-yanyi:0092:c0019' }, // 基准 #14 第92回
+    { query: '司马懿初次登上演义舞台是在哪一回', anchor: 'sanguo-yanyi:0039:c0008' }, // 基准 #11 第39回
+  ];
+  for (const { query, anchor } of cases) {
+    const { entries } = await index.search(query, 10);
+    const ids = entries.map((e) => e.id);
+    const near = nearChunkIds(anchor);
+    const hit = ids.find((id) => near.has(id));
+    assert.ok(hit, `${query} top10 含期望段或其 ±1 相邻段（anchor=${anchor}，top10=${ids.join(',')}）`);
+  }
+});
