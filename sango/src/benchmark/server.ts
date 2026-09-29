@@ -19,8 +19,11 @@ const DEFAULT_RESULTS_DIR = 'D:\\workplace\\dev-docs\\test\\standard-set\\result
 export function startBenchmarkServer(index: SangoIndex, options: { port: number }): Server {
   const benchmarkFile = process.env.SANGO_BENCHMARK_FILE ?? DEFAULT_BENCHMARK_FILE;
   const resultsDir = process.env.SANGO_BENCHMARK_RESULTS_DIR ?? DEFAULT_RESULTS_DIR;
-  /** 正在执行的 runId；执行期间收到新 POST 直接 409。 */
-  let runningRunId: string | null = null;
+  /**
+   * bug-00049 B 案：run 已异步化，POST 立即 202，进度由 GET /run-status 轮询。
+   * 本变量只保留「最近一次 job」的内存态（单进程 dev 工具，重启即丢；running 期间收到新 POST 直接 409）。
+   */
+  let lastJob: RunJob | null = null;
 
   const server = createServer((req, res) => {
     route(req, res).catch((error: unknown) => {
@@ -33,27 +36,34 @@ export function startBenchmarkServer(index: SangoIndex, options: { port: number 
   async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
     const url = new URL(req.url ?? '/', 'http://127.0.0.1');
     if (req.method === 'POST' && url.pathname === '/dev/benchmark/run') {
-      if (runningRunId) {
-        sendJson(res, 409, { code: 409, message: 'benchmark already running', data: { runId: runningRunId } });
+      if (lastJob?.state === 'running') {
+        sendJson(res, 409, { code: 409, message: 'benchmark already running', data: { runId: lastJob.runId } });
         return;
       }
       const runId = makeRunId();
-      runningRunId = runId;
+      lastJob = { state: 'running', runId };
       console.error(`[benchmark] run 开始：${runId}`);
-      try {
-        const run = await runBenchmark(index, benchmarkFile, resultsDir, runId);
-        console.error(`[benchmark] run 完成：${runId} total=${run.summary.total} top5=${run.summary.top5} tail=${run.summary.tail} miss=${run.summary.miss}`);
-        sendJson(res, 200, { code: 200, message: 'ok', data: { runId: run.runId, summary: run.summary, results: run.results } });
-      } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        console.error(`[benchmark] run 失败：${message}`);
-        sendJson(res, 500, { code: 500, message });
-      } finally {
-        runningRunId = null;
-      }
+      // 立即回 202（不再同步等待）；run 结果写入 lastJob，失败只留 error 摘要、不回大段堆栈。
+      void runBenchmark(index, benchmarkFile, resultsDir, runId)
+        .then((run) => {
+          lastJob = { state: 'done', runId: run.runId, elapsedMs: run.summary.elapsedMs };
+          console.error(
+            `[benchmark] run 完成：${runId} total=${run.summary.total} top5=${run.summary.top5} tail=${run.summary.tail} miss=${run.summary.miss} elapsedMs=${run.summary.elapsedMs}`,
+          );
+        })
+        .catch((error: unknown) => {
+          const message = error instanceof Error ? error.message : String(error);
+          lastJob = { state: 'failed', runId, error: message };
+          console.error(`[benchmark] run 失败：${message}`);
+        });
+      sendJson(res, 202, { code: 202, message: 'ok', data: { runId, state: 'running' } });
       return;
     }
     if (req.method === 'GET') {
+      if (url.pathname === '/dev/benchmark/run-status') {
+        sendJson(res, 200, { code: 200, message: 'ok', data: runStatusData(lastJob) });
+        return;
+      }
       if (url.pathname === '/dev/benchmark/latest') {
         const runIds = listRunIds(resultsDir);
         const snap = runIds.length > 0 ? readSnapshot(resultsDir, runIds[0]) : null;
@@ -93,6 +103,23 @@ export function startBenchmarkServer(index: SangoIndex, options: { port: number 
 /** GET latest / snapshot 的出参 data 结构：快照 + runId/time 展平。 */
 function snapshotData(snap: Snapshot): { runId: string; time: string; summary: Snapshot['summary']; results: Snapshot['results'] } {
   return { runId: snap.runId, time: snap.time, summary: snap.summary, results: snap.results };
+}
+
+/**
+ * bug-00049 B 案：最近一次 run 的内存态（单进程 dev 工具，无持久化，重启即丢）。
+ * running 期间收到新 POST → 409；done / failed 记录保留到下次 run 启动。
+ */
+type RunJob =
+  | { state: 'running'; runId: string }
+  | { state: 'done'; runId: string; elapsedMs: number }
+  | { state: 'failed'; runId: string; error: string };
+
+/** GET /run-status 出参 data：无在跑且无最近记录 → idle（runId=null）；elapsedMs 取自 summary.elapsedMs。 */
+function runStatusData(job: RunJob | null): { state: string; runId: string | null; elapsedMs?: number; error?: string } {
+  if (!job) return { state: 'idle', runId: null };
+  if (job.state === 'done') return { state: 'done', runId: job.runId, elapsedMs: job.elapsedMs };
+  if (job.state === 'failed') return { state: 'failed', runId: job.runId, error: job.error };
+  return { state: 'running', runId: job.runId };
 }
 
 function sendJson(res: ServerResponse, status: number, body: unknown): void {

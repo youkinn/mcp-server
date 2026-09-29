@@ -9,7 +9,8 @@
  */
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
-import { SangoIndex } from '../search/sango-index.ts';
+import { resolveRerankMode, SangoIndex } from '../search/sango-index.ts';
+import { resolveRerankTuning } from '../search/reranker.ts';
 import { extractAnchors, matchEvidence, norm } from './matcher.ts';
 import { parseBenchmark } from './parser.ts';
 import type { BenchmarkItem } from './parser.ts';
@@ -75,7 +76,32 @@ export interface RunSummary {
   noAnchorCount: number;
   noAnchor: string[];
   category: Record<string, CategoryCount>;
+  /**
+   * FEAT-A015 test-2241：重排拾取信息（历史快照「是否开启重排」列；dev server 扩展字段，老快照无此键）。
+   * mode / wired / window 反映本次 run 实际装配（含降级）；maxTokens / batch / intraThreads 为调参生效值。
+   */
+  rerank: RunRerankSummary;
+  /**
+   * FEAT-A015 test-2241：本次 run 服务端计时（毫秒；run 开始 → 逐题检索判分结束，不含落盘与 HTTP 传输）。
+   */
+  elapsedMs: number;
   runId: string;
+}
+
+/** FEAT-A015 test-2241：重排拾取汇总（只增字段；老快照无 rerank → 前端显示「—」）。 */
+export interface RunRerankSummary {
+  /** SANGO_RERANKER 原始取值归一：仅 'on' 为 on，未设 / 其它值一律 off。 */
+  mode: 'on' | 'off';
+  /** 本次 run 是否真的接入 cross-encoder 打分器（权重缺失退回规则序时为 false）。 */
+  wired: boolean;
+  /** 实际生效重排窗口（sango-index.ts rerankWindowSize() 口径，非 .env 原文）。 */
+  window: number;
+  /** resolveRerankTuning() 生效值（含默认回落）：pair 截断上限。 */
+  maxTokens: number;
+  /** resolveRerankTuning() 生效值（含默认回落）：桶内批量。 */
+  batch: number;
+  /** ORT intra-op 线程数；未设 → null。 */
+  intraThreads: number | null;
 }
 
 /** 一次完整执行。 */
@@ -146,6 +172,7 @@ export function findNoAnchorItems(index: SangoIndex, items: BenchmarkItem[]): st
 
 /** 执行完整回归：解析评测集 → 锚校验 → 逐题检索判分 → 汇总 → 快照落盘，返回本次运行。 */
 export async function runBenchmark(index: SangoIndex, benchmarkFile: string, resultsDir: string, runId: string): Promise<BenchmarkRun> {
+  const t0 = performance.now();
   const items = parseBenchmark(benchmarkFile);
   const noAnchor = findNoAnchorItems(index, items);
   const results: RunResult[] = [];
@@ -183,6 +210,13 @@ export async function runBenchmark(index: SangoIndex, benchmarkFile: string, res
   const top10 = results.filter((r) => r.rank >= 1 && r.rank <= 10).length;
   const inPool50 = results.filter((r) => r.rank > 0).length;
 
+  // FEAT-A015 test-2241 计时口径：run 开始 → 逐题检索判分结束；落盘（writeRun）与 HTTP 传输不计入。
+  // 保留 0.1ms 精度：避免极小样本（单测合成语料）被四舍五入成 0，读数恒为正。
+  const elapsedMs = Math.round((performance.now() - t0) * 10) / 10;
+  // FEAT-A015 test-2241：重排拾取信息（只读装配口径，不另造 env 解析）。
+  const tuning = resolveRerankTuning();
+  const assembly = index.rerankAssembly();
+
   const summary: RunSummary = {
     tool: 'feat-A015-verify.mjs',
     version: 'v2',
@@ -199,6 +233,15 @@ export async function runBenchmark(index: SangoIndex, benchmarkFile: string, res
     noAnchorCount: noAnchor.length,
     noAnchor,
     category: byCategory,
+    rerank: {
+      mode: resolveRerankMode(),
+      wired: assembly.wired,
+      window: assembly.window,
+      maxTokens: tuning.maxTokens,
+      batch: tuning.batch,
+      intraThreads: tuning.intraOpThreads ?? null,
+    },
+    elapsedMs,
     runId,
   };
   const run: BenchmarkRun = { runId, time: summary.time, summary, results };

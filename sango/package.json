@@ -10,7 +10,7 @@
     "start": "node dist/index.js",
     "dev": "npm run build && set \"SANGO_DEV_HTTP_PORT=8787\" && node dist/index.js",
     "debug": "node --inspect-brk=9240 dist/index.js",
-    "test": "node --test src/test/feat-A004/sango-index.test.ts src/test/feat-A009/sango-diagnostics.test.ts src/test/feat-A010/sango-chapter.test.ts src/test/feat-A013/sango-query-embed.test.ts src/test/feat-A016/entity-table.test.ts src/test/feat-A016/sango-raw-query-expansion.test.ts src/test/feat-A018/event-table.test.ts src/test/feat-A018/sango-event-bridge.test.ts src/test/feat-A030/sango-rerank.test.ts",
+    "test": "node --test src/test/feat-A004/sango-index.test.ts src/test/feat-A009/sango-diagnostics.test.ts src/test/feat-A010/sango-chapter.test.ts src/test/feat-A013/sango-query-embed.test.ts src/test/feat-A015/benchmark-summary.test.ts src/test/feat-A016/entity-table.test.ts src/test/feat-A016/sango-raw-query-expansion.test.ts src/test/feat-A018/event-table.test.ts src/test/feat-A018/sango-event-bridge.test.ts src/test/feat-A030/sango-rerank.test.ts",
     "corpus": "py -3 scripts/build_corpus.py",
     "vectors": "py -3 scripts/build_vectors.py",
     "entity-table": "node scripts/merge-entity-table.mjs",

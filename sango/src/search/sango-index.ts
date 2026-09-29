@@ -215,7 +215,15 @@ export function createDataRerankScorer(dataDir: string = DEFAULT_DATA_DIR): Rera
  * 未设 / off / 其他值一律不接入（默认行为与现状逐字节一致，不触发权重解析）。装配层（src/index.ts）经此接入。
  */
 export function resolveRerankScorer(dataDir: string = DEFAULT_DATA_DIR): RerankScorer | null {
-  return process.env.SANGO_RERANKER === 'on' ? createDataRerankScorer(dataDir) : null;
+  return resolveRerankMode() === 'on' ? createDataRerankScorer(dataDir) : null;
+}
+
+/**
+ * FEAT-A015 test-2241：重排开关归一化（原始取值仅 'on' 视为开启；未设 / 其它值一律 'off'）。
+ * 装配开关与评测快照 summary.rerank.mode 共用此判定，避免两处各写一套 env 语义。
+ */
+export function resolveRerankMode(env: NodeJS.ProcessEnv = process.env): 'on' | 'off' {
+  return env.SANGO_RERANKER === 'on' ? 'on' : 'off';
 }
 
 export class SangoIndex {
@@ -237,6 +245,15 @@ export class SangoIndex {
     this.vectorsFile = path.join(dataDir, 'vectors', 'sanguo-yanyi.bin');
     this.tagsDir = path.join(dataDir, 'corpus', 'tags');
     this.rerankScorer = options.rerankScorer ?? null;
+  }
+
+  /**
+   * FEAT-A015 test-2241：本次装配的重排接入信息（只读；评测快照落表用，避免上层另造 env 解析）。
+   * - wired：本次是否真的接入 cross-encoder 打分器（权重缺失时装配层传 null → false，退回规则序）；
+   * - window：实际生效重排窗口（与 search 内 rerankWindow 同源，取 rerankWindowSize()）。
+   */
+  rerankAssembly(): { wired: boolean; window: number } {
+    return { wired: this.rerankScorer !== null, window: rerankWindowSize() };
   }
 
   docs: Doc[] = [];
