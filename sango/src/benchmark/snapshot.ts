@@ -22,7 +22,6 @@ const CATEGORY_LABEL: Record<string, string> = {
   事件关系: '事件关系',
   出场: '出场',
   死亡: '死亡',
-  拒答: '拒答',
 };
 
 /** 快照 runId 合法格式（兼作路径校验，拦截目录穿越）。 */
@@ -64,7 +63,8 @@ function buildSummaryMd(run: BenchmarkRun, jsonPath: string): string {
   const catRows = Object.entries(s.category).map(
     ([cat, v]) => `| ${CATEGORY_LABEL[cat] ?? cat} | ${v.total} | ${v.top5} | ${v.tail} | ${v.miss} | ${((v.top5 / v.total) * 100).toFixed(1)}% |`,
   );
-  const totalRow = `| **合计** | **${s.total}** | **${s.top5}** | **${s.tail}** | **${s.miss}** | **${((s.top5 / s.total) * 100).toFixed(1)}%** |`;
+  // bug-00052：无锚题不参与判分、不进通过率分母 → 合计总题数 / 通过率分母用 judged。
+  const totalRow = `| **合计** | **${s.judged}** | **${s.top5}** | **${s.tail}** | **${s.miss}** | **${((s.judged ? s.top5 / s.judged : 0) * 100).toFixed(1)}%** |`;
   const tableBody = ['| 类别 | 总题数 | 通过数(top5) | 兜底数(6–10) | 未命中数 | 通过率 |', '|---|---:|---:|---:|---:|---:|', ...catRows, totalRow].join('\n');
   const tailList = run.results
     .filter((r) => r.status === 'tail')

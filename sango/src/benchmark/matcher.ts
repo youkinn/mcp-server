@@ -61,6 +61,9 @@ export interface EvidenceMatch {
 /**
  * 在检索结果内定位证据段：① 正文匹配（归一化后子串）→ ② 回目锚匹配（限定回号优先）→
  * ③ 仅当无回目锚时，正文锚（≥4 字）回退匹配任意回目。与 verify.mjs 判定循环逐条同口径。
+ * 回目锚比较口径（bug-00052）：提取结果保留原文（titleAnchors.title 可能带标点，如
+ * 「陆逊营烧七百里，孔明巧布八阵图」），与归一化回目比较前统一经 norm——正文锚在提取期已归一化，
+ * 回目锚在比较期归一化，两侧最终都在归一化口径上比对。
  */
 export function matchEvidence(entries: SearchEntry[], textAnchors: string[], titleAnchors: TitleAnchor[]): EvidenceMatch {
   // 1) 正文匹配（归一化后子串优先）
@@ -70,12 +73,15 @@ export function matchEvidence(entries: SearchEntry[], textAnchors: string[], tit
       if (nt.includes(a)) return { rank: i + 1, hit: entries[i] };
     }
   }
-  // 2) 回目标题匹配：显式回目锚（限定回号）优先；仅当无回目锚时正文锚（≥4 字）回退匹配任意回目
+  // 2) 回目标题匹配：显式回目锚（限定回号）优先；仅当无回目锚时正文锚（≥4 字）回退匹配任意回目。
+  // bug-00052：回目锚原文带标点（如「陆逊营烧七百里，孔明巧布八阵图」）与归一化回目比对恒失配，
+  // 故比较前统一 norm（与 runner.findNoAnchorItems 同一口径）。
+  const nTitleAnchors = titleAnchors.map((ta) => ({ chapter: ta.chapter, title: norm(ta.title) }));
   for (let i = 0; i < entries.length; i++) {
     const e = entries[i];
     const nTitle = norm(e.title);
     let matched = false;
-    for (const ta of titleAnchors) {
+    for (const ta of nTitleAnchors) {
       if (e.chapter === ta.chapter && nTitle.includes(ta.title)) {
         matched = true;
         break;

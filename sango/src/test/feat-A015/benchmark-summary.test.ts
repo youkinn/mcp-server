@@ -68,6 +68,42 @@ function fixture(scorer: RerankScorer | null = null): Fixture {
   return { dir, index, benchmarkFile, resultsDir: path.join(dir, 'results') };
 }
 
+/** bug-00052 夹具：2 题有锚 + 1 题零锚（evidence 仅回号引用「第73回」，无引号锚 / 回目锚）。 */
+function fixtureWithNoAnchor(scorer: RerankScorer | null = null): Fixture {
+  const dir = mkdtempSync(path.join(tmpdir(), 'a015-noanchor-'));
+  const corpusDir = path.join(dir, 'corpus', 'sanguo-yanyi');
+  mkdirSync(corpusDir, { recursive: true });
+  const chunks = ['刘备字玄德，涿郡涿县人。', '曹操字孟德，沛国谯人。'].map((text, i) => ({
+    id: `sanguo-yanyi:0001:c000${i + 1}`,
+    text,
+    type: 'narration',
+    segFrom: i + 1,
+    segTo: i + 1,
+    quoteBalanced: true,
+    quotes: [],
+  }));
+  writeFileSync(path.join(corpusDir, '001.json'), JSON.stringify({ source: 'sanguo-yanyi', chapter: 1, title: '第一回 合成', chunks }), 'utf8');
+  const benchmarkFile = path.join(dir, 'bench.md');
+  writeFileSync(
+    benchmarkFile,
+    [
+      '# 合成评测集',
+      '',
+      '## 一、人物',
+      '',
+      '| # | 问题 | 标准答案 | 证据 |',
+      '|---|---|---|---|',
+      '| 1 | 刘备是谁 | 刘备 | “刘备字玄德” |',
+      '| 2 | 曹操是谁 | 曹操 | “曹操字孟德” |',
+      '| 3 | 刘备的官职是什么 | 无明确记载 | 第73回 |',
+    ].join('\n'),
+    'utf8',
+  );
+  const index = scorer ? new SangoIndex(dir, { rerankScorer: scorer }) : new SangoIndex(dir);
+  index.load();
+  return { dir, index, benchmarkFile, resultsDir: path.join(dir, 'results') };
+}
+
 /** 清空重排 env → 注入 vars → 执行 → 还原（runBenchmark 内 resolveRerankTuning / rerankWindowSize 读 process.env）。 */
 async function withEnv<T>(vars: Record<string, string>, fn: () => Promise<T>): Promise<T> {
   const saved = RERANK_ENVS.map((key) => [key, process.env[key]] as const);
@@ -179,6 +215,29 @@ test('⑥ 老快照兼容（只增字段）：缺 rerank / elapsedMs 的快照�
     assert.ok(snap, '老快照正常读回');
     assert.equal(snap.summary.rerank, undefined, '老快照无 rerank');
     assert.equal(snap.summary.elapsedMs, undefined, '老快照无 elapsedMs');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('⑦ bug-00052 零锚题：不参与判分、不进通过率分母；结果标记 noAnchor、不记 miss', async () => {
+  const { dir, index, benchmarkFile, resultsDir } = fixtureWithNoAnchor(null);
+  try {
+    const run = await withEnv({}, () => runBenchmark(index, benchmarkFile, resultsDir, 'feat-A015-2026-09-30-1000'));
+    const s = run.summary;
+    const na = run.results.find((r) => r.id === '人物#3');
+    assert.ok(na, '零锚题在结果中');
+    assert.equal(na.noAnchor, true, '零锚题标记 noAnchor');
+    assert.equal(na.status, 'noAnchor', '零锚题状态为 noAnchor 而非 miss');
+    assert.equal(na.rank, 0, '零锚题不判分 → rank 0');
+    assert.equal(s.total, 3, 'total 仍含零锚题');
+    assert.equal(s.noAnchorCount, 1, 'noAnchorCount 统计零锚题');
+    assert.deepEqual(s.noAnchor, ['人物#3'], 'summary.noAnchor 单列零锚题 id');
+    assert.equal(s.judged, 2, 'judged = total - noAnchorCount');
+    assert.equal(s.top5 + s.tail + s.miss, s.judged, 'top5+tail+miss 合计 = judged（零锚不进分母）');
+    for (const r of run.results) {
+      if (r.id !== '人物#3') assert.equal(r.noAnchor, false, '有锚题 noAnchor=false');
+    }
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

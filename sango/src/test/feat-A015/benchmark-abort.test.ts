@@ -34,9 +34,12 @@ function slowStubIndex(): SangoIndex {
   } as unknown as SangoIndex;
 }
 
-/** 写合成评测集：题面 / 答案非空、证据非空但无引号锚（findNoAnchorItems 会跳过锚校验）。 */
+/**
+ * 写合成评测集：题面 / 答案非空、证据含可定位引号锚「刘备字玄德」（stub 索引 docs 正文含该锚）。
+ * bug-00052 后零锚题不参与判分、不触发检索——本测试验证停止链路，夹具必须有锚才能逐题走 search。
+ */
 function writeBenchmark(dir: string): string {
-  const rows = Array.from({ length: ITEM_COUNT }, (_, i) => `| ${i + 1} | 问题${i + 1} | 答案${i + 1} | 证据${i + 1} |`);
+  const rows = Array.from({ length: ITEM_COUNT }, (_, i) => `| ${i + 1} | 问题${i + 1} | 答案${i + 1} | “刘备字玄德” |`);
   const file = path.join(dir, 'bench.md');
   writeFileSync(file, ['# 合成评测集', '', '## 一、人物', '', '| # | 问题 | 标准答案 | 证据 |', '|---|---|---|---|', ...rows].join('\n'), 'utf8');
   return file;

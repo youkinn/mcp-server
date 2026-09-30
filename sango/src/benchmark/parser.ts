@@ -7,8 +7,8 @@
 import { readFileSync } from 'node:fs';
 import { extractAnchors } from './matcher.ts';
 
-/** 评测集固定类别：小节标题去掉「一、」等编号前缀后必须以此开头才计题（与 CLI CATEGORIES 同口径）。 */
-const CATEGORIES = ['人物', '地名', '战役', '典故', '器物', '身体部位', '问法归一', '官职', '数字称谓', '事件关系', '出场', '死亡', '拒答'];
+/** 评测集固定类别：小节标题去掉「一、」等编号前缀后必须以此开头才计题（与 CLI CATEGORIES 同口径）；拒答类已删（bug-00052）。 */
+const CATEGORIES = ['人物', '地名', '战役', '典故', '器物', '身体部位', '问法归一', '官职', '数字称谓', '事件关系', '出场', '死亡'];
 
 /** 回目锚（限定回号 + 回目片段）。 */
 export interface TitleAnchor {
