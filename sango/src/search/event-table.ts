@@ -21,6 +21,11 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 /** 漂移阈值：缺失 chunkId 占比 > 5% 整表降级（接口 §2.3 首版口径）。 */
 const DRIFT_MAX_RATIO = 0.05;
 
+/**
+ * 事件层级（需求 feat-A018 落表分层口径）：L1 = 有通行专名的事件（三英战吕布 / 草船借箭），白话问法多、
+ * 优先处理；L2 = 无专名但完整闭环的情节单元（三顾茅庐全过程）；L3 = 死亡 / 登场，落表即「标签位点段
+ * ±N」小位点组（2-5 段）、置顶保证区不参与池重排。检索装配差异见 sango-index.ts search() 池装配层。
+ */
 export type EventType = 'L1' | 'L2' | 'L3';
 
 /** 事件行（仅保留桥 / 装配消费字段；characters / exampleQuestion 本期不消费、不载入）。 */
@@ -457,4 +462,3 @@ export function matchAllusions(normalized: string): MatchedAllusionGroup[] {
     chunkIds: row.chunkIds,
   }));
 }
-
