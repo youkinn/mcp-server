@@ -229,6 +229,16 @@ export interface RetrievalDeathIntentDiagnostics {
   chunkIds: string[];
 }
 
+/** 上场意图诊断（人物首次登场类问法；与死亡意图同构，供前端同款展示）。 */
+export interface RetrievalBirthIntentDiagnostics {
+  /** 是否判定登场意图。 */
+  detected: boolean;
+  /** 是否触发置顶。 */
+  pinned: boolean;
+  /** 被置顶的候选 chunkId；未置顶为 []。 */
+  chunkIds: string[];
+}
+
 /** FEAT-A018 §5.2：事件名桥命中诊断（事件路是否生效 / norm 版本 / 命中组明细）。 */
 export interface RetrievalEventHitDiagnostics {
   /** 事件路是否生效；false = 表加载失败或整表漂移降级（此时 groups 恒 []）。 */
@@ -307,6 +317,8 @@ export interface RetrievalDiagnostics {
   /** 第 N+1 名（未进 top-N）；候选不足为 null。 */
   nextRank: RetrievalCandidateDiagnostics | null;
   deathIntent: RetrievalDeathIntentDiagnostics;
+  /** 登场意图诊断（人物首次登场类问法；历史诊断无该字段，前端容错不展示）。 */
+  birthIntent: RetrievalBirthIntentDiagnostics;
   /** FEAT-A018：事件名桥命中诊断（新增顶层字段，老字段不动；非事件命中时 groups 空、degraded / normVersion 仍可读）。 */
   eventHit: RetrievalEventHitDiagnostics;
 }

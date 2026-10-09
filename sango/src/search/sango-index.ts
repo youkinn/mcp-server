@@ -142,6 +142,10 @@ interface DiagnosticsBuildContext {
   tagHits: Set<number>;
   deathIntent: DeathIntent | null;
   deathHits: Set<number>;
+  /** 登场意图（bug-00046 结构路）：true = 本次请求判定为登场类问法。 */
+  birthIntent: boolean;
+  /** 登场意图强命中保索引（birthByPerson 人名词典命中 docs）。 */
+  birthHits: Set<number>;
   combined: SearchHit[];
   hits: SearchHit[];
   /** FEAT-A018 §4：三路合并候选数（不含事件并池 / 置顶），funnel.mergedCandidates 口径（漏斗只描述三路召回）。 */
@@ -160,7 +164,7 @@ interface DiagnosticsBuildContext {
 
 /**
  * 64 KB 预算截断（硬约束 3）：按优先级从后往前丢——① candidates 尾部（保头部名次）② nextRank
- * ③ deathIntent.chunkIds（保留 detected / pinned）；query / env / funnel / timing 恒保留
+ * ③ deathIntent.chunkIds / birthIntent.chunkIds（保留 detected / pinned）；query / env / funnel / timing 恒保留
  * （timing 是低位固定 5 字段，截断不丢——检索耗时展示依赖它）。
  * 截断后 truncated=true、truncatedCount=被丢弃的候选条数；正常载荷远低于预算，不触发。
  */
@@ -182,13 +186,16 @@ export function enforceDiagnosticsBudget(diagnostics: RetrievalDiagnostics): Ret
       return candidate;
     }
   }
-  // candidates 全丢仍超限 → 丢 nextRank；仍超限 → 丢 deathIntent.chunkIds
+  // candidates 全丢仍超限 → 丢 nextRank；仍超限 → 丢 deathIntent.chunkIds / birthIntent.chunkIds
   let slim: RetrievalDiagnostics = { ...truncatedBase, candidates: [], truncatedCount: total };
   if (!fits(slim)) {
     slim = { ...slim, nextRank: null };
   }
   if (!fits(slim)) {
     slim = { ...slim, deathIntent: { ...slim.deathIntent, chunkIds: [] } };
+  }
+  if (!fits(slim)) {
+    slim = { ...slim, birthIntent: { ...slim.birthIntent, chunkIds: [] } };
   }
   return slim;
 }
@@ -807,6 +814,7 @@ export class SangoIndex {
                 qTokens,
                 cosine,
                 deathIntent,
+                birthIntent,
                 timing,
                 this.emptyEventHit(),
               ),
@@ -858,6 +866,8 @@ export class SangoIndex {
               tagHits,
               deathIntent,
               deathHits,
+              birthIntent,
+              birthHits,
               combined,
               hits,
               threeWayCandidates,
@@ -891,6 +901,7 @@ export class SangoIndex {
     tokens: string[],
     cosine: Float64Array | null,
     deathIntent: DeathIntent | null,
+    birthIntent: boolean,
     timing: RetrievalDiagnosticsTiming,
     eventHit: RetrievalEventHitDiagnostics,
   ): RetrievalDiagnostics {
@@ -907,6 +918,8 @@ export class SangoIndex {
       tagHits: new Set(),
       deathIntent,
       deathHits: new Set(),
+      birthIntent,
+      birthHits: new Set(),
       combined: [],
       hits: [],
       threeWayCandidates: 0,
@@ -1165,7 +1178,10 @@ export class SangoIndex {
         }
       : null;
     const combinedDocs = new Set(ctx.combined.map((h) => h.doc));
-    const pinnedChunkIds = [...ctx.deathHits]
+    const deathPinnedChunkIds = [...ctx.deathHits]
+      .filter((d) => combinedDocs.has(d))
+      .map((d) => this.docs[d].chunkId);
+    const birthPinnedChunkIds = [...ctx.birthHits]
       .filter((d) => combinedDocs.has(d))
       .map((d) => this.docs[d].chunkId);
     return {
@@ -1202,8 +1218,13 @@ export class SangoIndex {
       nextRank,
       deathIntent: {
         detected: ctx.deathIntent !== null,
-        pinned: pinnedChunkIds.length > 0,
-        chunkIds: pinnedChunkIds,
+        pinned: deathPinnedChunkIds.length > 0,
+        chunkIds: deathPinnedChunkIds,
+      },
+      birthIntent: {
+        detected: ctx.birthIntent,
+        pinned: birthPinnedChunkIds.length > 0,
+        chunkIds: birthPinnedChunkIds,
       },
       eventHit: ctx.eventHit,
     };

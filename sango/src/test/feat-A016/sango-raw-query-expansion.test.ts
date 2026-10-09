@@ -87,12 +87,17 @@ test('⑤ 登场类结构路：问句「刘备第一次出场是什么时候」�
   const index = loadBm25Only();
   assert.equal(matchBirthIntent('刘备第一次出场是什么时候'), true, '登场意图问法枚举命中（出场/登场/出世/首次…）');
   assert.equal(matchBirthIntent('刘备第一次回家是什么时候'), false, '非登场问法不误触发');
-  const { entries } = await index.search('刘备第一次出场是什么时候', 5);
+  const { entries, diagnostics } = await index.search('刘备第一次出场是什么时候', 5, { diagnostics: true });
   assert.equal(
     entries[0].id,
     'sanguo-yanyi:0001:c0007',
     'birthByPerson 置顶「人物之生-刘备登场」标签 chunk（0001:c0007，第 1 回）',
   );
+  assert.ok(diagnostics, '请求诊断时应产出');
+  assert.equal(diagnostics.birthIntent.detected, true, '登场意图判定命中');
+  assert.equal(diagnostics.birthIntent.pinned, true, '登场意图置顶生效');
+  assert.ok(diagnostics.birthIntent.chunkIds.includes('sanguo-yanyi:0001:c0007'), '登场置顶候选即标签位点段');
+  assert.equal(entries[0].id, diagnostics.birthIntent.chunkIds[0], '置顶段即出参首位');
 });
 
 test('⑥ 别名死亡问法不回退：云长是怎么死的 仍按人名词典置顶（人名匹配用原文 ∪ 双写扩展规范形）', async () => {

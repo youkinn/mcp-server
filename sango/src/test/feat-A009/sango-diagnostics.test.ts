@@ -104,9 +104,13 @@ test('② 请求诊断：结构字段齐全（truncated/truncatedCount/query/env
     ['chunkIds', 'detected', 'pinned'],
   );
   assert.deepEqual(
+    Object.keys(diagnostics.birthIntent).sort(),
+    ['chunkIds', 'detected', 'pinned'],
+  );
+  assert.deepEqual(
     Object.keys(diagnostics).sort(),
-    ['candidates', 'deathIntent', 'env', 'eventHit', 'funnel', 'nextRank', 'query', 'rerank', 'timing', 'truncated', 'truncatedCount'],
-    '诊断顶层字段齐全（FEAT-A018 增 eventHit；FEAT-A030 增 rerank）',
+    ['birthIntent', 'candidates', 'deathIntent', 'env', 'eventHit', 'funnel', 'nextRank', 'query', 'rerank', 'timing', 'truncated', 'truncatedCount'],
+    '诊断顶层字段齐全（FEAT-A018 增 eventHit；FEAT-A030 增 rerank；登场意图诊断增 birthIntent）',
   );
 });
 
@@ -226,6 +230,9 @@ test('⑧ 死亡意图：非死亡问法 detected=false；死亡问法 detected=
   assert.equal(normal.diagnostics.deathIntent.detected, false);
   assert.equal(normal.diagnostics.deathIntent.pinned, false);
   assert.deepEqual(normal.diagnostics.deathIntent.chunkIds, []);
+  assert.equal(normal.diagnostics.birthIntent.detected, false, '非登场问法不触发登场意图');
+  assert.equal(normal.diagnostics.birthIntent.pinned, false);
+  assert.deepEqual(normal.diagnostics.birthIntent.chunkIds, []);
 
   const death = await index.search('关羽是怎么死的', 5, { diagnostics: true });
   assert.ok(death.diagnostics);
@@ -234,6 +241,7 @@ test('⑧ 死亡意图：非死亡问法 detected=false；死亡问法 detected=
   assert.ok(death.diagnostics.deathIntent.chunkIds.includes('sanguo-yanyi:0073:c0001'));
   assert.ok(death.diagnostics.deathIntent.chunkIds.includes('sanguo-yanyi:0073:c0002'));
   assert.deepEqual(death.entries.slice(0, 2).map((e) => e.id), death.diagnostics.deathIntent.chunkIds.slice(0, 2).sort(), '置顶候选与出参首位一致');
+  assert.equal(death.diagnostics.birthIntent.detected, false, '死亡问法不含登场语义，不误触发登场意图');
 });
 
 test('⑨ 64KB 预算截断（硬约束 3）：超限诊断 truncated=true、truncatedCount>0、头部名次保留、JSON 合法', () => {
@@ -263,6 +271,7 @@ test('⑨ 64KB 预算截断（硬约束 3）：超限诊断 truncated=true、tru
     candidates: Array.from({ length: 1000 }, (_, i) => ({ ...candidate, rank: i + 1 })),
     nextRank: { ...candidate, rank: 11, gapToTopN: 0.1 },
     deathIntent: { detected: false, pinned: false, chunkIds: [] },
+    birthIntent: { detected: false, pinned: false, chunkIds: [] },
     eventHit: { degraded: true, normVersion: '', groupCount: 0, groups: [] },
     rerank: { enabled: false, window: 50, considered: 0, skippedPinned: 0, applied: false, reason: '未接入重排打分器' },
   };
@@ -286,6 +295,7 @@ test('⑨ 64KB 预算截断（硬约束 3）：超限诊断 truncated=true、tru
     candidates: [candidate],
     nextRank: null,
     deathIntent: { detected: false, pinned: false, chunkIds: [] },
+    birthIntent: { detected: false, pinned: false, chunkIds: [] },
     eventHit: { degraded: true, normVersion: '', groupCount: 0, groups: [] },
     rerank: { enabled: false, window: 50, considered: 0, skippedPinned: 0, applied: false, reason: '未接入重排打分器' },
   };
