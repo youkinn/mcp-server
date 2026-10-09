@@ -1,6 +1,7 @@
 /**
- * FEAT-A018 活文档：检索主链路事件名桥接入（§3.1 管线位点 / §3.3 并池重排 + L3 锚点置顶 /
- * §5 eventHit 与 candidates.sources 'event'）。夹具与模块层 self-check 同源（event-table.test.ts）。
+ * FEAT-A018 活文档：检索主链路事件名桥 / 典故名桥接入（§3.1 管线位点 / §3.3 并池重排 + L3 锚点置顶 /
+ * §5 eventHit / §5.6 allusionHit 与 candidates.sources 'event' / 'allusion'）。夹具与模块层
+ * self-check 同源（event-table.test.ts）。
  * 契约：docs/feat-A018-event-table-interface.md（口径唯一来源 requirements/feat-A018-event-table.md）。
  */
 import { test } from 'node:test';
@@ -21,17 +22,22 @@ function loadFixture(dir: string): SangoIndex {
   return index;
 }
 
-/** 诊断可比拷贝：事件表与实体表为进程内单例，跨索引实例比较时踢掉 eventHit（状态随最后加载者）与墙钟 timing。 */
+/** 诊断可比拷贝：事件表 / 典故表 / 实体表为进程内单例，跨索引实例比较时踢掉 eventHit / allusionHit
+ * （状态随最后加载者）与墙钟 timing。 */
 function comparableDiagnostics(d: RetrievalDiagnostics): unknown {
-  return { ...d, eventHit: null, timing: { ...d.timing, bm25: 0, label: 0, merge: 0 } };
+  return { ...d, eventHit: null, allusionHit: null, timing: { ...d.timing, bm25: 0, label: 0, merge: 0 } };
 }
 
-/** 夹具临摹目录；removedEvents=true 时剔除 events.json（事件路降级基线）。 */
-function tempFixture(removedEvents = false): string {
+/** 夹具临摹目录；removedEvents=true 剔除 events.json（事件路降级基线）；
+ * removedAllusions=true 剔除 allusions.json（典故路降级基线）。 */
+function tempFixture(removedEvents = false, removedAllusions = false): string {
   const dir = mkdtempSync(path.join(tmpdir(), 'a018-ix-'));
   cpSync(FIXTURE_DIR, dir, { recursive: true });
   if (removedEvents) {
     rmSync(path.join(dir, 'corpus', 'events.json'), { force: true });
+  }
+  if (removedAllusions) {
+    rmSync(path.join(dir, 'corpus', 'allusions.json'), { force: true });
   }
   return dir;
 }
@@ -293,6 +299,97 @@ test('⑨ 空表降级端到端（§2.2）：无 events.json 时检索与工具�
     const hit = result.diagnostics?.eventHit;
     assert.ok(hit && hit.degraded === true && hit.normVersion === '' && hit.groupCount === 0, '降级可观测');
   } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('⑩ 典故并池（§5.6，同 L1/L2 口径）：三路空 + 典故命中 → 组 chunk 并池构成出参；allusionHit 结构 + sources 增 allusion', async () => {
+  const dir = tempFixture();
+  try {
+    const index = loadFixture(dir);
+    const result = await index.search('鸡肋', 5, { diagnostics: true });
+    assert.deepEqual(
+      result.entries.map((e) => e.id),
+      ['sanguo-yanyi:0001:c0006'],
+      '三路空时由典故组并池构成出参（事件内序）',
+    );
+    const d = result.diagnostics;
+    assert.ok(d);
+    assert.equal(d.env.degradedBm25Only, true, '夹具无向量 → 纯 BM25');
+    assert.equal(d.funnel.mergedCandidates, 0, '漏斗只描述三路召回：典故并池不进 mergedCandidates（§4）');
+    assert.equal(d.funnel.topN, 1);
+    assert.deepEqual(d.candidates.map((c) => c.chunkId), ['sanguo-yanyi:0001:c0006'], 'candidates 按重排后池序');
+    assert.ok(d.candidates[0].sources.includes('allusion'), '并池候选带 allusion 来源');
+    assert.ok(!d.candidates[0].sources.includes('event'), '未命中事件路不带 event 来源');
+    assert.ok(d.timing.merge !== null && d.timing.merge >= 0, '典故并池耗时并入 merge 段');
+    const hit = d.allusionHit;
+    assert.equal(hit.degraded, false);
+    assert.equal(hit.normVersion, 'a2b3c4d5');
+    assert.equal(hit.groupCount, 1);
+    assert.equal(hit.groups[0].allusionId, 'AL0001');
+    assert.equal(hit.groups[0].allusionName, '鸡肋');
+    assert.equal(hit.groups[0].matchedAlias, '鸡肋');
+    assert.equal(hit.groups[0].groupSize, 1);
+    assert.equal(hit.groups[0].placedCount, 1);
+    assert.deepEqual(hit.groups[0].placedChunkIds, ['sanguo-yanyi:0001:c0006']);
+    // 事件路镜像不命中：eventHit 空组、degraded 仍可读
+    const eh = d.eventHit;
+    assert.equal(eh.degraded, false);
+    assert.equal(eh.groupCount, 0);
+    assert.deepEqual(eh.groups, []);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('⑪ 典故表缺失降级（§5.6）：allusionHit.degraded=true 可读；事件路照常命中、出参不变', async () => {
+  const base = tempFixture(false, true); // events 正常 + allusions 缺失（典故路降级基线）
+  const dir = tempFixture(false, false); // 双表均在
+  try {
+    const idxB = loadFixture(base);
+    const b = await idxB.search('温酒斩华雄是怎么斩的', 5, { diagnostics: true });
+    const idxA = loadFixture(dir);
+    const a = await idxA.search('温酒斩华雄是怎么斩的', 5, { diagnostics: true });
+    assert.deepEqual(a.entries.map((e) => e.id), b.entries.map((e) => e.id), '事件路出参不受典故降级影响');
+    const hit = b.diagnostics?.allusionHit;
+    assert.ok(hit, '应产出 allusionHit');
+    assert.equal(hit.degraded, true, '典故表缺失 → degraded=true');
+    assert.equal(hit.normVersion, '');
+    assert.equal(hit.groupCount, 0);
+    assert.deepEqual(hit.groups, []);
+    const eh = a.diagnostics?.eventHit;
+    assert.ok(eh && eh.degraded === false && eh.groupCount === 1, '事件路照常命中');
+    assert.equal(eh.groups[0].eventId, 'E00501');
+    assert.equal(eh.groups[0].placedCount, 2, '事件组闭环装配不受典故降级影响');
+  } finally {
+    rmSync(base, { recursive: true, force: true });
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('⑫ 非事件非典故请求输出与现状逐字节一致（§4 强回归性质，双表均在 vs 双表均缺席）', async () => {
+  const base = tempFixture(true, true);
+  const dir = tempFixture(false, false);
+  try {
+    const idxB = loadFixture(base);
+    const b = await idxB.search('壬癸', 5, { diagnostics: true });
+    const idxA = loadFixture(dir);
+    const a = await idxA.search('壬癸', 5, { diagnostics: true });
+    assert.ok(b.entries.length >= 1);
+    assert.deepEqual(a.entries, b.entries, '非事件非典故请求出参逐字节一致');
+    assert.ok(a.diagnostics && b.diagnostics);
+    assert.deepEqual(
+      comparableDiagnostics(a.diagnostics),
+      comparableDiagnostics(b.diagnostics),
+      '非事件非典故请求其余诊断逐字节一致',
+    );
+    // 双表均在：两路均未命中 → 空组但状态可读
+    assert.equal(a.diagnostics.eventHit.degraded, false);
+    assert.equal(a.diagnostics.eventHit.groupCount, 0);
+    assert.equal(a.diagnostics.allusionHit.degraded, false);
+    assert.equal(a.diagnostics.allusionHit.groupCount, 0);
+  } finally {
+    rmSync(base, { recursive: true, force: true });
     rmSync(dir, { recursive: true, force: true });
   }
 });

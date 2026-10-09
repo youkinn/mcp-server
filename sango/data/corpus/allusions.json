@@ -1,0 +1,643 @@
+{
+  "meta": {
+    "schemaVersion": 1,
+    "normVersion": "ef47cbbe",
+    "generatedAt": "2026-10-09T00:00:00.000Z",
+    "corpusChunkCount": 2344,
+    "source": "tags/story.json 典故名句迁移（batch-01）"
+  },
+  "rows": [
+    {
+      "eventId": "AL0001",
+      "eventName": "既生瑜，何生亮",
+      "aliases": [
+        "既生瑜，何生亮"
+      ],
+      "chunkIds": [
+        "sanguo-yanyi:0057:c0002"
+      ],
+      "type": "典故",
+      "exampleQuestion": "「既生瑜，何生亮」出自哪一回、讲的什么事"
+    },
+    {
+      "eventId": "AL0002",
+      "eventName": "勿以恶小而为之",
+      "aliases": [
+        "勿以善小而不为",
+        "勿以恶小而为之"
+      ],
+      "chunkIds": [
+        "sanguo-yanyi:0085:c0013"
+      ],
+      "type": "典故",
+      "exampleQuestion": "「勿以恶小而为之」出自哪一回、讲的什么事"
+    },
+    {
+      "eventId": "AL0003",
+      "eventName": "玉可碎不可改其白",
+      "aliases": [
+        "玉可碎不可改其白"
+      ],
+      "chunkIds": [
+        "sanguo-yanyi:0076:c0017"
+      ],
+      "type": "典故",
+      "exampleQuestion": "「玉可碎不可改其白」出自哪一回、讲的什么事"
+    },
+    {
+      "eventId": "AL0004",
+      "eventName": "一身都是胆",
+      "aliases": [
+        "一身都是胆"
+      ],
+      "chunkIds": [
+        "sanguo-yanyi:0071:c0018",
+        "sanguo-yanyi:0071:c0019",
+        "sanguo-yanyi:0071:c0020",
+        "sanguo-yanyi:0071:c0021"
+      ],
+      "type": "典故",
+      "exampleQuestion": "「一身都是胆」出自哪一回、讲的什么事"
+    },
+    {
+      "eventId": "AL0005",
+      "eventName": "伏龙凤雏",
+      "aliases": [
+        "伏龙凤雏"
+      ],
+      "chunkIds": [
+        "sanguo-yanyi:0035:c0005"
+      ],
+      "type": "典故",
+      "exampleQuestion": "「伏龙凤雏」出自哪一回、讲的什么事"
+    },
+    {
+      "eventId": "AL0006",
+      "eventName": "车载斗量",
+      "aliases": [
+        "车载斗量"
+      ],
+      "chunkIds": [
+        "sanguo-yanyi:0082:c0004",
+        "sanguo-yanyi:0082:c0005"
+      ],
+      "type": "典故",
+      "exampleQuestion": "「车载斗量」出自哪一回、讲的什么事"
+    },
+    {
+      "eventId": "AL0007",
+      "eventName": "虎女焉嫁犬子",
+      "aliases": [
+        "虎女焉嫁犬子"
+      ],
+      "chunkIds": [
+        "sanguo-yanyi:0073:c0008"
+      ],
+      "type": "典故",
+      "exampleQuestion": "「虎女焉嫁犬子」出自哪一回、讲的什么事"
+    },
+    {
+      "eventId": "AL0008",
+      "eventName": "攻心为上",
+      "aliases": [
+        "攻心为上"
+      ],
+      "chunkIds": [
+        "sanguo-yanyi:0087:c0012"
+      ],
+      "type": "典故",
+      "exampleQuestion": "「攻心为上」出自哪一回、讲的什么事"
+    },
+    {
+      "eventId": "AL0009",
+      "eventName": "八门金锁阵",
+      "aliases": [
+        "八门金锁阵"
+      ],
+      "chunkIds": [
+        "sanguo-yanyi:0036:c0002"
+      ],
+      "type": "典故",
+      "exampleQuestion": "「八门金锁阵」出自哪一回、讲的什么事"
+    },
+    {
+      "eventId": "AL0010",
+      "eventName": "子午谷奇谋",
+      "aliases": [
+        "子午谷奇谋"
+      ],
+      "chunkIds": [
+        "sanguo-yanyi:0092:c0001"
+      ],
+      "type": "典故",
+      "exampleQuestion": "「子午谷奇谋」出自哪一回、讲的什么事"
+    },
+    {
+      "eventId": "AL0011",
+      "eventName": "的卢妨主",
+      "aliases": [
+        "的卢妨主"
+      ],
+      "chunkIds": [
+        "sanguo-yanyi:0035:c0010"
+      ],
+      "type": "典故",
+      "exampleQuestion": "「的卢妨主」出自哪一回、讲的什么事"
+    },
+    {
+      "eventId": "AL0012",
+      "eventName": "绝妙好辞",
+      "aliases": [
+        "绝妙好辞"
+      ],
+      "chunkIds": [
+        "sanguo-yanyi:0071:c0004",
+        "sanguo-yanyi:0071:c0005"
+      ],
+      "type": "典故",
+      "exampleQuestion": "「绝妙好辞」出自哪一回、讲的什么事"
+    },
+    {
+      "eventId": "AL0013",
+      "eventName": "拜井得泉",
+      "aliases": [
+        "拜井得泉"
+      ],
+      "chunkIds": [
+        "sanguo-yanyi:0109:c0007"
+      ],
+      "type": "典故",
+      "exampleQuestion": "「拜井得泉」出自哪一回、讲的什么事"
+    },
+    {
+      "eventId": "AL0014",
+      "eventName": "割席分坐",
+      "aliases": [
+        "割席分坐"
+      ],
+      "chunkIds": [
+        "sanguo-yanyi:0066:c0016"
+      ],
+      "type": "典故",
+      "exampleQuestion": "「割席分坐」出自哪一回、讲的什么事"
+    },
+    {
+      "eventId": "AL0015",
+      "eventName": "青囊书",
+      "aliases": [
+        "青囊书"
+      ],
+      "chunkIds": [
+        "sanguo-yanyi:0078:c0007",
+        "sanguo-yanyi:0078:c0008"
+      ],
+      "type": "典故",
+      "exampleQuestion": "「青囊书」出自哪一回、讲的什么事"
+    },
+    {
+      "eventId": "AL0016",
+      "eventName": "梦中杀人",
+      "aliases": [
+        "梦中杀人"
+      ],
+      "chunkIds": [
+        "sanguo-yanyi:0072:c0013"
+      ],
+      "type": "典故",
+      "exampleQuestion": "「梦中杀人」出自哪一回、讲的什么事"
+    },
+    {
+      "eventId": "AL0017",
+      "eventName": "一合酥",
+      "aliases": [
+        "一合酥"
+      ],
+      "chunkIds": [
+        "sanguo-yanyi:0072:c0013"
+      ],
+      "type": "典故",
+      "exampleQuestion": "「一合酥」出自哪一回、讲的什么事"
+    },
+    {
+      "eventId": "AL0018",
+      "eventName": "堕泪碑",
+      "aliases": [
+        "堕泪碑"
+      ],
+      "chunkIds": [
+        "sanguo-yanyi:0120:c0011"
+      ],
+      "type": "典故",
+      "exampleQuestion": "「堕泪碑」出自哪一回、讲的什么事"
+    },
+    {
+      "eventId": "AL0019",
+      "eventName": "假途灭虢",
+      "aliases": [
+        "假途灭虢"
+      ],
+      "chunkIds": [
+        "sanguo-yanyi:0056:c0012",
+        "sanguo-yanyi:0056:c0013",
+        "sanguo-yanyi:0056:c0014",
+        "sanguo-yanyi:0056:c0016",
+        "sanguo-yanyi:0056:c0017"
+      ],
+      "type": "典故",
+      "exampleQuestion": "「假途灭虢」出自哪一回、讲的什么事"
+    },
+    {
+      "eventId": "AL0020",
+      "eventName": "割发代首",
+      "aliases": [
+        "割发代首"
+      ],
+      "chunkIds": [
+        "sanguo-yanyi:0017:c0014",
+        "sanguo-yanyi:0017:c0015"
+      ],
+      "type": "典故",
+      "exampleQuestion": "「割发代首」出自哪一回、讲的什么事"
+    },
+    {
+      "eventId": "AL0021",
+      "eventName": "鸡肋",
+      "aliases": [
+        "鸡肋"
+      ],
+      "chunkIds": [
+        "sanguo-yanyi:0072:c0011"
+      ],
+      "type": "典故",
+      "exampleQuestion": "「鸡肋」出自哪一回、讲的什么事"
+    },
+    {
+      "eventId": "AL0022",
+      "eventName": "乐不思蜀",
+      "aliases": [
+        "乐不思蜀"
+      ],
+      "chunkIds": [
+        "sanguo-yanyi:0119:c0010",
+        "sanguo-yanyi:0119:c0011"
+      ],
+      "type": "典故",
+      "exampleQuestion": "「乐不思蜀」出自哪一回、讲的什么事"
+    },
+    {
+      "eventId": "AL0023",
+      "eventName": "夜战马超",
+      "aliases": [
+        "夜战马超"
+      ],
+      "chunkIds": [
+        "sanguo-yanyi:0065:c0007",
+        "sanguo-yanyi:0065:c0008"
+      ],
+      "type": "典故",
+      "exampleQuestion": "「夜战马超」出自哪一回、讲的什么事"
+    },
+    {
+      "eventId": "AL0024",
+      "eventName": "哭祖庙",
+      "aliases": [
+        "哭祖庙"
+      ],
+      "chunkIds": [
+        "sanguo-yanyi:0118:c0004"
+      ],
+      "type": "典故",
+      "exampleQuestion": "「哭祖庙」出自哪一回、讲的什么事"
+    },
+    {
+      "eventId": "AL0025",
+      "eventName": "借荆州",
+      "aliases": [
+        "借荆州"
+      ],
+      "chunkIds": [
+        "sanguo-yanyi:0054:c0003"
+      ],
+      "type": "典故",
+      "exampleQuestion": "「借荆州」出自哪一回、讲的什么事"
+    },
+    {
+      "eventId": "AL0026",
+      "eventName": "初出茅庐第一功",
+      "aliases": [
+        "初出茅庐第一功"
+      ],
+      "chunkIds": [
+        "sanguo-yanyi:0039:c0017"
+      ],
+      "type": "典故",
+      "exampleQuestion": "「初出茅庐第一功」出自哪一回、讲的什么事"
+    },
+    {
+      "eventId": "AL0027",
+      "eventName": "孙策托孤",
+      "aliases": [
+        "孙策托孤"
+      ],
+      "chunkIds": [
+        "sanguo-yanyi:0029:c0014"
+      ],
+      "type": "典故",
+      "exampleQuestion": "「孙策托孤」出自哪一回、讲的什么事"
+    },
+    {
+      "eventId": "AL0028",
+      "eventName": "曹操哭郭嘉",
+      "aliases": [
+        "曹操哭郭嘉"
+      ],
+      "chunkIds": [
+        "sanguo-yanyi:0050:c0013"
+      ],
+      "type": "典故",
+      "exampleQuestion": "「曹操哭郭嘉」出自哪一回、讲的什么事"
+    },
+    {
+      "eventId": "AL0029",
+      "eventName": "于吉祈雨",
+      "aliases": [
+        "于吉祈雨"
+      ],
+      "chunkIds": [
+        "sanguo-yanyi:0029:c0008"
+      ],
+      "type": "典故",
+      "exampleQuestion": "「于吉祈雨」出自哪一回、讲的什么事"
+    },
+    {
+      "eventId": "AL0030",
+      "eventName": "管辂神卜",
+      "aliases": [
+        "管辂神卜"
+      ],
+      "chunkIds": [
+        "sanguo-yanyi:0069:c0002",
+        "sanguo-yanyi:0069:c0003",
+        "sanguo-yanyi:0069:c0004",
+        "sanguo-yanyi:0069:c0005",
+        "sanguo-yanyi:0069:c0006",
+        "sanguo-yanyi:0069:c0007",
+        "sanguo-yanyi:0069:c0008"
+      ],
+      "type": "典故",
+      "exampleQuestion": "「管辂神卜」出自哪一回、讲的什么事"
+    },
+    {
+      "eventId": "AL0031",
+      "eventName": "铜雀台",
+      "aliases": [
+        "铜雀台"
+      ],
+      "chunkIds": [
+        "sanguo-yanyi:0056:c0003",
+        "sanguo-yanyi:0056:c0004",
+        "sanguo-yanyi:0056:c0005",
+        "sanguo-yanyi:0056:c0006",
+        "sanguo-yanyi:0056:c0007"
+      ],
+      "type": "典故",
+      "exampleQuestion": "「铜雀台」出自哪一回、讲的什么事"
+    },
+    {
+      "eventId": "AL0032",
+      "eventName": "拔矢啖睛",
+      "aliases": [
+        "拔矢啖睛"
+      ],
+      "chunkIds": [
+        "sanguo-yanyi:0018:c0014"
+      ],
+      "type": "典故",
+      "exampleQuestion": "「拔矢啖睛」出自哪一回、讲的什么事"
+    },
+    {
+      "eventId": "AL0033",
+      "eventName": "土山约三事",
+      "aliases": [
+        "土山约三事"
+      ],
+      "chunkIds": [
+        "sanguo-yanyi:0025:c0004",
+        "sanguo-yanyi:0025:c0005",
+        "sanguo-yanyi:0025:c0006"
+      ],
+      "type": "典故",
+      "exampleQuestion": "「土山约三事」出自哪一回、讲的什么事"
+    },
+    {
+      "eventId": "AL0034",
+      "eventName": "斩颜良",
+      "aliases": [
+        "斩颜良"
+      ],
+      "chunkIds": [
+        "sanguo-yanyi:0025:c0018",
+        "sanguo-yanyi:0025:c0019"
+      ],
+      "type": "典故",
+      "exampleQuestion": "「斩颜良」出自哪一回、讲的什么事"
+    },
+    {
+      "eventId": "AL0035",
+      "eventName": "斩蔡阳",
+      "aliases": [
+        "斩蔡阳"
+      ],
+      "chunkIds": [
+        "sanguo-yanyi:0028:c0012"
+      ],
+      "type": "典故",
+      "exampleQuestion": "「斩蔡阳」出自哪一回、讲的什么事"
+    },
+    {
+      "eventId": "AL0036",
+      "eventName": "苦肉计",
+      "aliases": [
+        "苦肉计"
+      ],
+      "chunkIds": [
+        "sanguo-yanyi:0046:c0013",
+        "sanguo-yanyi:0046:c0014",
+        "sanguo-yanyi:0046:c0015",
+        "sanguo-yanyi:0046:c0016",
+        "sanguo-yanyi:0046:c0017"
+      ],
+      "type": "典故",
+      "exampleQuestion": "「苦肉计」出自哪一回、讲的什么事"
+    },
+    {
+      "eventId": "AL0037",
+      "eventName": "借东风",
+      "aliases": [
+        "借东风"
+      ],
+      "chunkIds": [
+        "sanguo-yanyi:0049:c0002",
+        "sanguo-yanyi:0049:c0003",
+        "sanguo-yanyi:0049:c0005",
+        "sanguo-yanyi:0049:c0006",
+        "sanguo-yanyi:0049:c0007",
+        "sanguo-yanyi:0049:c0009",
+        "sanguo-yanyi:0049:c0010"
+      ],
+      "type": "典故",
+      "exampleQuestion": "「借东风」出自哪一回、讲的什么事"
+    },
+    {
+      "eventId": "AL0038",
+      "eventName": "华容道",
+      "aliases": [
+        "华容道"
+      ],
+      "chunkIds": [
+        "sanguo-yanyi:0049:c0015",
+        "sanguo-yanyi:0049:c0016",
+        "sanguo-yanyi:0050:c0007",
+        "sanguo-yanyi:0050:c0008",
+        "sanguo-yanyi:0050:c0010",
+        "sanguo-yanyi:0050:c0011"
+      ],
+      "type": "典故",
+      "exampleQuestion": "「华容道」出自哪一回、讲的什么事"
+    },
+    {
+      "eventId": "AL0039",
+      "eventName": "义释黄忠",
+      "aliases": [
+        "义释黄忠"
+      ],
+      "chunkIds": [
+        "sanguo-yanyi:0053:c0005",
+        "sanguo-yanyi:0053:c0006",
+        "sanguo-yanyi:0053:c0007"
+      ],
+      "type": "典故",
+      "exampleQuestion": "「义释黄忠」出自哪一回、讲的什么事"
+    },
+    {
+      "eventId": "AL0040",
+      "eventName": "截江夺阿斗",
+      "aliases": [
+        "截江夺阿斗"
+      ],
+      "chunkIds": [
+        "sanguo-yanyi:0061:c0006",
+        "sanguo-yanyi:0061:c0007",
+        "sanguo-yanyi:0061:c0008",
+        "sanguo-yanyi:0061:c0009",
+        "sanguo-yanyi:0061:c0010"
+      ],
+      "type": "典故",
+      "exampleQuestion": "「截江夺阿斗」出自哪一回、讲的什么事"
+    },
+    {
+      "eventId": "AL0041",
+      "eventName": "义释严颜",
+      "aliases": [
+        "义释严颜"
+      ],
+      "chunkIds": [
+        "sanguo-yanyi:0063:c0020",
+        "sanguo-yanyi:0063:c0021"
+      ],
+      "type": "典故",
+      "exampleQuestion": "「义释严颜」出自哪一回、讲的什么事"
+    },
+    {
+      "eventId": "AL0042",
+      "eventName": "威震逍遥津",
+      "aliases": [
+        "威震逍遥津"
+      ],
+      "chunkIds": [
+        "sanguo-yanyi:0067:c0021"
+      ],
+      "type": "典故",
+      "exampleQuestion": "「威震逍遥津」出自哪一回、讲的什么事"
+    },
+    {
+      "eventId": "AL0043",
+      "eventName": "庞德抬榇",
+      "aliases": [
+        "庞德抬榇"
+      ],
+      "chunkIds": [
+        "sanguo-yanyi:0074:c0003"
+      ],
+      "type": "典故",
+      "exampleQuestion": "「庞德抬榇」出自哪一回、讲的什么事"
+    },
+    {
+      "eventId": "AL0044",
+      "eventName": "关公显圣",
+      "aliases": [
+        "关公显圣"
+      ],
+      "chunkIds": [
+        "sanguo-yanyi:0077:c0007",
+        "sanguo-yanyi:0077:c0008",
+        "sanguo-yanyi:0077:c0010"
+      ],
+      "type": "典故",
+      "exampleQuestion": "「关公显圣」出自哪一回、讲的什么事"
+    },
+    {
+      "eventId": "AL0045",
+      "eventName": "出师表",
+      "aliases": [
+        "出师表"
+      ],
+      "chunkIds": [
+        "sanguo-yanyi:0091:c0012",
+        "sanguo-yanyi:0091:c0013",
+        "sanguo-yanyi:0091:c0014"
+      ],
+      "type": "典故",
+      "exampleQuestion": "「出师表」出自哪一回、讲的什么事"
+    },
+    {
+      "eventId": "AL0046",
+      "eventName": "上方谷",
+      "aliases": [
+        "上方谷"
+      ],
+      "chunkIds": [
+        "sanguo-yanyi:0103:c0011",
+        "sanguo-yanyi:0103:c0012"
+      ],
+      "type": "典故",
+      "exampleQuestion": "「上方谷」出自哪一回、讲的什么事"
+    },
+    {
+      "eventId": "AL0047",
+      "eventName": "武侯显圣",
+      "aliases": [
+        "武侯显圣"
+      ],
+      "chunkIds": [
+        "sanguo-yanyi:0116:c0012",
+        "sanguo-yanyi:0116:c0013"
+      ],
+      "type": "典故",
+      "exampleQuestion": "「武侯显圣」出自哪一回、讲的什么事"
+    },
+    {
+      "eventId": "AL0048",
+      "eventName": "偷度阴平",
+      "aliases": [
+        "偷度阴平"
+      ],
+      "chunkIds": [
+        "sanguo-yanyi:0117:c0006",
+        "sanguo-yanyi:0117:c0007"
+      ],
+      "type": "典故",
+      "exampleQuestion": "「偷度阴平」出自哪一回、讲的什么事"
+    }
+  ]
+}

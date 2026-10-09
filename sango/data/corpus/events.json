@@ -1,7 +1,7 @@
 {
   "meta": {
     "schemaVersion": 1,
-    "normVersion": "2e5f4f9d",
+    "normVersion": "ae0b1b52",
     "generatedAt": "2026-09-29T10:01:24.950Z",
     "corpusChunkCount": 2344
   },
@@ -4481,6 +4481,7 @@
       "eventId": "E02301",
       "eventName": "祢衡裸衣骂曹",
       "aliases": [
+        "祢衡裸衣骂贼",
         "祢衡裸衣骂曹"
       ],
       "chunkIds": [
@@ -4919,6 +4920,7 @@
       "eventId": "E02802",
       "eventName": "古城聚义",
       "aliases": [
+        "古城会",
         "古城聚义"
       ],
       "chunkIds": [
@@ -5145,6 +5147,7 @@
       "eventId": "E03001",
       "eventName": "官渡之战",
       "aliases": [
+        "火烧乌巢",
         "官渡之战"
       ],
       "chunkIds": [
@@ -5552,6 +5555,7 @@
       "eventId": "E03401",
       "eventName": "跃马过檀溪",
       "aliases": [
+        "跃马檀溪",
         "跃马过檀溪"
       ],
       "chunkIds": [
@@ -6283,6 +6287,8 @@
       "eventId": "E04102",
       "eventName": "长坂坡单骑救主",
       "aliases": [
+        "赵子龙单骑救主",
+        "刘备摔阿斗",
         "长坂坡单骑救主"
       ],
       "chunkIds": [
@@ -6960,6 +6966,7 @@
       "eventId": "E05001",
       "eventName": "华容道义释曹操",
       "aliases": [
+        "关云长义释曹操",
         "华容道义释曹操"
       ],
       "chunkIds": [
@@ -7434,6 +7441,8 @@
       "eventId": "E05401",
       "eventName": "甘露寺招亲",
       "aliases": [
+        "刘备招亲",
+        "赔了夫人又折兵",
         "甘露寺招亲"
       ],
       "chunkIds": [
@@ -7564,6 +7573,7 @@
       "eventId": "E05701",
       "eventName": "柴桑口吊丧",
       "aliases": [
+        "卧龙吊丧",
         "柴桑口吊丧"
       ],
       "chunkIds": [
@@ -8022,6 +8032,7 @@
       "eventId": "E06001",
       "eventName": "张松献图",
       "aliases": [
+        "张松献地图",
         "张松献图"
       ],
       "chunkIds": [
@@ -8535,6 +8546,7 @@
       "aliases": [
         "庞统之死",
         "庞统死亡",
+        "落凤坡",
         "庞统去世"
       ],
       "chunkIds": [
@@ -9096,6 +9108,7 @@
       "eventId": "E06802",
       "eventName": "左慈掷杯戏曹操",
       "aliases": [
+        "左慈戏曹操",
         "左慈掷杯戏曹操"
       ],
       "chunkIds": [
@@ -9245,6 +9258,7 @@
       "eventId": "E06902",
       "eventName": "五臣讨贼死节",
       "aliases": [
+        "五臣死节",
         "五臣讨贼死节"
       ],
       "chunkIds": [
@@ -10195,6 +10209,8 @@
       "eventId": "E07901",
       "eventName": "曹植七步诗",
       "aliases": [
+        "七步成诗",
+        "煮豆燃豆萁",
         "曹植七步诗"
       ],
       "chunkIds": [
@@ -11048,6 +11064,7 @@
       "eventId": "E08601",
       "eventName": "秦宓逞天辩",
       "aliases": [
+        "秦宓天辩",
         "秦宓逞天辩"
       ],
       "chunkIds": [
@@ -11105,6 +11122,7 @@
       "eventId": "E08701",
       "eventName": "七擒孟获",
       "aliases": [
+        "七擒七纵",
         "七纵七擒"
       ],
       "chunkIds": [
@@ -11401,6 +11419,7 @@
       "eventId": "E09001",
       "eventName": "火烧藤甲兵",
       "aliases": [
+        "火烧藤甲军",
         "火烧藤甲兵"
       ],
       "chunkIds": [
@@ -12055,6 +12074,7 @@
       "eventId": "E09701",
       "eventName": "诸葛亮再上出师表",
       "aliases": [
+        "后出师表",
         "诸葛亮再上出师表"
       ],
       "chunkIds": [
@@ -12607,6 +12627,7 @@
       "eventId": "E10401",
       "eventName": "死诸葛吓走活仲达",
       "aliases": [
+        "死诸葛走生仲达",
         "死诸葛吓走活仲达"
       ],
       "chunkIds": [
@@ -12667,6 +12688,8 @@
       "eventId": "E10501",
       "eventName": "武侯锦囊斩魏延",
       "aliases": [
+        "锦囊妙计",
+        "锦囊杀魏延",
         "武侯锦囊斩魏延"
       ],
       "chunkIds": [

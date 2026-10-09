@@ -1,0 +1,73 @@
+{
+ "meta": {
+  "schemaVersion": 1,
+  "normVersion": "a2b3c4d5",
+  "generatedAt": "2026-10-09T00:00:00.000Z",
+  "corpusChunkCount": 9
+ },
+ "rows": [
+  {
+   "eventId": "AL0003",
+   "eventName": "割发代首",
+   "aliases": [
+    "割发代首"
+   ],
+   "chunkIds": [
+    "sanguo-yanyi:0002:c0002",
+    "sanguo-yanyi:0002:c0001"
+   ],
+   "type": "典故",
+   "exampleQuestion": "割发代首是怎么回事"
+  },
+  {
+   "eventId": "AL0001",
+   "eventName": "鸡肋",
+   "aliases": [
+    "鸡肋"
+   ],
+   "chunkIds": [
+    "sanguo-yanyi:0001:c0006"
+   ],
+   "type": "典故",
+   "exampleQuestion": "鸡肋这个典故是什么意思"
+  },
+  {
+   "eventId": "AL0002",
+   "eventName": "乐不思蜀",
+   "aliases": [
+    "乐不思蜀"
+   ],
+   "chunkIds": [
+    "sanguo-yanyi:0001:c0007"
+   ],
+   "type": "典故",
+   "exampleQuestion": "乐不思蜀出自哪一回"
+  },
+  {
+   "eventId": "AL0004",
+   "eventName": "夜战马超",
+   "aliases": [
+    "夜战马超"
+   ],
+   "chunkIds": [
+    "sanguo-yanyi:0001:c0005"
+   ],
+   "type": "典故",
+   "exampleQuestion": "夜战马超是哪一回的事"
+  },
+  {
+   "eventId": "AL0005",
+   "eventName": "谜团典故",
+   "aliases": [
+    "迷之典故",
+    "谜"
+   ],
+   "chunkIds": [
+    "sanguo-yanyi:0002:c0001"
+   ],
+   "type": "典故",
+   "exampleQuestion": "这个典故叫什么"
+  }
+ ]
+}
+

@@ -210,7 +210,7 @@ export interface RetrievalCandidateDiagnostics {
   hitLabels: string[];
   /** 最终分（合并排序分）。 */
   finalScore: number;
-  /** 命中来源子集：lexical / vector / label；FEAT-A018 可选增 event（该候选同时属某命中事件组）。 */
+  /** 命中来源子集：lexical / vector / label；FEAT-A018 可选增 event / allusion（该候选同时属某命中事件组 / 典故组）。 */
   sources: string[];
   /** 是否进注入视图；sango 占位 null，总台回填。 */
   injected: boolean | null;
@@ -263,6 +263,32 @@ export interface RetrievalEventHitGroup {
   /** 实际进出参条目的事件组 chunk 数（事件内序前缀；= placedChunkIds.length）。 */
   placedCount: number;
   /** 进出参条目的事件组 chunkId（事件内序）。 */
+  placedChunkIds: string[];
+}
+
+/** FEAT-A018 §5.6：典故名桥命中诊断（镜像 eventHit；典故路是否生效 / norm 版本 / 命中组明细）。 */
+export interface RetrievalAllusionHitDiagnostics {
+  /** 典故路是否生效；true = 典故表缺失 / 加载失败 / 整表漂移降级（此时 groups 恒 []）。事件路不受影响。 */
+  degraded: boolean;
+  /** 典故表 meta.normVersion；未加载 / 降级为空串（对齐 eventHit 降级口径）。 */
+  normVersion: string;
+  /** 命中典故组数；0 = 未命中典故路。 */
+  groupCount: number;
+  /** 命中组明细，按组优先级（命中 alias 长度降序，同长 allusionId 升序）。 */
+  groups: RetrievalAllusionHitGroup[];
+}
+
+/** FEAT-A018 §5.6：单命中典故组诊断（典故无 L3；字段镜像事件组、去 type）。 */
+export interface RetrievalAllusionHitGroup {
+  allusionId: string;
+  allusionName: string;
+  /** 本组命中的 alias（归一化后 query 中子串命中者，组内最长）。 */
+  matchedAlias: string;
+  /** 组内有效 chunk 引用总数（漂移剔除后）。 */
+  groupSize: number;
+  /** 实际进出参条目的典故组 chunk 数（重排后自然进窗，= placedChunkIds.length）。 */
+  placedCount: number;
+  /** 进出参条目的典故组 chunkId（按重排后出参序）。 */
   placedChunkIds: string[];
 }
 
@@ -321,6 +347,8 @@ export interface RetrievalDiagnostics {
   birthIntent: RetrievalBirthIntentDiagnostics;
   /** FEAT-A018：事件名桥命中诊断（新增顶层字段，老字段不动；非事件命中时 groups 空、degraded / normVersion 仍可读）。 */
   eventHit: RetrievalEventHitDiagnostics;
+  /** FEAT-A018：典故名桥命中诊断（镜像 eventHit；非典故命中时 groups 空、degraded / normVersion 仍可读）。 */
+  allusionHit: RetrievalAllusionHitDiagnostics;
 }
 
 /** feat-A009：search 统一返回 出参条目 + 检索诊断（诊断仅在请求时产出，否则为 null）。 */

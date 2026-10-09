@@ -14,8 +14,17 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { embedQuery } from '../embed/bge-m3-encoder.ts';
-import { eventsDegraded, eventsNormVersion, loadEventsTable, matchEvents } from './event-table.ts';
-import type { MatchedEventGroup } from './event-table.ts';
+import {
+  allusionsDegraded,
+  allusionsNormVersion,
+  eventsDegraded,
+  eventsNormVersion,
+  loadAllusionsTable,
+  loadEventsTable,
+  matchAllusions,
+  matchEvents,
+} from './event-table.ts';
+import type { MatchedAllusionGroup, MatchedEventGroup } from './event-table.ts';
 import { createCrossEncoderScorer, resolveRerankModelFile } from './reranker.ts';
 import type { RerankScorer } from './reranker.ts';
 import {
@@ -32,6 +41,7 @@ import type {
   DeathIntent,
   Doc,
   RetrievalCandidateDiagnostics,
+  RetrievalAllusionHitDiagnostics,
   RetrievalEventHitDiagnostics,
   RetrievalDiagnostics,
   RetrievalDiagnosticsTiming,
@@ -158,6 +168,10 @@ interface DiagnosticsBuildContext {
   eventHit: RetrievalEventHitDiagnostics;
   /** FEAT-A018：命中事件组全部有效 chunk 的文档下标集合（candidates[].sources 'event' 判定）。 */
   eventDocSet: Set<number>;
+  /** FEAT-A018：典故名桥命中诊断（镜像 eventHit；未命中时 degraded / normVersion 仍可读、groups 空）。 */
+  allusionHit: RetrievalAllusionHitDiagnostics;
+  /** FEAT-A018：命中典故组全部有效 chunk 的文档下标集合（candidates[].sources 'allusion' 判定）。 */
+  allusionDocSet: Set<number>;
   /** FEAT-A030：检索重排诊断（rerankWindow 产出；空结果早退路径用默认值）。 */
   rerank: RetrievalRerankDiagnostics;
 }
@@ -395,6 +409,7 @@ export class SangoIndex {
     this.loadVectors(this.n);
     this.loadTags();
     this.loadEvents();
+    this.loadAllusions();
   }
 
   /**
@@ -408,7 +423,15 @@ export class SangoIndex {
   }
 
   /**
-   * 加载标签表（data/corpus/tags/{duel,event,story}.json：chunkId → 标签文本，多标签以 | 分隔），
+   * FEAT-A018：典故表加载（典故名桥 + 组内闭环装配的数据源，接口 §5.6 / 需求验收 7）。
+   * 与事件表同机制、独立降级：典故表失败仅告警降级为「无典故路由」，事件路不受影响、不阻断启动。
+   */
+  private loadAllusions(): void {
+    loadAllusionsTable(this.dataDir, (chunkId) => this.docIndexOf.has(chunkId), this.n);
+  }
+
+  /**
+   * 加载标签表（data/corpus/tags/{duel,event}.json：chunkId → 标签文本，多标签以 | 分隔），
    * 建「标签 token → 文档」倒排供第三路召回。标签文本与 query 侧同口径归一化（entity-table 在前），
    * 保证「人物之死-关羽之死」标签与「云长怎么死的」问法互相命中。
    * 入倒排前按 stripTagType 剥离标签类型信息（feat-A014 索引剥壳），类型词不进候选面；
@@ -417,7 +440,7 @@ export class SangoIndex {
    * 标签只进 TAG 分量，不改 chunk / 向量。
    */
   private loadTags(): void {
-    for (const file of ['duel.json', 'event.json', 'story.json']) {
+    for (const file of ['duel.json', 'event.json']) {
       const tagFile = path.join(this.tagsDir, file);
       if (!existsSync(tagFile)) continue;
       let parsed: unknown;
@@ -502,7 +525,6 @@ export class SangoIndex {
    *   - 人物之生-XX登场 / 人物之死-XX之死 → XX（纯人物名）
    *   - 武将单挑-A-B → A-B（保留对阵双方）
    *   - event 其余类型前缀（战役- / 政治事件- / 谋略/计策- / 结盟/外交- / 典故事件-）剥离前缀、保留内容
-   *   - story 标签无类型前缀，原文即终型
    * 死亡 / 登场语义由结构承载（deathByPerson 人名词典 / 事件内容），类型词（人物 / 物之 / 之生 /
    * 之死 / 登场 等）不再进第三路候选面；原始标签文本仍由 tagTextsByDoc 保留供 hitLabels 回读。
    * 入参为单个标签（| 拆分后）的归一化文本。
@@ -747,15 +769,16 @@ export class SangoIndex {
       }
       // best < MIN_COSINE：向量存在但全部低于阈值 → 无命中（combined 保持空，走空结果 / 事件路）。
     }
-    // ---- FEAT-A018 事件名桥（§3.1 / §3.3）：L1/L2 并池 + 增强查询重排 + L3 锚点置顶 ----
-    // 桥只读 normalized、零 LLM、不重编码向量、不改权重（§3.4）；非事件命中请求（groups 空）此段零改动
+    // ---- FEAT-A018 事件名桥 / 典故名桥（§3.1 / §3.3 / §5.6）：L1/L2 并池 + 增强查询重排 + L3 锚点置顶 ----
+    // 桥只读 normalized、零 LLM、不重编码向量、不改权重（§3.4）；非事件非典故命中请求（groups 空）此段零改动
     // （pinDocs ≡ deathHits、无并池 / 无重排），出参与其余诊断与现状逐字节一致。
     const threeWayCandidates = combined.length; // funnel.mergedCandidates 口径：漏斗只描述三路召回（§4）
     const eventGroups = matchEvents(normalized);
+    const allusionGroups = matchAllusions(normalized);
     const l1l2Groups = eventGroups.filter((g) => g.type !== 'L3');
     const l3Groups = eventGroups.filter((g) => g.type === 'L3');
     const inPool = new Set(combined.map((h) => h.doc));
-    /** 增强查询重排后的 bm25Norm 覆盖（诊断复算恒等式用）；未并池重排（无 L1/L2 命中）恒 null。 */
+    /** 增强查询重排后的 bm25Norm 覆盖（诊断复算恒等式用）；未并池重排（无事件 L1/L2 / 典故命中）恒 null。 */
     let enhancedBm25Norm: Map<number, number> | null = null;
 
     // ③ L1/L2 并池：命中组全部有效 chunk 并入候选池——cands 按 doc 下标并集去重、无来源配额；
@@ -769,13 +792,29 @@ export class SangoIndex {
       }
     }
 
-    // ④ 池内重排（与三路同公式）：增强查询 = normalized + canonical 事件名（多组命中取优先级最高组）
-    // + 命中 alias；按增强查询重算全池 bm25Norm 分量，按原公式 0.6·cos + 0.3·bm25 + 0.1·tag 全池重排
-    // ——唯一变化 = bm25Norm，cosine / tag 分量不变（cosine 不重编码，红线 §7）；事件组无独立加分项。
-    if (l1l2Groups.length > 0) {
+    // ③ 典故组并池（§5.6，同 L1/L2 口径）：命中典故组全部有效 chunk 并入候选池——doc 下标并集去重、
+    // 无来源配额；典故无 L3、不进保证区置顶（不进 pinDocs / L3 锚点小位点组产出）。
+    for (const g of allusionGroups) {
+      for (const chunkId of g.chunkIds) {
+        const d = this.docIndexOf.get(chunkId);
+        if (d === undefined || inPool.has(d)) continue;
+        inPool.add(d);
+        combined.push({ doc: d, score: this.unifiedScore(d, bm25Norm, cosine, tagHits) });
+      }
+    }
+
+    // ④ 池内重排（与三路同公式）：增强查询 = normalized + 命中组规范名（事件 eventName / 典故
+    // allusionName，多组命中取优先级最高组：事件 L1/L2 在前、典故组在后）+ 命中 alias；按增强查询
+    // 重算全池 bm25Norm 分量，按原公式 0.6·cos + 0.3·bm25 + 0.1·tag 全池重排——唯一变化 = bm25Norm，
+    // cosine / tag 分量不变（cosine 不重编码，红线 §7）；组无独立加分项。
+    const poolDrivers: Array<{ canonicalName: string; matchedAlias: string }> = [
+      ...l1l2Groups.map((g) => ({ canonicalName: g.eventName, matchedAlias: g.matchedAlias })),
+      ...allusionGroups.map((g) => ({ canonicalName: g.allusionName, matchedAlias: g.matchedAlias })),
+    ];
+    if (poolDrivers.length > 0) {
       enhancedBm25Norm = this.rescorePoolWithEnhancedQuery(
         combined,
-        l1l2Groups[0],
+        poolDrivers[0],
         normalized,
         inPool,
         cosine,
@@ -800,8 +839,8 @@ export class SangoIndex {
       }
     }
 
-    // 空结果早退：无三路候选且事件路未命中（表降级 / 未命中）→ 与现状实现逐字节一致
-    // （timing.merge 保持未执行 = null；eventHit 仅 degraded / normVersion 可读、groups 空）。
+    // 空结果早退：无三路候选且事件 / 典故双路均未命中（表降级 / 未命中）→ 与现状实现逐字节一致
+    // （timing.merge 保持未执行 = null；eventHit / allusionHit 仅 degraded / normVersion 可读、groups 空）。
     if (combined.length === 0) {
       return {
         entries: [],
@@ -817,6 +856,7 @@ export class SangoIndex {
                 birthIntent,
                 timing,
                 this.emptyEventHit(),
+                this.emptyAllusionHit(),
               ),
             )
           : null,
@@ -848,6 +888,8 @@ export class SangoIndex {
     const hits = combined.slice(0, limit);
     const eventHit = this.buildEventHit(eventGroups, hits, l3Segments);
     const eventDocSet = this.eventDocSetOf(eventGroups, l3Segments);
+    const allusionHit = this.buildAllusionHit(allusionGroups, hits);
+    const allusionDocSet = this.allusionDocSetOf(allusionGroups);
     const entries = hits.map((h) => this.toEntry(this.docs[h.doc]));
     return {
       entries,
@@ -876,6 +918,8 @@ export class SangoIndex {
               timing,
               eventHit,
               eventDocSet,
+              allusionHit,
+              allusionDocSet,
               rerank: rerankDiag,
             }),
           )
@@ -904,6 +948,7 @@ export class SangoIndex {
     birthIntent: boolean,
     timing: RetrievalDiagnosticsTiming,
     eventHit: RetrievalEventHitDiagnostics,
+    allusionHit: RetrievalAllusionHitDiagnostics,
   ): RetrievalDiagnostics {
     return this.buildDiagnostics({
       raw: query,
@@ -928,6 +973,8 @@ export class SangoIndex {
       timing,
       eventHit,
       eventDocSet: new Set(),
+      allusionHit,
+      allusionDocSet: new Set(),
       rerank: this.emptyRerankDiagnostics(),
     });
   }
@@ -963,20 +1010,20 @@ export class SangoIndex {
   }
 
   /**
-   * FEAT-A018 §3.3④：增强查询 = normalized + 命中组 canonical 事件名（多组命中取优先级最高组）
-   * + matchedAlias；按增强查询重算全池 bm25Norm 分量（min-max 归一到池内命中），按原公式
+   * FEAT-A018 §3.3④ / §5.6：增强查询 = normalized + 命中组规范名（事件 eventName / 典故 allusionName，
+   * 多组命中取优先级最高组）+ matchedAlias；按增强查询重算全池 bm25Norm 分量（min-max 归一到池内命中），按原公式
    * 0.6·cos + 0.3·bm25 + 0.1·tag 全池重排——唯一变化 = bm25Norm，cosine / tag 分量逐项不变
    * （cosine 不重编码）。零新增 LLM。
    */
   private rescorePoolWithEnhancedQuery(
     pool: SearchHit[],
-    topGroup: MatchedEventGroup,
+    topGroup: { canonicalName: string; matchedAlias: string },
     normalized: string,
     inPool: Set<number>,
     cosine: Float64Array | null,
     tagHits: Set<number>,
   ): Map<number, number> {
-    const enhancedTokens = new Set(tokenize(`${normalized}${topGroup.eventName}${topGroup.matchedAlias}`));
+    const enhancedTokens = new Set(tokenize(`${normalized}${topGroup.canonicalName}${topGroup.matchedAlias}`));
     const raw = new Map<number, number>();
     for (const t of enhancedTokens) {
       const posts = this.postings.get(t);
@@ -1163,6 +1210,65 @@ export class SangoIndex {
     return docs;
   }
 
+  /** FEAT-A018：空典故路（表降级 / 未命中）时的最小 allusionHit（degraded / normVersion 仍可读，groups 空）。 */
+  private emptyAllusionHit(): RetrievalAllusionHitDiagnostics {
+    return {
+      degraded: allusionsDegraded(),
+      normVersion: allusionsNormVersion(),
+      groupCount: 0,
+      groups: [],
+    };
+  }
+
+  /**
+   * FEAT-A018 §5.6：命中典故组 → allusionHit 明细（镜像 eventHit §5.2，典故无 L3）。
+   * placedChunkIds = 实际进出参条目的典故组 chunk，按重排后出参序（placedCount = placedChunkIds.length）。
+   */
+  private buildAllusionHit(
+    groups: MatchedAllusionGroup[],
+    hits: SearchHit[],
+  ): RetrievalAllusionHitDiagnostics {
+    const rankOf = new Map<number, number>();
+    for (let i = 0; i < hits.length; i++) {
+      if (!rankOf.has(hits[i].doc)) rankOf.set(hits[i].doc, i);
+    }
+    return {
+      degraded: allusionsDegraded(),
+      normVersion: allusionsNormVersion(),
+      groupCount: groups.length,
+      groups: groups.map((g) => {
+        const placedDocs = g.chunkIds
+          .map((chunkId) => this.docIndexOf.get(chunkId))
+          .filter((d): d is number => d !== undefined && rankOf.has(d))
+          .sort((a, b) => (rankOf.get(a) as number) - (rankOf.get(b) as number));
+        const placedChunkIds = placedDocs.map((d) => this.docs[d].chunkId);
+        return {
+          allusionId: g.allusionId,
+          allusionName: g.allusionName,
+          matchedAlias: g.matchedAlias,
+          groupSize: g.groupSize,
+          placedCount: placedChunkIds.length,
+          placedChunkIds,
+        };
+      }),
+    };
+  }
+
+  /**
+   * FEAT-A018 §5.3：命中典故组相关 chunk 的文档下标集合（candidates[].sources 'allusion' 判定用）：
+   * 组 chunk 引用（典故无 L3 锚点扩展，镜像事件 L1/L2 口径）。
+   */
+  private allusionDocSetOf(groups: MatchedAllusionGroup[]): Set<number> {
+    const docs = new Set<number>();
+    for (const g of groups) {
+      for (const chunkId of g.chunkIds) {
+        const di = this.docIndexOf.get(chunkId);
+        if (di !== undefined) docs.add(di);
+      }
+    }
+    return docs;
+  }
+
   /** 从 search 各中间量组装诊断（契约 §1.3）；注入 / 被引用占位 null，由总台回填。 */
   private buildDiagnostics(ctx: DiagnosticsBuildContext): RetrievalDiagnostics {
     const degraded = ctx.cosine === null;
@@ -1227,6 +1333,7 @@ export class SangoIndex {
         chunkIds: birthPinnedChunkIds,
       },
       eventHit: ctx.eventHit,
+      allusionHit: ctx.allusionHit,
     };
   }
 
@@ -1245,6 +1352,8 @@ export class SangoIndex {
     if (ctx.tagHits.has(d)) sources.push('label');
     // FEAT-A018 §5.3：可选来源 'event' = 候选同时属某命中事件组（便于漏斗核对；非事件命中请求恒不加，与现状逐字节一致）。
     if (ctx.eventDocSet.has(d)) sources.push('event');
+    // FEAT-A018 §5.3：可选来源 'allusion' = 候选同时属某命中典故组（镜像 'event'；非典故命中请求恒不加）。
+    if (ctx.allusionDocSet.has(d)) sources.push('allusion');
     // hitLabels：命中该 chunk 的标签原始文本（保序、去重）。判定口径与 tagPostings 构建 / tagHits 严格一致：
     // 复用 tagTokensOf（标签原文剥壳 token ∪ 命中键规范形 token，接口 §2.4），与 query 中长度 ≥ 2 的词元
     // 求交（单字词元不参与，同标签路由）。

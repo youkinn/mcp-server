@@ -31,7 +31,7 @@ function loadFixtureIndex(): SangoIndex {
 /** 标签表（chunkId → `|` 拆分后的原始标签数组，保序）：核对 hitLabels 必须是该 chunk 标签表成员。 */
 function loadTagTable(tagsDir: string): Map<string, string[]> {
   const byChunk = new Map<string, string[]>();
-  for (const file of ['duel.json', 'event.json', 'story.json']) {
+  for (const file of ['duel.json', 'event.json']) {
     const filePath = path.join(tagsDir, file);
     if (!existsSync(filePath)) continue;
     const parsed = JSON.parse(readFileSync(filePath, 'utf8')) as Record<string, string>;
@@ -109,8 +109,8 @@ test('② 请求诊断：结构字段齐全（truncated/truncatedCount/query/env
   );
   assert.deepEqual(
     Object.keys(diagnostics).sort(),
-    ['birthIntent', 'candidates', 'deathIntent', 'env', 'eventHit', 'funnel', 'nextRank', 'query', 'rerank', 'timing', 'truncated', 'truncatedCount'],
-    '诊断顶层字段齐全（FEAT-A018 增 eventHit；FEAT-A030 增 rerank；登场意图诊断增 birthIntent）',
+    ['allusionHit', 'birthIntent', 'candidates', 'deathIntent', 'env', 'eventHit', 'funnel', 'nextRank', 'query', 'rerank', 'timing', 'truncated', 'truncatedCount'],
+    '诊断顶层字段齐全（FEAT-A018 增 eventHit / allusionHit；FEAT-A030 增 rerank；诞生意图诊断增 birthIntent）',
   );
 });
 
@@ -273,6 +273,7 @@ test('⑨ 64KB 预算截断（硬约束 3）：超限诊断 truncated=true、tru
     deathIntent: { detected: false, pinned: false, chunkIds: [] },
     birthIntent: { detected: false, pinned: false, chunkIds: [] },
     eventHit: { degraded: true, normVersion: '', groupCount: 0, groups: [] },
+    allusionHit: { degraded: true, normVersion: '', groupCount: 0, groups: [] },
     rerank: { enabled: false, window: 50, considered: 0, skippedPinned: 0, applied: false, reason: '未接入重排打分器' },
   };
   const trimmed = enforceDiagnosticsBudget(overBudget);
@@ -297,6 +298,7 @@ test('⑨ 64KB 预算截断（硬约束 3）：超限诊断 truncated=true、tru
     deathIntent: { detected: false, pinned: false, chunkIds: [] },
     birthIntent: { detected: false, pinned: false, chunkIds: [] },
     eventHit: { degraded: true, normVersion: '', groupCount: 0, groups: [] },
+    allusionHit: { degraded: true, normVersion: '', groupCount: 0, groups: [] },
     rerank: { enabled: false, window: 50, considered: 0, skippedPinned: 0, applied: false, reason: '未接入重排打分器' },
   };
   const kept = enforceDiagnosticsBudget(tiny);
@@ -401,27 +403,28 @@ test('⑭ 复算恒等式（bug-00013）：cosine / bm25Norm 全精度、bm25Nor
  * 口径（09-29 bug-00046 定案）：检索侧不改写 query；标签侧 = 标签原文 token + 命中键的规范形 token 双写
  * （接口 §2.4）。故 hitLabels 判定 = 「标签原文（剥壳后）token ∪ 双写规范形 token」∩ query 双字词元。
  * 本轮断言（与下方逐条断言一一对应）：
- *   - 轮 1 query「云长」：normalized ≡ raw、rewrites=[]、expansionHits=[{云长→关羽}]、funnel.labelHits>0；
+ *   - 轮 1 query「云长」：normalized ≡ raw、rewrites=[]、expansionHits=[{云长→关羽}]、funnel.labelHits=0
+ *     （story.json 已删，典故经典故表路由、不再享受标签加权，故「云长」标签路归零）；
  *     候选逐条：labelHit ⇔ hitLabels 非空（自洽）、hitLabels 保序去重且每项都是该 chunk 标签表成员、
- *     存在不含「关羽」三字的命中标签原文（证 hitLabels 未回传改写文本）、命中的候选数 > 0。
+ *     全部候选 labelHit=false / hitLabels=[]（无标签路命中，lexical 仍正常召回）。
  *   - 轮 2 query「华雄」：normalized ≡ raw、expansionHits=[]（「华雄」在 entity-table 内只作为
  *     「温酒斩华雄」行的 canonical 组成与别名键「斩华雄」出现，无独立行、非任何 rewriteKeys / fragmentOnly）；
  *     候选逐条：hitLabels 与测试侧独立复算（tokenize(标签原文) ∩ query 双字词元，保序去重）逐字相等、
  *     labelHit 与复算一致；命中的候选数 > 0（人物之生-华雄登场 / 人物之死-华雄之死 等标签）。
  * 向量对标签路无影响（tagHits 只由 tagPostings 决定），故默认构造后本地清空 vec 即为确定的降级纯 BM25 场景。
  */
-test('⑮ hitLabels 真实语料核对（data/corpus）：云长 自洽 + 表成员 + 保序去重 + 原文口径；华雄 逐候选独立复算', async () => {
+test('⑮ hitLabels 真实语料核对（data/corpus）：云长 story 路归零（自洽 + 表成员 + 保序去重）；华雄 逐候选独立复算', async () => {
   const index = new SangoIndex(DATA_DIR);
   index.load();
   index.vec = new Float32Array(0); // 降级纯 BM25，避免真向量编码拖慢测试，且不影响标签路判定
   const tagsByChunk = loadTagTable(path.join(DATA_DIR, 'corpus', 'tags'));
 
-  // 轮 1（检索侧不改写 + 索引双写诊断 query「云长」）：自洽 + 表成员 + 保序去重 + 原文口径。
+  // 轮 1（检索侧不改写 + 索引双写诊断 query「云长」）：story 标签路归零（story.json 已删）；候选逐条自洽。
   const aliased = await index.search('云长', 5, { diagnostics: true });
   assert.ok(aliased.diagnostics);
   assert.ok(aliased.diagnostics.env.corpusChunks > 1000, '真实语料已加载');
   assert.equal(aliased.diagnostics.env.degradedBm25Only, true);
-  assert.ok(aliased.diagnostics.funnel.labelHits > 0);
+  assert.equal(aliased.diagnostics.funnel.labelHits, 0, 'story.json 已删：query「云长」标签路归零（典故经典故表路由）');
   assert.equal(aliased.diagnostics.query.normalized, aliased.diagnostics.query.raw, '检索侧不改写：normalized ≡ raw');
   assert.deepEqual(aliased.diagnostics.query.rewrites, [], 'rewrites 恒 []');
   assert.deepEqual(
@@ -430,7 +433,6 @@ test('⑮ hitLabels 真实语料核对（data/corpus）：云长 自洽 + 表成
     'expansionHits 报告索引侧已双写覆盖（from → to），不改写输入',
   );
   let aliasedLabelHit = 0;
-  const allLabels: string[] = [];
   for (const c of aliased.diagnostics.candidates) {
     assert.equal(c.labelHit, c.hitLabels.length > 0, 'rank' + c.rank + ' hitLabels 与 labelHit 自洽');
     if (!c.labelHit) assert.deepEqual(c.hitLabels, [], 'rank' + c.rank + ' 未命中标签的候选 hitLabels=[]');
@@ -439,15 +441,9 @@ test('⑮ hitLabels 真实语料核对（data/corpus）：云长 自洽 + 表成
     assert.deepEqual([...new Set(c.hitLabels)], c.hitLabels, 'rank' + c.rank + ' hitLabels 保序去重（无重复项）');
     for (const label of c.hitLabels) {
       assert.ok(chunkTags.includes(label), 'rank' + c.rank + ' hitLabels 项「' + label + '」必在该 chunk 标签表内');
-      allLabels.push(label);
     }
   }
-  assert.ok(aliasedLabelHit > 0, 'query「云长」标签路有命中');
-  // 原文口径证据：回传的标签原文里存在不含「关羽」二字者（「关云长义释曹操」）——证明未回传改写文本。
-  assert.ok(
-    allLabels.some((label) => !label.includes('关羽')),
-    'hitLabels 回传标签原文（保留别名写法），不做归一化改写',
-  );
+  assert.equal(aliasedLabelHit, 0, '所有候选 labelHit=false / hitLabels=[]（无标签路命中，lexical 仍正常召回）');
 
   // 轮 2（query「华雄」——在 entity-table 内仅作「温酒斩华雄」行 canonical 的组成与别名键「斩华雄」，
   // 无独立行、非任何 rewriteKeys / fragmentOnly → 无扩展）：标签侧判定 == 测试侧直接 tokenize 标签原文。

@@ -1,6 +1,6 @@
 /**
- * FEAT-A018 活文档：事件表加载（V1–V7 校验 / 降级 / 漂移检测）+ 事件名桥匹配。
- * 契约：docs/feat-A018-event-table-interface.md §1 / §2 / §3.2（验证方式）；夹具 fixtures 与集成侧同源。
+ * FEAT-A018 活文档：事件表 / 典故表加载（V1–V7 校验 / 降级 / 漂移检测）+ 事件名桥 / 典故名桥匹配。
+ * 契约：docs/feat-A018-event-table-interface.md §1 / §2 / §3.2 / §5.6（验证方式）；夹具 fixtures 与集成侧同源。
  * §3.3 并池 / 增强查询重排 / L3 锚点置顶装配与 §3.3③ 池上限直测见 sango-event-bridge.test.ts。
  */
 import { test } from 'node:test';
@@ -18,7 +18,14 @@ import {
   loadEventsTable,
   matchEvents,
 } from '../../search/event-table.ts';
-import type { MatchedEventGroup } from '../../search/event-table.ts';
+import {
+  allusionsDegraded,
+  allusionsNormVersion,
+  allusionsRowCount,
+  loadAllusionsTable,
+  matchAllusions,
+} from '../../search/event-table.ts';
+import type { MatchedAllusionGroup, MatchedEventGroup } from '../../search/event-table.ts';
 import type { SearchHit } from '../../types.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -29,6 +36,12 @@ const REAL_DATA_DIR = path.resolve(__dirname, '..', '..', '..', 'data');
 function writeEvents(dir: string, content: unknown): void {
   mkdirSync(path.join(dir, 'corpus'), { recursive: true });
   writeFileSync(path.join(dir, 'corpus', 'events.json'), JSON.stringify(content), 'utf8');
+}
+
+/** 把典故表 JSON 写入 {dir}/corpus/allusions.json（自动建目录；schema 同 events.json）。 */
+function writeAllusions(dir: string, content: unknown): void {
+  mkdirSync(path.join(dir, 'corpus'), { recursive: true });
+  writeFileSync(path.join(dir, 'corpus', 'allusions.json'), JSON.stringify(content), 'utf8');
 }
 
 /** 可复用的临时目录工厂：活动期间保留，测试结束由调用方 rmSync。 */
@@ -63,6 +76,18 @@ function assertGroup(
   assert.equal(g.eventName, expected.eventName);
   assert.equal(g.matchedAlias, expected.matchedAlias);
   assert.equal(g.type, expected.type);
+  assert.equal(g.groupSize, expected.chunkIds.length);
+  assert.deepEqual(g.chunkIds, expected.chunkIds, '组内 chunkIds 按事件内序');
+}
+
+/** 断言缺一不可的典故匹配组结构（组内 chunkIds 事件内序；镜像 assertGroup 去 type）。 */
+function assertAllusionGroup(
+  g: MatchedAllusionGroup,
+  expected: { allusionId: string; allusionName: string; matchedAlias: string; chunkIds: string[] },
+): void {
+  assert.equal(g.allusionId, expected.allusionId);
+  assert.equal(g.allusionName, expected.allusionName);
+  assert.equal(g.matchedAlias, expected.matchedAlias);
   assert.equal(g.groupSize, expected.chunkIds.length);
   assert.deepEqual(g.chunkIds, expected.chunkIds, '组内 chunkIds 按事件内序');
 }
@@ -324,7 +349,9 @@ test('⑦ 定点四问（真实表 + 真实语料）：eventHit.groups 非空、
     { query: '温酒斩华雄', eventId: 'E00501' },
     { query: '三英战吕布', eventId: 'E00502' },
     { query: '草船借箭', eventId: 'E04601' },
-    { query: '空城计', eventId: 'E09502' },
+    // 空城计（E09502）原为 story 标签加权进窗示例，story.json 删除后其证据段在纯 BM25 + 事件桥下
+    // 跌出窗（placed=0），改用火烧乌巢（E03001）作定点（同靠事件桥并池进窗、不依赖标签加权）。
+    { query: '火烧乌巢', eventId: 'E03001' },
   ];
   // 期望 chunkIds / 回区间以落表数据为准（唯一权威）
   const table = JSON.parse(readFileSync(path.join(REAL_DATA_DIR, 'corpus', 'events.json'), 'utf8')) as {
@@ -418,4 +445,169 @@ test('⑨ 真实事件问法「赤壁之战发生在哪里」：增强查询重�
   const rankOff = off.entries.map((e) => e.id).indexOf(answer);
   assert.ok(rankOff >= 0, 'bridge off：答案段亦在出参内');
   assert.ok(rankOn < rankOff, `增强查询重排使答案段前移（on rank ${rankOn + 1} < off rank ${rankOff + 1}）`);
+});
+
+test('⑩ 典故表加载（镜像 ①）：加载日志行 + V3 单字禁入剔 alias + 状态可读 + 表内序重排 + 文件缺失降级', () => {
+  const dir = tempDir('a018-t10-');
+  try {
+    resetEntityDegraded();
+    cpSync(FIXTURE_DIR, dir, { recursive: true });
+    const cap = captureStderr();
+    let ok: boolean;
+    try {
+      ok = loadAllusionsTable(dir, fixtureChunkExists, 9);
+    } finally {
+      cap.restore();
+    }
+    assert.equal(ok, true);
+    const log = cap.lines.find((l) => l.includes('allusion-table loaded'));
+    assert.ok(log, '应输出 [sango] allusion-table loaded 日志行');
+    assert.match(
+      log,
+      /allusion-table loaded: rows=5 aliases=5 chunkRefs=6 normVersion=a2b3c4d5/,
+      'rows=5（含单字 alias 行 AL0005）、aliases=5（剔除单字「谜」）、chunkRefs=6',
+    );
+    assert.ok(cap.lines.some((l) => l.includes('V3 单字禁入，剔 alias「谜」')), '单字 alias 剔除告警');
+    assert.equal(allusionsDegraded(), false);
+    assert.equal(allusionsNormVersion(), 'a2b3c4d5');
+    assert.equal(allusionsRowCount(), 5);
+    // 表内序重排：AL0003 表内书写 [0002:c0002, 0002:c0001] → 内序 [0002:c0001, 0002:c0002]
+    const g = matchAllusions('割发代首')[0];
+    assert.ok(g, '割发代首 命中');
+    assert.deepEqual(g.chunkIds, ['sanguo-yanyi:0002:c0001', 'sanguo-yanyi:0002:c0002'], '组内 chunkIds 按事件内序');
+    // 文件缺失 → 无典故路由降级
+    assert.equal(loadAllusionsTable(path.join(dir, 'nonexistent'), fixtureChunkExists, 9), false);
+    assert.equal(allusionsDegraded(), true);
+    assert.equal(allusionsNormVersion(), '');
+    assert.deepEqual(matchAllusions('鸡肋'), [], '降级后匹配恒空');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('⑪ 典故漂移降级（镜像 ④）：>5% 整表降级且事件路不受影响 / ≤5% 剔缺失 chunkId 告警（组空等效无典故路由）', () => {
+  // 4.1 缺失 >5% → 典故整表降级；同目录事件表正常加载、事件桥照常命中
+  const over = {
+    meta: { normVersion: 'a2b3c4d5', corpusChunkCount: 9 },
+    rows: [
+      { eventId: 'AL1', eventName: '甲典故', aliases: ['甲词'], chunkIds: ['sanguo-yanyi:0001:c0001'], type: '典故' },
+      { eventId: 'AL2', eventName: '乙典故', aliases: ['乙词'], chunkIds: ['sanguo-yanyi:9999:c9999'], type: '典故' },
+    ],
+  };
+  const dir1 = tempDir('a018-t11a-');
+  try {
+    resetEntityDegraded();
+    cpSync(FIXTURE_DIR, dir1, { recursive: true });
+    writeAllusions(dir1, over);
+    const cap = captureStderr();
+    let okEvents: boolean;
+    let okAllusions: boolean;
+    try {
+      okEvents = loadEventsTable(dir1, fixtureChunkExists, 9);
+      okAllusions = loadAllusionsTable(dir1, fixtureChunkExists, 9);
+    } finally {
+      cap.restore();
+    }
+    assert.equal(okEvents, true, '事件表加载正常（不受典故降级影响）');
+    assert.equal(okAllusions, false, '50% 缺失 > 5% 典故整表降级');
+    assert.equal(eventsDegraded(), false);
+    assert.equal(allusionsDegraded(), true);
+    assert.equal(matchEvents('温酒斩华雄')[0]?.eventId, 'E00501', '事件桥照常命中');
+    assert.ok(
+      cap.lines.some((l) => l.includes('缺失 chunkId 1/2（50.0%）> 5%，整表降级为无典故路由')),
+      '整表降级告警含占比与路由名',
+    );
+  } finally {
+    rmSync(dir1, { recursive: true, force: true });
+  }
+
+  // 4.2 0 < 缺失 ≤ 5% → 剔缺失 chunkId + 告警；组空等效无典故路由
+  const refs = Array.from({ length: 20 }, (_, i) => `sanguo-yanyi:0001:c${String((i % 5) + 1).padStart(4, '0')}`);
+  const mild = {
+    meta: { normVersion: 'a2b3c4d5', corpusChunkCount: 9 },
+    rows: [
+      { eventId: 'AL1', eventName: '甲典故', aliases: ['甲词'], chunkIds: refs, type: '典故' },
+      { eventId: 'AL2', eventName: '乙典故', aliases: ['乙词'], chunkIds: ['sanguo-yanyi:9999:c0001'], type: '典故' },
+    ],
+  };
+  const dir2 = tempDir('a018-t11b-');
+  try {
+    resetEntityDegraded();
+    cpSync(FIXTURE_DIR, dir2, { recursive: true });
+    writeAllusions(dir2, mild);
+    const cap = captureStderr();
+    let ok: boolean;
+    try {
+      ok = loadAllusionsTable(dir2, fixtureChunkExists, 9);
+    } finally {
+      cap.restore();
+    }
+    assert.equal(ok, true, '≤5% 缺失不拒整表');
+    assert.equal(allusionsDegraded(), false);
+    assert.ok(cap.lines.some((l) => l.includes('剔除缺失 chunkId 1/21')), '剔除告警含缺失计数（20 有效 + 1 缺失）');
+    assert.ok(cap.lines.some((l) => l.includes('组剔空（等效无典故路由）')), 'AL2 组空告警');
+    const kept = matchAllusions('甲词')[0];
+    assert.equal(kept.chunkIds.length, refs.length, 'AL1 引用保留（20 条）');
+    assert.deepEqual(new Set(kept.chunkIds), new Set(refs), 'AL1 引用集合保留（模块按事件内序重排，不与表序比较）');
+    assert.deepEqual(matchAllusions('乙词'), [], 'AL2 组空不进匹配面');
+  } finally {
+    rmSync(dir2, { recursive: true, force: true });
+  }
+});
+
+test('⑫ 典故名桥匹配（镜像 ⑤）：子串命中 / 最长 alias 选取 / 多组命中组优先级 / 同长 allusionId 升序 / 单字禁入 / 空 query / 降级恒空', () => {
+  const dir = tempDir('a018-t12-');
+  try {
+    resetEntityDegraded();
+    cpSync(FIXTURE_DIR, dir, { recursive: true });
+    loadAllusionsTable(dir, fixtureChunkExists, 9);
+
+    // 子串命中 + 表内序（AL0003 表内 [0002:c0002, 0002:c0001] → 内序 [0002:c0001, 0002:c0002]）
+    const g1 = matchAllusions('割发代首是哪一回');
+    assert.equal(g1.length, 1);
+    assertAllusionGroup(g1[0], {
+      allusionId: 'AL0003',
+      allusionName: '割发代首',
+      matchedAlias: '割发代首',
+      chunkIds: ['sanguo-yanyi:0002:c0001', 'sanguo-yanyi:0002:c0002'],
+    });
+    // 多组命中：组优先级 = 命中 alias 长度降序（乐不思蜀 4 > 鸡肋 2）
+    const g2 = matchAllusions('鸡肋乐不思蜀');
+    assert.deepEqual(g2.map((g) => g.allusionId), ['AL0002', 'AL0001']);
+    assert.deepEqual(g2.map((g) => g.matchedAlias), ['乐不思蜀', '鸡肋']);
+    // 同长 allusionId 升序（乐不思蜀 AL0002 < 夜战马超 AL0004）
+    const g3 = matchAllusions('乐不思蜀夜战马超');
+    assert.deepEqual(g3.map((g) => g.allusionId), ['AL0002', 'AL0004']);
+    // 单字禁入：表内「谜」已剔
+    assert.deepEqual(matchAllusions('谜面谜底'), []);
+    // 空 query / 降级恒空
+    assert.deepEqual(matchAllusions(''), []);
+    loadAllusionsTable(path.join(dir, 'nonexistent'), fixtureChunkExists, 9);
+    assert.deepEqual(matchAllusions('鸡肋'), [], '表缺失降级后匹配恒空');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('⑬ 事件路不受典故降级影响（镜像 ⑨ 反向）：典故表降级后事件桥照常命中、两路状态独立', () => {
+  const dir = tempDir('a018-t13-');
+  try {
+    resetEntityDegraded();
+    cpSync(FIXTURE_DIR, dir, { recursive: true });
+    // 先正常加载两表，验证独立状态可读
+    assert.equal(loadEventsTable(dir, fixtureChunkExists, 9), true);
+    assert.equal(loadAllusionsTable(dir, fixtureChunkExists, 9), true);
+    assert.equal(eventsDegraded(), false);
+    assert.equal(allusionsDegraded(), false);
+    // 典故表降级 → 事件路保持正常
+    assert.equal(loadAllusionsTable(path.join(dir, 'nonexistent'), fixtureChunkExists, 9), false);
+    assert.equal(allusionsDegraded(), true);
+    assert.equal(allusionsNormVersion(), '');
+    assert.equal(eventsDegraded(), false, '事件路不受典故降级影响');
+    assert.equal(eventsNormVersion(), 'a1b2c3d4');
+    assert.equal(matchEvents('温酒斩华雄')[0]?.eventId, 'E00501', '事件桥照常命中');
+    assert.deepEqual(matchAllusions('割发代首'), [], '典故路保持降级空匹配');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 });
