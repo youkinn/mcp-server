@@ -8,9 +8,7 @@
       "text": "话说天下大势，分久必合，合久必分。",
       "type": "narration",
       "segFrom": 1,
-      "segTo": 1,
-      "quoteBalanced": true,
-      "quotes": []
+      "segTo": 1
     }
   ]
 }

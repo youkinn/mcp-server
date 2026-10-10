@@ -4,7 +4,7 @@
 
 读取 dev-docs 的《三国演义.txt》（只读），清洗站点杂质（更新时间/本章字数行、行首缩进等），
 按回切分为段级语料，再按 dev-docs/docs/sango-corpus-spec.md §3 的六步算法装箱为 chunk 级语料
-（schema v2），并抽取引语表 quotes[]（§5）。构建期自检 I1~I9，任一失败即构建失败。
+（schema v2）。构建期自检 I1~I8，任一失败即构建失败。
 
 产物（三份，勿混）：
 1. data/corpus/sanguo-yanyi/{001..120}.json
@@ -16,7 +16,7 @@
 清洗边界：只删除站点杂质与行首缩进空白；合并被网页折行拆开的行（内容零增删改）；
 不修改任何正文文字。
 
-切分参数（规范 §0，已拍板）：TARGET=250 / CAP=400（仅箱尾引语配平延伸）/ 重叠 0 /
+切分参数（规范 §0，已拍板）：TARGET=250 / CAP=400 硬上限 / 重叠 0 /
 软下限 MIN=100 / 同回内连续 narration 可跨段 / verse 与 comment 段内独立 / 只在 。！？； 切分。
 """
 import io
@@ -35,11 +35,8 @@ SOURCE = "sanguo-yanyi"
 
 # ===================== 规范 §3 参数 =====================
 TARGET = 250      # 目标尺寸（§4.1）
-CAP = 400         # 硬上限（§4.5，仅箱尾引语配平延伸用）
+CAP = 400         # 硬上限
 MIN = 100         # 尾部碎片软下限（§4.4）
-QUOTE_MAX = 0     # 步骤 2 并句上限（0 = 关闭，§4.5）
-OPEN = "\u201c"   # “
-CLOSE = "\u201d"  # ”
 TERM = "。！？；"  # 句末标点（唯一切分边界）
 
 CN_DIGITS = {
@@ -190,30 +187,18 @@ def build_chapters(text):
     return chapters
 
 
-# ===================== 步骤 1~3、6：切句 / 装箱 / 引语表（§3 参考实现移植） =====================
+# ===================== 步骤 1~3：切句 / 装箱（§3 参考实现移植） =====================
 def split_sentences(text):
     return [s for s in re.split(r"(?<=[。！？；])", text) if s.strip()]
 
 
-def quote_delta(s):
-    return s.count(OPEN) - s.count(CLOSE)
+def to_units(text):
+    """步骤 1 切句。"""
+    return [{"s": s} for s in split_sentences(text)]
 
 
-def to_units(text, quote_max):
-    """步骤 1 切句；步骤 2 可选并句（quote_max=0 时关闭）。"""
-    out = []
-    for s in split_sentences(text):
-        prev = out[-1] if out else None
-        if quote_max > 0 and prev and prev["open"] > 0 and len(prev["s"]) + len(s) <= quote_max:
-            prev["s"] += s
-            prev["open"] = max(0, prev["open"] + quote_delta(s))
-        else:
-            out.append({"s": s, "open": max(0, quote_delta(s))})
-    return out
-
-
-def pack_units(units, target, close_quote_cap=0):
-    """步骤 3：顺序装箱到 target，至少装 1 句；箱尾引语未配平则继续吞入后续句至配平或达 CAP。"""
+def pack_units(units, target):
+    """步骤 3：顺序装箱到 target，至少装 1 句。"""
     out = []
     start = 0
     while start < len(units):
@@ -222,12 +207,6 @@ def pack_units(units, target, close_quote_cap=0):
         while end < len(units) and (length == 0 or length + len(units[end]["s"]) <= target):
             length += len(units[end]["s"])
             end += 1
-        if close_quote_cap > 0:
-            depth = sum(quote_delta(u["s"]) for u in units[start:end])
-            while depth > 0 and end < len(units) and length + len(units[end]["s"]) <= close_quote_cap:
-                depth += quote_delta(units[end]["s"])
-                length += len(units[end]["s"])
-                end += 1
         out.append(units[start:end])
         if end >= len(units):
             break
@@ -235,39 +214,8 @@ def pack_units(units, target, close_quote_cap=0):
     return out
 
 
-def quote_pairs(text):
-    """成对引语抽取：栈式配对，返回 [(open, close)]，按出现顺序。"""
-    pairs = []
-    stack = []
-    for i, ch in enumerate(text):
-        if ch == OPEN:
-            stack.append(i)
-        elif ch == CLOSE and stack:
-            pairs.append((stack.pop(), i))
-    pairs.sort()
-    return pairs
-
-
-# 说话人：开引号前匹配 `X曰：“` 的 X（规范 §3 步骤 6）
-SPEAKER_RE = re.compile(r"([\u4e00-\u9fa5]{1,4})(曰|云|问|答|喝|叱|骂)：“$")
-
-
-def extract_quotes(text):
-    """步骤 6：抽取 chunk 内的引语表（§5 quotes[]）。"""
-    out = []
-    for i, (o, c) in enumerate(quote_pairs(text)):
-        m = SPEAKER_RE.search(text[max(0, o - 12):o + 1])
-        out.append({
-            "qid": "Q%d" % (i + 1),
-            "text": text[o + 1:c],
-            "offset": o + 1,
-            "speaker": m.group(1) if m else None,
-        })
-    return out
-
-
 def build_chunks(segments):
-    """步骤 4~6：同回内连续 narration 跨段装箱 + verse/comment 段内独立 + 软下限 + 引语表。"""
+    """步骤 4~5：同回内连续 narration 跨段装箱 + verse/comment 段内独立 + 软下限。"""
     chunks = []
 
     def emit(items, seg_type, part_idx, part_n):
@@ -289,7 +237,7 @@ def build_chunks(segments):
     # 步骤 4：分组（跨段仅 narration）
     groups = []
     for seg in segments:
-        items = [dict(u, seg=seg["index"]) for u in to_units(seg["text"], QUOTE_MAX)]
+        items = [dict(u, seg=seg["index"]) for u in to_units(seg["text"])]
         last = groups[-1] if groups else None
         joinable = seg["type"] == "narration" and last is not None and last["type"] == "narration"
         if joinable:
@@ -297,7 +245,7 @@ def build_chunks(segments):
         else:
             groups.append({"type": seg["type"], "items": items})
     for g in groups:
-        parts = pack_units(g["items"], TARGET, CAP)
+        parts = pack_units(g["items"], TARGET)
         for pi, part in enumerate(parts):
             emit(part, g["type"], pi, len(parts))
 
@@ -315,10 +263,6 @@ def build_chunks(segments):
                 merged.append(dict(c))
         chunks = merged
 
-    # 步骤 6：引语表 + 配平自检产物
-    for c in chunks:
-        c["quoteBalanced"] = c["text"].count(OPEN) == c["text"].count(CLOSE)
-        c["quotes"] = extract_quotes(c["text"])
     return chunks
 
 
@@ -378,7 +322,7 @@ def classify_cuts(chapters, chunks_by_chapter):
             else:
                 out["chosen"] += 1
                 out["chosenChars"][last_char] = out["chosenChars"].get(last_char, 0) + 1
-                if last_char not in TERM and last_char != CLOSE:
+                if last_char not in TERM:
                     out["chosenBad"] += 1
             if off == len(stream):
                 continue
@@ -386,7 +330,7 @@ def classify_cuts(chapters, chunks_by_chapter):
                 out["sent"] += 1
             elif off in seg_ends:
                 out["seg"] += 1
-                if last_char not in TERM and last_char != CLOSE:
+                if last_char not in TERM:
                     out["examples"].append({
                         "chapter": ch["chapter"], "from": c["segFrom"], "to": c["segTo"],
                         "len": len(c["text"]), "tail": c["text"][-14:],
@@ -397,7 +341,7 @@ def classify_cuts(chapters, chunks_by_chapter):
 
 
 def self_check(chapters, chunks_by_chapter):
-    """I1~I9 + §5 schema 自检；返回是否全部通过。"""
+    """I1~I8 构建期自检；返回是否全部通过。"""
     all_chunks = [c for ch in chapters for c in chunks_by_chapter[ch["chapter"]]]
     ok = True
 
@@ -439,8 +383,7 @@ def self_check(chapters, chunks_by_chapter):
 
     # I6 文本为纯原文，不含元数据
     meta_re = re.compile(r"【出处】|第\d+回|段\d+")
-    i6 = sum(1 for c in all_chunks
-             if meta_re.search(c["text"]) or any(meta_re.search(q["text"]) for q in c["quotes"]))
+    i6 = sum(1 for c in all_chunks if meta_re.search(c["text"]))
     ok &= i6 == 0
 
     # I7 无 chunk 超 CAP
@@ -458,28 +401,6 @@ def self_check(chapters, chunks_by_chapter):
     tiny_other = [c for c in tiny if c["type"] != "verse"]
     ok &= len(tiny_other) <= 12
 
-    # I9 quotes[] 覆盖全部成对引语
-    i9 = sum(1 for c in all_chunks if len(c["quotes"]) != len(quote_pairs(c["text"])))
-    ok &= i9 == 0
-
-    # §5 schema 自检
-    schema_bad = 0
-    for c in all_chunks:
-        for q in c["quotes"]:
-            if q["text"] not in c["text"]:
-                schema_bad += 1
-                continue
-            if not (0 <= q["offset"] - 1 < len(c["text"])) or c["text"][q["offset"] - 1] != OPEN:
-                schema_bad += 1
-                continue
-            end = q["offset"] + len(q["text"])
-            if end >= len(c["text"]) or c["text"][end] != CLOSE:
-                schema_bad += 1
-        # quoteBalanced = 「引号配平」= 开引号数 == 闭引号数（规范 §4.5「引号断」口径）。
-        # 不能用 len(quotes)*2：块首可能有上一块遗留的孤立闭引号，配对表会丢弃它，两者不等价。
-        if c["quoteBalanced"] != (c["text"].count(OPEN) == c["text"].count(CLOSE)):
-            schema_bad += 1
-    ok &= schema_bad == 0
 
     lens = sorted(len(c["text"]) for c in all_chunks)
     def pct(p):
@@ -508,8 +429,6 @@ def self_check(chapters, chunks_by_chapter):
     print("  I7 chunk 超 %d 字硬上限（应为 0）：%d" % (CAP, i7))
     print("  I8 长度 < 80 字的 chunk：%d（占 %.1f%%）｜其中 verse 完整诗篇 %d（单列）／非 verse 残余 %d（接受 ≤12）"
           % (len(tiny), len(tiny) * 100.0 / len(all_chunks), len(tiny_verse), len(tiny_other)))
-    print("  I9 quotes[] 漏抽（应为 0）：%d" % i9)
-    print("  §5 schema 自检失败项（应为 0）：%d" % schema_bad)
     print("  参考：chunk %d｜均 %d｜p50 %d｜p90 %d｜max %d｜超 %d 字 %d 个"
           % (len(lens), sum(lens) // len(lens), pct(0.5), pct(0.9), lens[-1],
              TARGET, sum(1 for l in lens if l > TARGET)))

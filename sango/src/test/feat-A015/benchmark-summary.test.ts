@@ -44,8 +44,6 @@ function fixture(scorer: RerankScorer | null = null): Fixture {
     type: 'narration',
     segFrom: i + 1,
     segTo: i + 1,
-    quoteBalanced: true,
-    quotes: [],
   }));
   writeFileSync(path.join(corpusDir, '001.json'), JSON.stringify({ source: 'sanguo-yanyi', chapter: 1, title: '第一回 合成', chunks }), 'utf8');
   const benchmarkFile = path.join(dir, 'bench.md');
@@ -79,8 +77,6 @@ function fixtureWithNoAnchor(scorer: RerankScorer | null = null): Fixture {
     type: 'narration',
     segFrom: i + 1,
     segTo: i + 1,
-    quoteBalanced: true,
-    quotes: [],
   }));
   writeFileSync(path.join(corpusDir, '001.json'), JSON.stringify({ source: 'sanguo-yanyi', chapter: 1, title: '第一回 合成', chunks }), 'utf8');
   const benchmarkFile = path.join(dir, 'bench.md');

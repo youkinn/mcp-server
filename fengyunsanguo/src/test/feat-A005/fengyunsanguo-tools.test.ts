@@ -15,13 +15,13 @@ import {
 } from '../../fengyunsanguo-service.ts';
 import { registerFengyunsanguoTools } from '../../tools/fengyunsanguo-tools.ts';
 
-const Q1: FengyunsanguoQuestion = {
+const entry1: FengyunsanguoQuestion = {
   question: '夏侯惇的字是什么？',
   options: { A: '元让', B: '妙才', C: '子龙', D: '云长' },
   answer: '元让',
 };
 
-const Q2: FengyunsanguoQuestion = {
+const entry2: FengyunsanguoQuestion = {
   question: '吕布的字是什么？',
   options: { A: '奉孝', B: '奉先', C: '公瑾', D: '伯符' },
   answer: '奉先',
@@ -36,7 +36,7 @@ function writeQuestionFile(entries: unknown[]): string {
 
 function makeService(
   t: TestContext,
-  entries: unknown[] = [Q1, Q2]
+  entries: unknown[] = [entry1, entry2]
 ): FengyunsanguoService {
   const file = writeQuestionFile(entries);
   t.after(() => cleanupQuestionFile(file));

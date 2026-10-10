@@ -32,8 +32,6 @@ function writeCorpus(dir: string, withL3 = false): void {
       type: 'narration',
       segFrom: i,
       segTo: i,
-      quoteBalanced: true,
-      quotes: [],
     });
   }
   writeFileSync(

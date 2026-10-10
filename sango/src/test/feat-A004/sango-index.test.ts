@@ -64,14 +64,14 @@ test('① 语料按 chunks[] 加载：chunk 数与回级字段（chapter / title
   assert.equal(doc.segTo, 5);
 });
 
-test('② 出参条目字段与接口文档逐字一致：id / text / chapter / title / type / segFrom / segTo / quoteBalanced / quotes', async () => {
+test('② 出参条目字段与接口文档逐字一致：id / text / chapter / title / type / segFrom / segTo（字段全集）', async () => {
   const index = loadFixtureIndex();
   const { entries } = await index.search('关羽', 5);
   assert.ok(entries.length > 0);
   for (const entry of entries) {
     assert.deepEqual(
       Object.keys(entry).sort(),
-      ['chapter', 'id', 'quoteBalanced', 'quotes', 'segFrom', 'segTo', 'text', 'title', 'type'],
+      ['chapter', 'id', 'segFrom', 'segTo', 'text', 'title', 'type'],
     );
   }
 });
@@ -99,42 +99,21 @@ test('④ 按相关度降序返回，limit 生效', async () => {
   assert.equal((await index.search('关羽', 1)).entries.length, 1);
 });
 
-test('⑤ quotes[] 字段（offset / len）与契约一致，切片口径可从 text 还原引语', async () => {
+test('⑤ 出参字段全集恒定：仅为检索条目七字段，无冗余字段', async () => {
   const index = loadFixtureIndex();
   const entry = (await index.search('瑾曰', 1)).entries[0];
   assert.equal(entry.id, 'sanguo-yanyi:0073:c0002');
-  assert.deepEqual(entry.quotes.map((q) => q.offset), [4, 30]);
-  assert.deepEqual(entry.quotes.map((q) => q.len), [16, 12]);
-  assert.deepEqual(
-    entry.quotes.map((q) => Object.keys(q).sort()),
-    [['len', 'offset'], ['len', 'offset']],
-    '出参引语只回 offset / len（不含 qid / text / speaker）',
-  );
-  assert.deepEqual(
-    entry.quotes.map((q) => entry.text.slice(q.offset - 1, q.offset - 1 + q.len + 2)),
-    ['“特来求结两家之好……请君侯思之。”', '“吾虎女安肯嫁犬子乎！……”'],
-    'text.slice(offset - 1, offset - 1 + len + 2) 应等于 “引语本体”',
-  );
-  for (const quote of entry.quotes) {
-    const sliced = entry.text.slice(quote.offset - 1, quote.offset - 1 + quote.len + 2);
-    assert.equal(
-      sliced.length,
-      quote.len + 2,
-      '切片长度应为引语本体字数 + 两侧引号',
-    );
-    assert.ok(sliced.startsWith('“') && sliced.endsWith('”'), `切片应含成对引号：${sliced}`);
-  }
+  assert.deepEqual(Object.keys(entry).sort(), ['chapter', 'id', 'segFrom', 'segTo', 'text', 'title', 'type']);
 });
 
-test('⑥ 跨段 chunk：segFrom != segTo，type / quoteBalanced / quotes 原样承载', async () => {
+test('⑥ 跨段 chunk：segFrom != segTo，type 原样承载（字段全集恒定）', async () => {
   const index = loadFixtureIndex();
   const entry = (await index.search('赤壁楼船', 1)).entries[0];
   assert.equal(entry.id, 'sanguo-yanyi:0073:c0003');
   assert.equal(entry.segFrom, 6);
   assert.equal(entry.segTo, 8);
   assert.equal(entry.type, 'verse');
-  assert.equal(entry.quoteBalanced, false);
-  assert.deepEqual(entry.quotes, []);
+  assert.deepEqual(Object.keys(entry).sort(), ['chapter', 'id', 'segFrom', 'segTo', 'text', 'title', 'type']);
 });
 
 test('⑦ 无命中：检索层返回空数组，由工具层转固定话术「未召回任何原文段落」', async () => {
@@ -152,10 +131,7 @@ test('⑧ 工具出参：命中为 JSON 序列化条目数组，无命中为固�
   assert.ok(Array.isArray(entries), '命中应为结构化条目数组');
   assert.equal(entries.length, 1);
   assert.equal(entries[0].id, 'sanguo-yanyi:0073:c0002');
-  assert.deepEqual(entries[0].quotes, [
-    { offset: 4, len: 16 },
-    { offset: 30, len: 12 },
-  ]);
+  assert.deepEqual(Object.keys(entries[0]).sort(), ['chapter', 'id', 'segFrom', 'segTo', 'text', 'title', 'type']);
   const miss = await callTool({ source: 'sanguo-yanyi', query: '鹅鹅鹅曲项向天歌', limit: 5 });
   assert.equal(miss.content[0].text, NO_HIT_TEXT);
 });

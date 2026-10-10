@@ -58,8 +58,6 @@ function writeRerankCorpus(dir: string, withEvents: boolean): void {
     type: 'narration',
     segFrom: 1,
     segTo: 1,
-    quoteBalanced: true,
-    quotes: [],
   }));
   writeFileSync(
     path.join(corpusDir, '001.json'),

@@ -16,7 +16,7 @@ import type { SearchEntry } from '../../types.ts';
 
 /** 构造最小 SearchEntry（正文不含回目锚短语，隔离出回目标题比较路径）。 */
 function mkEntry(id: string, chapter: number, title: string, text: string): SearchEntry {
-  return { id, chapter, title, text, type: 'narration', segFrom: 1, segTo: 1, quoteBalanced: true, quotes: [] };
+  return { id, chapter, title, text, type: 'narration', segFrom: 1, segTo: 1 };
 }
 
 test('① bug-00052 回目锚含中文逗号：matchEvidence 经 norm 仍命中对应回目（限定回号）', () => {
@@ -43,7 +43,7 @@ test('② bug-00052 回目锚含中文逗号：findNoAnchorItems 与 matchEviden
         source: 'sanguo-yanyi',
         chapter: 84,
         title: '第八十四回 陆逊营烧七百里，孔明巧布八阵图',
-        chunks: [{ id: 'sanguo-yanyi:0084:c0001', text: '此处为无关正文。', type: 'narration', segFrom: 1, segTo: 1, quoteBalanced: true, quotes: [] }],
+        chunks: [{ id: 'sanguo-yanyi:0084:c0001', text: '此处为无关正文。', type: 'narration', segFrom: 1, segTo: 1 }],
       }),
       'utf8',
     );

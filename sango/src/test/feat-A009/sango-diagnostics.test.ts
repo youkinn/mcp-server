@@ -75,8 +75,8 @@ test('① 未请求诊断（无 traceId / diagnostics 未开启）：search 返�
   assert.ok(result.entries.length > 0);
   assert.deepEqual(
     Object.keys(result.entries[0]).sort(),
-    ['chapter', 'id', 'quoteBalanced', 'quotes', 'segFrom', 'segTo', 'text', 'title', 'type'],
-    'content 契约零改动（结构化条目字段不变）',
+    ['chapter', 'id', 'segFrom', 'segTo', 'text', 'title', 'type'],
+    '出参条目字段集与 A004 一致',
   );
 });
 
