@@ -1,12 +1,14 @@
 /**
- * 快照落盘与读取（story-A015-02）：JSON 快照 + summary.md，格式与 dev-docs CLI 产物同构（禁止另造格式）。
- * 落盘：{resultsDir}/feat-A015-YYYY-MM-DD-HHMM.json 及同名 -summary.md（runId 保证同日多次执行不重名）。
- * JSON 顶层 { summary, results }；summary.md 沿用 CLI 模板（引擎/判分口径头 + 十三段模板 COPY 类别表 +
- * 兜底 6–10 列表 + 未命中（>10 / 未召回）列表）。
+ * 快照落盘与读取（story-A015-02 / A018-03）：JSON 快照 + summary.md。
+ * 锚判定落盘：{resultsDir}/feat-A015-YYYY-MM-DD-HHMM.json 及同名 -summary.md；
+ * 组判分落盘：{resultsDir}/feat-A018-YYYY-MM-DD-HHMMSS.json 及同名 -summary.md。
+ * runId 前缀区分评测集（两集快照不互覆盖、不混入同一 history）；老快照与新字段互相兼容，缺字段前端显示「—」。
+ * JSON 顶层统一 { summary, results }；summary.md 按判分模式分别沿用 CLI 模板（锚）与探针模板（组）。
  */
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import type { BenchmarkRun, RunResult, RunSummary } from './runner.ts';
+import type { GroupBenchmarkRun, GroupCompare, GroupCount } from './group-runner.ts';
 
 /** summary.md 类别显示名：官职 → 官职/爵位（与 CLI CATEGORY_LABEL 同口径，对齐评测集「十三」表）。 */
 const CATEGORY_LABEL: Record<string, string> = {
@@ -24,8 +26,11 @@ const CATEGORY_LABEL: Record<string, string> = {
   死亡: '死亡',
 };
 
-/** 快照 runId 合法格式（兼作路径校验，拦截目录穿越）。 */
-const RUN_ID_RE = /^feat-A015-\d{4}-\d{2}-\d{2}-\d{4}$/;
+/**
+ * 快照 runId 合法格式（兼作路径校验，拦截目录穿越）：
+ * standard = feat-A015-YYYY-MM-DD-HHMM；events = feat-A018-YYYY-MM-DD-HHMMSS（秒级粒度避免同分覆盖）。
+ */
+const RUN_ID_RE = /^(feat-A015-\d{4}-\d{2}-\d{2}-\d{4}|feat-A018-\d{4}-\d{2}-\d{2}-\d{6})$/;
 
 /** 一次快照（GET latest / snapshot 出参 data 结构）。 */
 export interface Snapshot {
@@ -48,7 +53,7 @@ export function isValidRunId(runId: string): boolean {
   return RUN_ID_RE.test(runId);
 }
 
-/** 落盘一次运行：JSON 快照 + summary.md；目录不存在自动创建。 */
+/** 落盘一次锚判定运行：JSON 快照 + summary.md；目录不存在自动创建。 */
 export function writeRun(run: BenchmarkRun, resultsDir: string): void {
   const { jsonPath, summaryPath } = snapshotPaths(resultsDir, run.runId);
   mkdirSync(resultsDir, { recursive: true });
@@ -95,6 +100,64 @@ function buildSummaryMd(run: BenchmarkRun, jsonPath: string): string {
     '| 编号 | 问题 | 结果 |',
     '|---|---|---|',
     missList || '（无）',
+    '',
+  ].join('\n');
+}
+
+/** 落盘一次组判分运行：JSON 快照 + 组集 summary.md；目录不存在自动创建。 */
+export function writeGroupRun(run: GroupBenchmarkRun, resultsDir: string): void {
+  const { jsonPath, summaryPath } = snapshotPaths(resultsDir, run.runId);
+  mkdirSync(resultsDir, { recursive: true });
+  writeFileSync(jsonPath, JSON.stringify({ summary: run.summary, results: run.results }, null, 2), 'utf8');
+  writeFileSync(summaryPath, buildGroupSummaryMd(run, jsonPath), 'utf8');
+}
+
+/** 组集 summary.md 内容：沿用探针 summary.md 模板（总分档 / 分类别 / 环比 / 未进池列表），逐段同构。 */
+function buildGroupSummaryMd(run: GroupBenchmarkRun, jsonPath: string): string {
+  const s = run.summary;
+  const pct = (x: number): string => `${(x * 100).toFixed(1)}%`;
+  const table = (label: string, rows: Record<string, GroupCount>): string =>
+    [
+      `| ${label} | 题数 | hit@5 | hit@10 | hit@50 | 未进池 | 通过率(hit@10) | cover@5 |`,
+      '|---|---:|---:|---:|---:|---:|---:|---:|',
+      ...Object.entries(rows).map(
+        ([k, v]) => `| ${k} | ${v.total} | ${v.hit5} | ${v.hit10} | ${v.hit50} | ${v.miss} | ${pct(v.hit10Rate)} | ${pct(v.cover5)} |`,
+      ),
+    ].join('\n');
+  const missList = run.results
+    .filter((r) => r.status === 'miss')
+    .map((r) => `- [${r.category}] ${r.question}（组 ${r.segCount} 段）`);
+  const compareLines = (c: GroupCompare): string[] => [
+    `对照 ${c.prevFile}（生成 ${c.prevTime}）：退化 ${c.regressed.length} 题 / 改善 ${c.improved.length} 题。`,
+    '',
+    ...(c.regressed.length ? [`退化 ${c.regressed.length} 题`, ...c.regressed.slice(0, 20).map((r) => `- ${r.question}（${r.from} → ${r.to}）`)] : ['退化 0 题']),
+    '',
+    ...(c.improved.length ? [`改善 ${c.improved.length} 题`, ...c.improved.slice(0, 20).map((r) => `- ${r.question}（${r.from} → ${r.to}）`)] : ['改善 0 题']),
+  ];
+  return [
+    '# 事件 / 典故组召回评测快照',
+    '',
+    `> 判分单位 = 事件 / 典故 chunkIds 组：hit@k = top-k 含组内任一段；cover@5 = top5 命中组内段数 / min(5, 组大小)。零 LLM，引擎 SangoIndex（窗口 ${s.engine.inferLimit}）。`,
+    `> 评测集 ${s.benchmark}；题数 ${s.total}；生成 ${s.time}；检索耗时 ${s.elapsedMs} ms。`,
+    '',
+    '## 总分档',
+    '',
+    table('分档', s.byBucket),
+    '',
+    `合计 ${s.total} 题：hit@5 ${s.hit5} / hit@10 ${s.hit10} / hit@50 ${s.hit50} / 未进池 ${s.miss}（桥未命中 ${s.missNoBridge}、并池后掉窗 ${s.dropped}），通过率 ${pct(s.hit10Rate)}，cover@5 ${pct(s.cover5)}。`,
+    `桥命中 ${s.total - s.noBridge}/${s.total}（${pct((s.total - s.noBridge) / s.total)}）：桥未命中的题多由常规三路召回进窗，故桥命中率与召回率须分开读。`,
+    '',
+    '## 分类别',
+    '',
+    table('类别', s.byCategory),
+    '',
+    '## 环比上一份快照',
+    '',
+    ...(s.compare ? compareLines(s.compare) : ['（本目录暂无上一份快照，首次运行）']),
+    '',
+    '## 未进 50 路池',
+    '',
+    ...(missList.length ? missList : ['（无）']),
     '',
   ].join('\n');
 }

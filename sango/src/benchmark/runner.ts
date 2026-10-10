@@ -142,9 +142,10 @@ const SANGO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '.
 
 const pad2 = (n: number): string => String(n).padStart(2, '0');
 
-/** runId 生成：feat-A015-YYYY-MM-DD-HHMM（同日多次执行不重名）。 */
-export function makeRunId(date: Date = new Date()): string {
-  return `feat-A015-${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}-${pad2(date.getHours())}${pad2(date.getMinutes())}`;
+/** runId 生成：{prefix}-YYYY-MM-DD-HHMM[SS]（同日多次执行不重名；组集带秒避免同分覆盖）。 */
+export function makeRunId(prefix: string, withSeconds = false, date: Date = new Date()): string {
+  const base = `${prefix}-${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}-${pad2(date.getHours())}${pad2(date.getMinutes())}`;
+  return withSeconds ? `${base}${pad2(date.getSeconds())}` : base;
 }
 
 /**
