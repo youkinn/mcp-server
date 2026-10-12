@@ -4,7 +4,7 @@
  * 判分口径与 dev-docs 离线探针（test/events/events-recall-probe.mjs，story-A018-02）逐条一致，禁止分叉：
  * 判分单位 = 该题 chunkIds 组；hit@k = top-k 含组内任一段；firstRank = 组内段最小排名（0 = 未进 50 路池）；
  * status = hit5（1-5）/ hit10（6-10）/ hit50（11-50）/ miss（0）；cover@5 = top5 命中组内段数 / min(5, 组大小)；
- * bridgeHit = search() 诊断 eventHit.groupCount + allusionHit.groupCount > 0；未进池按桥命中与否分「桥未命中 / 并池后掉窗」。
+ * bridgeHit = 并集（eventHit.groupCount + allusionHit.groupCount > 0）；桥命中拆「事件桥 / 典故桥」两列；未进池按桥命中与否分「桥未命中 / 并池后掉窗」。
  */
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
@@ -53,6 +53,8 @@ export interface GroupRunResult {
   hit50: boolean;
   bridgeGroups: number;
   bridgeHit: boolean;
+  eventBridgeHit: boolean;
+  allusionBridgeHit: boolean;
   chunkIds: string[];
   top10Ids: string[];
   /** 50 路池有序 chunkId（下标 +1 = 池内名次；供页面查看组内段在池中的位置） */
@@ -66,6 +68,8 @@ export interface GroupCount {
   hit10: number;
   hit50: number;
   miss: number;
+  eventBridge: number;
+  allusionBridge: number;
   noBridge: number;
   missNoBridge: number;
   dropped: number;
@@ -159,6 +163,8 @@ export function summarizeGroup(list: GroupRunResult[]): GroupCount {
     hit10: 0,
     hit50: 0,
     miss: 0,
+    eventBridge: 0,
+    allusionBridge: 0,
     noBridge: 0,
     missNoBridge: 0,
     dropped: 0,
@@ -172,6 +178,8 @@ export function summarizeGroup(list: GroupRunResult[]): GroupCount {
     if (r.firstRank >= 1) s.hit50++;
     else s.miss++;
     if (!r.bridgeHit) s.noBridge++;
+    if (r.eventBridgeHit) s.eventBridge++;
+    if (r.allusionBridgeHit) s.allusionBridge++;
     if (r.firstRank === 0) {
       if (r.bridgeHit) s.dropped++;
       else s.missNoBridge++;
@@ -245,6 +253,8 @@ export async function runGroupBenchmark(
       hit50: firstRank >= 1,
       bridgeGroups,
       bridgeHit: bridgeGroups > 0,
+      eventBridgeHit: (diagnostics?.eventHit?.groupCount ?? 0) > 0,
+      allusionBridgeHit: (diagnostics?.allusionHit?.groupCount ?? 0) > 0,
       chunkIds: row.chunkIds,
       top10Ids: entries.slice(0, 10).map((e) => e.id),
       poolIds: entries.map((e) => e.id),

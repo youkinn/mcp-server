@@ -96,14 +96,20 @@ test('① 判分语义：hit5 / hit10 / hit50 / miss + 桥命中归因 + byCateg
     assert.equal(q1.hits5, 1, 'top5 命中组内段数（c2 rank1；c1 未进池）');
     assert.equal(q1.hits10, 1);
     assert.equal(q1.bridgeHit, true, 'eventHit 组命中 → 桥命中');
+    assert.equal(q1.eventBridgeHit, true, 'eventHit 组命中 → 事件桥命中');
+    assert.equal(q1.allusionBridgeHit, false, 'allusionHit=0 → 典故桥未命中');
     assert.equal(q1.crossChapter, false);
     assert.deepEqual(q1.poolIds, ['a:c2', 'x001', 'x002', 'x003'], 'poolIds = 池内有序 id（下标 +1 即名次）');
     const q2 = byId.get('L1#E00102')!;
     assert.equal(q2.status, 'hit10', '组内首段 rank8 → hit10');
     assert.equal(q2.bridgeHit, false, 'eventHit=0 → 桥未命中');
+    assert.equal(q2.eventBridgeHit, false);
+    assert.equal(q2.allusionBridgeHit, false);
     const q3 = byId.get('L2#E00201')!;
     assert.equal(q3.status, 'hit50', '组内首段 rank12 → hit50');
     assert.equal(q3.bridgeHit, true, 'allusionHit 组命中 → 桥命中');
+    assert.equal(q3.eventBridgeHit, false, 'eventHit=0 → 事件桥未命中');
+    assert.equal(q3.allusionBridgeHit, true, 'allusionHit 组命中 → 典故桥命中');
     assert.equal(q3.crossChapter, true);
     const q4 = byId.get('典故#AL0001')!;
     assert.equal(q4.status, 'miss', '未进池 → miss');
@@ -112,6 +118,8 @@ test('① 判分语义：hit5 / hit10 / hit50 / miss + 桥命中归因 + byCateg
     assert.equal(q4.hit10, false);
     assert.equal(q4.hit50, false);
     assert.equal(q4.bridgeHit, false);
+    assert.equal(q4.eventBridgeHit, false);
+    assert.equal(q4.allusionBridgeHit, false);
     assert.deepEqual(q4.top10Ids, [], '无候选 → top10Ids 空');
     assert.deepEqual(q4.poolIds, [], '无候选 → poolIds 空');
 
@@ -121,6 +129,8 @@ test('① 判分语义：hit5 / hit10 / hit50 / miss + 桥命中归因 + byCateg
     assert.equal(s.hit10, 2, 'hit10 = 组内首段 1-10 题数（Q1+Q2）');
     assert.equal(s.hit50, 3, 'hit50 = 组内首段进 50 池（Q1+Q2+Q3）');
     assert.equal(s.miss, 1, '未进池题数');
+    assert.equal(s.eventBridge, 1, '事件桥命中题数（Q1）');
+    assert.equal(s.allusionBridge, 1, '典故桥命中题数（Q3）');
     assert.equal(s.noBridge, 2, '桥未命中题数（Q2+Q4）');
     assert.equal(s.missNoBridge, 1, '未进池且桥未命中（Q4）');
     assert.equal(s.dropped, 0, '无桥命中但掉窗');
@@ -164,6 +174,8 @@ test('② cover@5 累计口径 + 并池后掉窗（dropped）归因', async () =
     const c3 = byId.get('L2#E0202')!;
     assert.equal(c3.status, 'miss');
     assert.equal(c3.bridgeHit, true, '桥命中但未进池');
+    assert.equal(c3.eventBridgeHit, true, 'C3 事件桥命中');
+    assert.equal(c3.allusionBridgeHit, false, 'C3 典故桥未命中');
     const s = run.summary;
     assert.equal(s.sumHits5, 7, 'Σhits5 = 3+4+0');
     assert.equal(s.sumCap5, 9, 'Σmin(5, segCount) = 3+5+1');
@@ -171,6 +183,8 @@ test('② cover@5 累计口径 + 并池后掉窗（dropped）归因', async () =
     assert.equal(s.dropped, 1, '桥命中但掉窗 1 题');
     assert.equal(s.missNoBridge, 0);
     assert.equal(s.noBridge, 1, '桥未命中但常规三路召回进窗（C2）计入 noBridge');
+    assert.equal(s.eventBridge, 2, '事件桥命中题数（C1+C3）');
+    assert.equal(s.allusionBridge, 0, '无典故桥命中');
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
