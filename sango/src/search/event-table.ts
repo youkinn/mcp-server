@@ -304,9 +304,13 @@ function createTableModule(config: TableModuleConfig): TableModule & { state: Ta
     }
 
     state.rows = filtered.map((r) => ({ ...r, chunkIds: sortChunkIdsInner(r.chunkIds) }));
+    // 桥键 = 规范名（name）∪ aliases（§3.2）：规范名与实体表 rewriteKeys 冲突时不入 aliases，仍须能命中桥。
+    // 加载日志的 aliases 计数沿用「表内有效 alias 数」，与桥键数区分（桥键另含规范名）。
     const aliasList: Array<{ alias: string; row: TableRow }> = [];
+    let aliasCount = 0;
     for (const r of state.rows) {
-      for (const alias of r.aliases) aliasList.push({ alias, row: r });
+      aliasCount += r.aliases.length;
+      for (const key of new Set([r.name, ...r.aliases])) aliasList.push({ alias: key, row: r });
     }
     // 尝试序（§3.2）：长度降序、同长 (id 升序, 表内顺序) 升序（sort 稳定保表内顺序）。
     aliasList.sort(
@@ -318,7 +322,7 @@ function createTableModule(config: TableModuleConfig): TableModule & { state: Ta
     state.degraded = false;
     const chunkRefs = state.rows.reduce((s, r) => s + r.chunkIds.length, 0);
     console.error(
-      `[sango] ${config.logPrefix} loaded: rows=${state.rows.length} aliases=${aliasList.length} chunkRefs=${chunkRefs} normVersion=${normVersion}`,
+      `[sango] ${config.logPrefix} loaded: rows=${state.rows.length} aliases=${aliasCount} chunkRefs=${chunkRefs} normVersion=${normVersion}`,
     );
     return true;
   };
