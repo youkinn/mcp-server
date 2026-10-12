@@ -1,7 +1,7 @@
 /**
  * 评测集注册表（story-A018-03）：服务端多评测集定义（id / 名称 / 文件 / 判分模式 / 快照目录 / runId 前缀）。
- * 注册表为代码内定义，env 仅覆盖两集的文件与快照目录路径；快照目录按评测集隔离，runId 前缀区分评测集，
- * 避免两集快照互相覆盖或混入同一 history。
+ * 注册表为代码内定义，env 仅覆盖各集的文件与快照目录路径；快照目录按评测集隔离，runId 前缀区分评测集，
+ * 避免各集快照互相覆盖或混入同一 history。
  */
 import path from 'node:path';
 
@@ -31,15 +31,21 @@ const DEFAULT_BENCHMARK_FILE = 'D:\\workplace\\dev-docs\\docs\\sango-rag-regress
 const DEFAULT_RESULTS_DIR = 'D:\\workplace\\dev-docs\\test\\standard-set\\results';
 /** 事件 / 典故组召回评测集默认路径（与 events-recall-probe.mjs 同源）。 */
 const DEFAULT_EVENTS_EVAL = 'D:\\workplace\\dev-docs\\test\\standard-set\\events\\eval-set.json';
+/** 事件 / 典故组召回（标准名问法）评测集默认路径（与 events-recall-probe.mjs 同源，问题统一为「标准名」问法）。 */
+const DEFAULT_EVENTS_STANDARD_NAME_EVAL =
+  'D:\\workplace\\dev-docs\\test\\standard-set\\events\\eval-set-standard-name.json';
 
 /** 标准集 id（POST run 缺省 setId = 本集，保持 A015 向后兼容）。 */
 export const STANDARD_SET_ID = 'standard';
 /** 事件 / 典故组召回集 id。 */
 export const EVENTS_SET_ID = 'events';
+/** 事件 / 典故组召回（标准名问法）集 id。 */
+export const EVENTS_STANDARD_NAME_SET_ID = 'events-standard-name';
 
 /** 装配评测集注册表（读 env 覆盖路径；每次启动调用一次）。 */
 export function loadBenchmarkSets(): BenchmarkSet[] {
   const eventsFile = process.env.SANGO_EVENTS_EVAL ?? DEFAULT_EVENTS_EVAL;
+  const eventsStandardNameFile = process.env.SANGO_EVENTS_STANDARD_NAME_EVAL ?? DEFAULT_EVENTS_STANDARD_NAME_EVAL;
   return [
     {
       id: STANDARD_SET_ID,
@@ -56,6 +62,17 @@ export function loadBenchmarkSets(): BenchmarkSet[] {
       file: eventsFile,
       judge: 'group',
       resultsDir: process.env.SANGO_EVENTS_RESULTS_DIR ?? path.join(path.dirname(eventsFile), 'results'),
+      runIdPrefix: 'feat-A018',
+      withSeconds: true,
+    },
+    {
+      id: EVENTS_STANDARD_NAME_SET_ID,
+      name: '事件 / 典故组召回（标准名问法）',
+      file: eventsStandardNameFile,
+      judge: 'group',
+      resultsDir:
+        process.env.SANGO_EVENTS_STANDARD_NAME_RESULTS_DIR ??
+        path.join(path.dirname(eventsStandardNameFile), 'results-standard-name'),
       runIdPrefix: 'feat-A018',
       withSeconds: true,
     },
