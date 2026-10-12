@@ -97,6 +97,7 @@ test('① 判分语义：hit5 / hit10 / hit50 / miss + 桥命中归因 + byCateg
     assert.equal(q1.hits10, 1);
     assert.equal(q1.bridgeHit, true, 'eventHit 组命中 → 桥命中');
     assert.equal(q1.crossChapter, false);
+    assert.deepEqual(q1.poolIds, ['a:c2', 'x001', 'x002', 'x003'], 'poolIds = 池内有序 id（下标 +1 即名次）');
     const q2 = byId.get('L1#E00102')!;
     assert.equal(q2.status, 'hit10', '组内首段 rank8 → hit10');
     assert.equal(q2.bridgeHit, false, 'eventHit=0 → 桥未命中');
@@ -112,6 +113,7 @@ test('① 判分语义：hit5 / hit10 / hit50 / miss + 桥命中归因 + byCateg
     assert.equal(q4.hit50, false);
     assert.equal(q4.bridgeHit, false);
     assert.deepEqual(q4.top10Ids, [], '无候选 → top10Ids 空');
+    assert.deepEqual(q4.poolIds, [], '无候选 → poolIds 空');
 
     const s = run.summary;
     assert.equal(s.total, 4);

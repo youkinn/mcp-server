@@ -55,6 +55,8 @@ export interface GroupRunResult {
   bridgeHit: boolean;
   chunkIds: string[];
   top10Ids: string[];
+  /** 50 路池有序 chunkId（下标 +1 = 池内名次；供页面查看组内段在池中的位置） */
+  poolIds: string[];
 }
 
 /** 一组题汇总（与探针 summarize 同口径）。 */
@@ -245,6 +247,7 @@ export async function runGroupBenchmark(
       bridgeHit: bridgeGroups > 0,
       chunkIds: row.chunkIds,
       top10Ids: entries.slice(0, 10).map((e) => e.id),
+      poolIds: entries.map((e) => e.id),
     });
   }
   const elapsedMs = Math.round((performance.now() - t0) * 10) / 10;
