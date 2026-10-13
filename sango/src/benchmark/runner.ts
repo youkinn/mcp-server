@@ -223,7 +223,7 @@ export async function runBenchmark(index: SangoIndex, benchmarkFile: string, res
     let candidates: CandidateInfo[] = [];
     if (!isNoAnchor) {
       const res = await index.search(it.question, INFER_LIMIT);
-      const m = matchEvidence(res.entries, it.textAnchors, it.titleAnchors);
+      const m = matchEvidence(res.entries, it.textAnchors, it.titleAnchors, it.chapterRefs);
       rank = m.rank;
       if (m.rank >= 1 && m.rank <= 5) status = 'top5';
       else if (m.rank >= 6 && m.rank <= 10) status = 'tail';

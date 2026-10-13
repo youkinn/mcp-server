@@ -40,7 +40,7 @@ const FIXPOINTS = [
 const inTop10 = (r) => r >= 1 && r <= 10;
 
 function rankOf(entries, item) {
-  const m = matchEvidence(entries, item.textAnchors, item.titleAnchors);
+  const m = matchEvidence(entries, item.textAnchors, item.titleAnchors, item.chapterRefs);
   return { rank: m.rank, hitId: m.hit ? m.hit.id : null };
 }
 

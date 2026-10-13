@@ -67,7 +67,7 @@ const latencies = [];
 for (const { group, id, item } of picked) {
   // ① 池覆盖探针：证据段是否入 50 路候选池（无重排口径 = 规则召回池）
   const poolEntries = (await plain.search(item.question, POOL)).entries;
-  const poolMatch = matchEvidence(poolEntries, item.textAnchors, item.titleAnchors);
+  const poolMatch = matchEvidence(poolEntries, item.textAnchors, item.titleAnchors, item.chapterRefs);
   const probeGroups = (await plain.search(item.question, LIMIT, { diagnostics: true })).diagnostics?.eventHit.groups ?? [];
   probe.push({
     group,
@@ -82,11 +82,11 @@ for (const { group, id, item } of picked) {
   // ② 定点不倒车：证据段 top10 名次
   const plainTop = (await plain.search(item.question, LIMIT)).entries;
   const rerankTop = (await withRerank.search(item.question, LIMIT)).entries;
-  const plainRank = matchEvidence(plainTop, item.textAnchors, item.titleAnchors).rank;
-  const rerankRank = matchEvidence(rerankTop, item.textAnchors, item.titleAnchors).rank;
+  const plainRank = matchEvidence(plainTop, item.textAnchors, item.titleAnchors, item.chapterRefs).rank;
+  const rerankRank = matchEvidence(rerankTop, item.textAnchors, item.titleAnchors, item.chapterRefs).rank;
   const plainIds = plainTop.map((e) => e.id);
   const rerankIds = rerankTop.map((e) => e.id);
-  const evidenceId = matchEvidence(rerankTop, item.textAnchors, item.titleAnchors).hit?.id ?? matchEvidence(plainTop, item.textAnchors, item.titleAnchors).hit?.id ?? null;
+  const evidenceId = matchEvidence(rerankTop, item.textAnchors, item.titleAnchors, item.chapterRefs).hit?.id ?? matchEvidence(plainTop, item.textAnchors, item.titleAnchors, item.chapterRefs).hit?.id ?? null;
   fixedPoint.push({
     group,
     id,
