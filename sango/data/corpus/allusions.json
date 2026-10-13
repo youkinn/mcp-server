@@ -1,8 +1,8 @@
 {
   "meta": {
     "schemaVersion": 1,
-    "normVersion": "ef47cbbe",
-    "generatedAt": "2026-10-09T00:00:00.000Z",
+    "normVersion": "87b22fcc",
+    "generatedAt": "2026-10-12T10:06:14.544Z",
     "corpusChunkCount": 2344,
     "source": "tags/story.json 典故名句迁移（batch-01）"
   },
@@ -139,6 +139,8 @@
         "的卢妨主"
       ],
       "chunkIds": [
+        "sanguo-yanyi:0034:c0004",
+        "sanguo-yanyi:0034:c0005",
         "sanguo-yanyi:0035:c0010"
       ],
       "type": "典故",
@@ -253,7 +255,6 @@
         "割发代首"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0017:c0014",
         "sanguo-yanyi:0017:c0015"
       ],
       "type": "典故",
@@ -555,6 +556,7 @@
         "威震逍遥津"
       ],
       "chunkIds": [
+        "sanguo-yanyi:0067:c0020",
         "sanguo-yanyi:0067:c0021"
       ],
       "type": "典故",

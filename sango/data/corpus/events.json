@@ -1,8 +1,8 @@
 {
   "meta": {
     "schemaVersion": 1,
-    "normVersion": "8632c059",
-    "generatedAt": "2026-09-29T10:01:24.950Z",
+    "normVersion": "bc41a2e9",
+    "generatedAt": "2026-10-13T01:52:22.465Z",
     "corpusChunkCount": 2344
   },
   "rows": [
@@ -13,6 +13,7 @@
         "桃园三结义"
       ],
       "chunkIds": [
+        "sanguo-yanyi:0001:c0008",
         "sanguo-yanyi:0001:c0009",
         "sanguo-yanyi:0001:c0010"
       ],
@@ -45,7 +46,6 @@
         "刘备破黄巾立功"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0001:c0006",
         "sanguo-yanyi:0001:c0007",
         "sanguo-yanyi:0001:c0008",
         "sanguo-yanyi:0001:c0009",
@@ -53,9 +53,7 @@
         "sanguo-yanyi:0001:c0011",
         "sanguo-yanyi:0001:c0012",
         "sanguo-yanyi:0001:c0014",
-        "sanguo-yanyi:0001:c0015",
         "sanguo-yanyi:0001:c0016",
-        "sanguo-yanyi:0001:c0019",
         "sanguo-yanyi:0001:c0020",
         "sanguo-yanyi:0001:c0021"
       ],
@@ -170,8 +168,7 @@
         "sanguo-yanyi:0002:c0008",
         "sanguo-yanyi:0002:c0009",
         "sanguo-yanyi:0002:c0010",
-        "sanguo-yanyi:0002:c0011",
-        "sanguo-yanyi:0002:c0014"
+        "sanguo-yanyi:0002:c0011"
       ],
       "type": "L1",
       "exampleQuestion": "张飞为什么要鞭打督邮"
@@ -186,16 +183,13 @@
         "sanguo-yanyi:0002:c0015",
         "sanguo-yanyi:0002:c0016",
         "sanguo-yanyi:0002:c0017",
-        "sanguo-yanyi:0002:c0018",
         "sanguo-yanyi:0002:c0019",
         "sanguo-yanyi:0002:c0020",
         "sanguo-yanyi:0003:c0001",
         "sanguo-yanyi:0003:c0002",
         "sanguo-yanyi:0003:c0003",
         "sanguo-yanyi:0003:c0004",
-        "sanguo-yanyi:0003:c0005",
-        "sanguo-yanyi:0003:c0006",
-        "sanguo-yanyi:0003:c0012"
+        "sanguo-yanyi:0003:c0006"
       ],
       "type": "L2",
       "exampleQuestion": "何进是怎么死的",
@@ -436,27 +430,16 @@
         "董卓入主朝政"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0003:c0001",
-        "sanguo-yanyi:0003:c0002",
-        "sanguo-yanyi:0003:c0003",
         "sanguo-yanyi:0003:c0011",
         "sanguo-yanyi:0003:c0012",
         "sanguo-yanyi:0003:c0015",
         "sanguo-yanyi:0003:c0016",
-        "sanguo-yanyi:0003:c0018",
         "sanguo-yanyi:0003:c0019",
         "sanguo-yanyi:0004:c0001",
         "sanguo-yanyi:0004:c0003",
-        "sanguo-yanyi:0004:c0004",
         "sanguo-yanyi:0004:c0005",
-        "sanguo-yanyi:0004:c0006",
         "sanguo-yanyi:0004:c0007",
-        "sanguo-yanyi:0004:c0008",
-        "sanguo-yanyi:0004:c0009",
-        "sanguo-yanyi:0004:c0010",
-        "sanguo-yanyi:0004:c0011",
-        "sanguo-yanyi:0004:c0012",
-        "sanguo-yanyi:0004:c0015"
+        "sanguo-yanyi:0004:c0008"
       ],
       "type": "L2",
       "exampleQuestion": "董卓是怎么专权的",
@@ -627,11 +610,7 @@
         "sanguo-yanyi:0004:c0011",
         "sanguo-yanyi:0004:c0012",
         "sanguo-yanyi:0004:c0013",
-        "sanguo-yanyi:0004:c0014",
-        "sanguo-yanyi:0004:c0015",
-        "sanguo-yanyi:0004:c0016",
-        "sanguo-yanyi:0004:c0017",
-        "sanguo-yanyi:0004:c0018"
+        "sanguo-yanyi:0004:c0014"
       ],
       "type": "L1",
       "exampleQuestion": "曹操献刀刺董卓是怎么回事",
@@ -646,10 +625,6 @@
         "捉放曹"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0004:c0011",
-        "sanguo-yanyi:0004:c0012",
-        "sanguo-yanyi:0004:c0013",
-        "sanguo-yanyi:0004:c0014",
         "sanguo-yanyi:0004:c0015",
         "sanguo-yanyi:0004:c0016",
         "sanguo-yanyi:0004:c0017",
@@ -853,10 +828,6 @@
         "温酒斩华雄"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0005:c0009",
-        "sanguo-yanyi:0005:c0010",
-        "sanguo-yanyi:0005:c0011",
-        "sanguo-yanyi:0005:c0012",
         "sanguo-yanyi:0005:c0013",
         "sanguo-yanyi:0005:c0014",
         "sanguo-yanyi:0005:c0015",
@@ -873,7 +844,6 @@
         "三英战吕布"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0005:c0008",
         "sanguo-yanyi:0005:c0017",
         "sanguo-yanyi:0005:c0018",
         "sanguo-yanyi:0005:c0019",
@@ -895,32 +865,16 @@
         "十八路诸侯讨董卓"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0005:c0001",
-        "sanguo-yanyi:0005:c0003",
-        "sanguo-yanyi:0005:c0005",
+        "sanguo-yanyi:0005:c0002",
         "sanguo-yanyi:0005:c0006",
-        "sanguo-yanyi:0005:c0008",
-        "sanguo-yanyi:0005:c0009",
+        "sanguo-yanyi:0005:c0007",
         "sanguo-yanyi:0005:c0010",
-        "sanguo-yanyi:0005:c0012",
-        "sanguo-yanyi:0005:c0014",
         "sanguo-yanyi:0005:c0015",
-        "sanguo-yanyi:0005:c0016",
-        "sanguo-yanyi:0005:c0017",
         "sanguo-yanyi:0005:c0018",
-        "sanguo-yanyi:0005:c0019",
-        "sanguo-yanyi:0005:c0020",
-        "sanguo-yanyi:0005:c0021",
         "sanguo-yanyi:0005:c0022",
-        "sanguo-yanyi:0005:c0023",
-        "sanguo-yanyi:0006:c0001",
         "sanguo-yanyi:0006:c0005",
         "sanguo-yanyi:0006:c0006",
-        "sanguo-yanyi:0006:c0009",
-        "sanguo-yanyi:0006:c0010",
-        "sanguo-yanyi:0006:c0011",
-        "sanguo-yanyi:0006:c0012",
-        "sanguo-yanyi:0006:c0013"
+        "sanguo-yanyi:0006:c0009"
       ],
       "type": "L2",
       "exampleQuestion": "十八路诸侯讨伐董卓是怎么打的",
@@ -1543,17 +1497,10 @@
         "董卓焚洛阳"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0006:c0001",
         "sanguo-yanyi:0006:c0002",
         "sanguo-yanyi:0006:c0003",
         "sanguo-yanyi:0006:c0004",
-        "sanguo-yanyi:0006:c0005",
-        "sanguo-yanyi:0006:c0006",
-        "sanguo-yanyi:0006:c0009",
-        "sanguo-yanyi:0006:c0011",
-        "sanguo-yanyi:0006:c0012",
-        "sanguo-yanyi:0006:c0013",
-        "sanguo-yanyi:0006:c0014"
+        "sanguo-yanyi:0006:c0005"
       ],
       "type": "L2",
       "exampleQuestion": "董卓为什么要火烧洛阳、迁都长安",
@@ -1886,7 +1833,14 @@
         "连环计"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0008:c0005"
+        "sanguo-yanyi:0008:c0004",
+        "sanguo-yanyi:0008:c0005",
+        "sanguo-yanyi:0008:c0006",
+        "sanguo-yanyi:0008:c0007",
+        "sanguo-yanyi:0008:c0008",
+        "sanguo-yanyi:0008:c0009",
+        "sanguo-yanyi:0008:c0010",
+        "sanguo-yanyi:0008:c0011"
       ],
       "type": "L1",
       "exampleQuestion": "王允的连环计是怎么回事",
@@ -1900,10 +1854,13 @@
       ],
       "chunkIds": [
         "sanguo-yanyi:0008:c0015",
-        "sanguo-yanyi:0008:c0017"
+        "sanguo-yanyi:0008:c0016",
+        "sanguo-yanyi:0008:c0017",
+        "sanguo-yanyi:0009:c0002"
       ],
       "type": "L1",
-      "exampleQuestion": "凤仪亭是怎么回事"
+      "exampleQuestion": "凤仪亭是怎么回事",
+      "crossChapter": "008–009"
     },
     {
       "eventId": "E00803",
@@ -1950,10 +1907,7 @@
         "李傕郭汜乱长安"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0009:c0009",
-        "sanguo-yanyi:0009:c0010",
         "sanguo-yanyi:0009:c0014",
-        "sanguo-yanyi:0009:c0017",
         "sanguo-yanyi:0009:c0018",
         "sanguo-yanyi:0009:c0019",
         "sanguo-yanyi:0009:c0020",
@@ -1962,12 +1916,7 @@
         "sanguo-yanyi:0009:c0024",
         "sanguo-yanyi:0010:c0001",
         "sanguo-yanyi:0010:c0002",
-        "sanguo-yanyi:0010:c0003",
-        "sanguo-yanyi:0010:c0004",
-        "sanguo-yanyi:0010:c0005",
-        "sanguo-yanyi:0010:c0006",
-        "sanguo-yanyi:0010:c0007",
-        "sanguo-yanyi:0010:c0008"
+        "sanguo-yanyi:0010:c0007"
       ],
       "type": "L2",
       "exampleQuestion": "李傕郭汜是怎么攻进长安的",
@@ -2170,30 +2119,14 @@
         "曹操报父仇伐徐州"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0010:c0007",
-        "sanguo-yanyi:0010:c0008",
-        "sanguo-yanyi:0010:c0009",
-        "sanguo-yanyi:0010:c0010",
-        "sanguo-yanyi:0010:c0011",
-        "sanguo-yanyi:0010:c0013",
+        "sanguo-yanyi:0010:c0012",
         "sanguo-yanyi:0010:c0014",
         "sanguo-yanyi:0010:c0015",
         "sanguo-yanyi:0010:c0016",
-        "sanguo-yanyi:0011:c0003",
-        "sanguo-yanyi:0011:c0007",
-        "sanguo-yanyi:0011:c0008",
-        "sanguo-yanyi:0011:c0009",
         "sanguo-yanyi:0011:c0010",
         "sanguo-yanyi:0011:c0011",
         "sanguo-yanyi:0011:c0012",
-        "sanguo-yanyi:0011:c0013",
-        "sanguo-yanyi:0011:c0014",
-        "sanguo-yanyi:0011:c0015",
-        "sanguo-yanyi:0011:c0016",
-        "sanguo-yanyi:0011:c0017",
-        "sanguo-yanyi:0011:c0018",
-        "sanguo-yanyi:0011:c0019",
-        "sanguo-yanyi:0011:c0021"
+        "sanguo-yanyi:0011:c0013"
       ],
       "type": "L2",
       "exampleQuestion": "曹操为什么要打徐州",
@@ -2684,21 +2617,13 @@
         "刘备北海救孔融"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0011:c0001",
-        "sanguo-yanyi:0011:c0002",
         "sanguo-yanyi:0011:c0003",
         "sanguo-yanyi:0011:c0004",
         "sanguo-yanyi:0011:c0005",
         "sanguo-yanyi:0011:c0006",
         "sanguo-yanyi:0011:c0007",
         "sanguo-yanyi:0011:c0008",
-        "sanguo-yanyi:0011:c0009",
-        "sanguo-yanyi:0011:c0010",
-        "sanguo-yanyi:0011:c0011",
-        "sanguo-yanyi:0011:c0012",
-        "sanguo-yanyi:0011:c0014",
-        "sanguo-yanyi:0011:c0015",
-        "sanguo-yanyi:0011:c0016"
+        "sanguo-yanyi:0011:c0009"
       ],
       "type": "L2",
       "exampleQuestion": "刘备是怎么带兵救孔融的",
@@ -2715,16 +2640,13 @@
       ],
       "chunkIds": [
         "sanguo-yanyi:0011:c0013",
-        "sanguo-yanyi:0011:c0016",
         "sanguo-yanyi:0011:c0017",
         "sanguo-yanyi:0011:c0018",
-        "sanguo-yanyi:0012:c0001",
         "sanguo-yanyi:0012:c0002",
+        "sanguo-yanyi:0012:c0004",
+        "sanguo-yanyi:0012:c0005",
         "sanguo-yanyi:0012:c0006",
-        "sanguo-yanyi:0012:c0007",
-        "sanguo-yanyi:0012:c0015",
-        "sanguo-yanyi:0012:c0016",
-        "sanguo-yanyi:0012:c0017"
+        "sanguo-yanyi:0012:c0007"
       ],
       "type": "L2",
       "exampleQuestion": "曹操和吕布在濮阳是怎么交战的",
@@ -2869,13 +2791,17 @@
         "三让徐州"
       ],
       "chunkIds": [
+        "sanguo-yanyi:0011:c0011",
+        "sanguo-yanyi:0011:c0014",
+        "sanguo-yanyi:0011:c0015",
         "sanguo-yanyi:0012:c0007",
         "sanguo-yanyi:0012:c0008",
         "sanguo-yanyi:0012:c0009",
         "sanguo-yanyi:0012:c0010"
       ],
       "type": "L1",
-      "exampleQuestion": "陶恭祖三让徐州是怎么回事"
+      "exampleQuestion": "陶恭祖三让徐州是怎么回事",
+      "crossChapter": "011–012"
     },
     {
       "eventId": "E01202",
@@ -2884,16 +2810,10 @@
         "曹操败吕布"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0012:c0001",
         "sanguo-yanyi:0012:c0002",
-        "sanguo-yanyi:0012:c0003",
-        "sanguo-yanyi:0012:c0004",
-        "sanguo-yanyi:0012:c0005",
         "sanguo-yanyi:0012:c0006",
         "sanguo-yanyi:0012:c0007",
         "sanguo-yanyi:0012:c0010",
-        "sanguo-yanyi:0012:c0013",
-        "sanguo-yanyi:0012:c0015",
         "sanguo-yanyi:0012:c0016",
         "sanguo-yanyi:0012:c0017",
         "sanguo-yanyi:0012:c0018",
@@ -2970,22 +2890,15 @@
         "李傕郭汜大交兵"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0013:c0004",
-        "sanguo-yanyi:0013:c0005",
         "sanguo-yanyi:0013:c0006",
         "sanguo-yanyi:0013:c0007",
         "sanguo-yanyi:0013:c0009",
         "sanguo-yanyi:0013:c0010",
-        "sanguo-yanyi:0013:c0011",
         "sanguo-yanyi:0013:c0012",
-        "sanguo-yanyi:0013:c0013",
-        "sanguo-yanyi:0013:c0014",
-        "sanguo-yanyi:0013:c0015",
         "sanguo-yanyi:0013:c0016",
         "sanguo-yanyi:0013:c0017",
         "sanguo-yanyi:0013:c0018",
         "sanguo-yanyi:0013:c0019",
-        "sanguo-yanyi:0013:c0020",
         "sanguo-yanyi:0013:c0023"
       ],
       "type": "L2",
@@ -3286,29 +3199,16 @@
         "太史慈酣斗小霸王"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0015:c0004",
         "sanguo-yanyi:0015:c0005",
-        "sanguo-yanyi:0015:c0007",
-        "sanguo-yanyi:0015:c0008",
         "sanguo-yanyi:0015:c0009",
-        "sanguo-yanyi:0015:c0010",
-        "sanguo-yanyi:0015:c0011",
         "sanguo-yanyi:0015:c0012",
         "sanguo-yanyi:0015:c0013",
         "sanguo-yanyi:0015:c0014",
         "sanguo-yanyi:0015:c0015",
         "sanguo-yanyi:0015:c0016",
         "sanguo-yanyi:0015:c0017",
-        "sanguo-yanyi:0015:c0018",
         "sanguo-yanyi:0015:c0019",
-        "sanguo-yanyi:0015:c0020",
-        "sanguo-yanyi:0015:c0022",
-        "sanguo-yanyi:0015:c0023",
-        "sanguo-yanyi:0015:c0024",
-        "sanguo-yanyi:0015:c0025",
-        "sanguo-yanyi:0015:c0026",
-        "sanguo-yanyi:0015:c0027",
-        "sanguo-yanyi:0015:c0029"
+        "sanguo-yanyi:0015:c0020"
       ],
       "type": "L1",
       "exampleQuestion": "太史慈和孙策是怎么单挑的",
@@ -3324,30 +3224,16 @@
         "孙策平定江东"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0015:c0004",
         "sanguo-yanyi:0015:c0005",
         "sanguo-yanyi:0015:c0006",
         "sanguo-yanyi:0015:c0007",
         "sanguo-yanyi:0015:c0008",
-        "sanguo-yanyi:0015:c0009",
-        "sanguo-yanyi:0015:c0010",
-        "sanguo-yanyi:0015:c0011",
         "sanguo-yanyi:0015:c0012",
-        "sanguo-yanyi:0015:c0014",
         "sanguo-yanyi:0015:c0015",
         "sanguo-yanyi:0015:c0016",
-        "sanguo-yanyi:0015:c0017",
-        "sanguo-yanyi:0015:c0018",
-        "sanguo-yanyi:0015:c0019",
-        "sanguo-yanyi:0015:c0020",
-        "sanguo-yanyi:0015:c0021",
         "sanguo-yanyi:0015:c0022",
-        "sanguo-yanyi:0015:c0023",
         "sanguo-yanyi:0015:c0024",
-        "sanguo-yanyi:0015:c0025",
-        "sanguo-yanyi:0015:c0026",
-        "sanguo-yanyi:0015:c0027",
-        "sanguo-yanyi:0015:c0029"
+        "sanguo-yanyi:0015:c0027"
       ],
       "type": "L2",
       "exampleQuestion": "孙策是怎么打下江东的",
@@ -3722,12 +3608,11 @@
         "辕门射戟"
       ],
       "chunkIds": [
+        "sanguo-yanyi:0016:c0004",
         "sanguo-yanyi:0016:c0005",
+        "sanguo-yanyi:0016:c0006",
         "sanguo-yanyi:0016:c0007",
-        "sanguo-yanyi:0016:c0008",
-        "sanguo-yanyi:0016:c0012",
-        "sanguo-yanyi:0016:c0014",
-        "sanguo-yanyi:0016:c0022"
+        "sanguo-yanyi:0016:c0008"
       ],
       "type": "L1",
       "exampleQuestion": "吕布辕门射戟是怎么回事"
@@ -4044,21 +3929,7 @@
         "白门楼斩吕布"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0019:c0001",
-        "sanguo-yanyi:0019:c0003",
-        "sanguo-yanyi:0019:c0004",
-        "sanguo-yanyi:0019:c0005",
-        "sanguo-yanyi:0019:c0006",
-        "sanguo-yanyi:0019:c0007",
-        "sanguo-yanyi:0019:c0008",
-        "sanguo-yanyi:0019:c0009",
-        "sanguo-yanyi:0019:c0010",
-        "sanguo-yanyi:0019:c0013",
-        "sanguo-yanyi:0019:c0014",
-        "sanguo-yanyi:0019:c0015",
-        "sanguo-yanyi:0019:c0016",
-        "sanguo-yanyi:0019:c0017",
-        "sanguo-yanyi:0019:c0018",
+        "sanguo-yanyi:0019:c0019",
         "sanguo-yanyi:0019:c0020",
         "sanguo-yanyi:0019:c0021",
         "sanguo-yanyi:0019:c0022",
@@ -4097,26 +3968,17 @@
       ],
       "chunkIds": [
         "sanguo-yanyi:0019:c0001",
-        "sanguo-yanyi:0019:c0002",
-        "sanguo-yanyi:0019:c0003",
-        "sanguo-yanyi:0019:c0004",
-        "sanguo-yanyi:0019:c0005",
-        "sanguo-yanyi:0019:c0007",
-        "sanguo-yanyi:0019:c0008",
-        "sanguo-yanyi:0019:c0009",
         "sanguo-yanyi:0019:c0010",
         "sanguo-yanyi:0019:c0011",
-        "sanguo-yanyi:0019:c0013",
-        "sanguo-yanyi:0019:c0014",
-        "sanguo-yanyi:0019:c0015",
-        "sanguo-yanyi:0019:c0016",
         "sanguo-yanyi:0019:c0019",
         "sanguo-yanyi:0019:c0021",
+        "sanguo-yanyi:0019:c0022",
         "sanguo-yanyi:0019:c0024",
-        "sanguo-yanyi:0019:c0025"
+        "sanguo-yanyi:0020:c0001"
       ],
       "type": "L2",
       "exampleQuestion": "张辽是怎么归顺曹操的",
+      "crossChapter": "019–020",
       "characters": [
         "曹操",
         "张辽"
@@ -4224,8 +4086,15 @@
         "衣带诏"
       ],
       "chunkIds": [
+        "sanguo-yanyi:0020:c0005",
+        "sanguo-yanyi:0020:c0006",
+        "sanguo-yanyi:0020:c0007",
+        "sanguo-yanyi:0020:c0008",
+        "sanguo-yanyi:0020:c0009",
         "sanguo-yanyi:0020:c0010",
-        "sanguo-yanyi:0020:c0011"
+        "sanguo-yanyi:0020:c0011",
+        "sanguo-yanyi:0020:c0012",
+        "sanguo-yanyi:0020:c0013"
       ],
       "type": "L1",
       "exampleQuestion": "衣带诏是怎么回事"
@@ -4257,6 +4126,7 @@
         "sanguo-yanyi:0021:c0005",
         "sanguo-yanyi:0021:c0006",
         "sanguo-yanyi:0021:c0007",
+        "sanguo-yanyi:0021:c0008",
         "sanguo-yanyi:0021:c0009"
       ],
       "type": "L1",
@@ -4481,16 +4351,15 @@
       "eventId": "E02301",
       "eventName": "祢衡裸衣骂曹",
       "aliases": [
-        "祢衡裸衣骂贼",
         "祢衡裸衣骂曹"
       ],
       "chunkIds": [
         "sanguo-yanyi:0023:c0003",
+        "sanguo-yanyi:0023:c0004",
         "sanguo-yanyi:0023:c0005",
         "sanguo-yanyi:0023:c0006",
         "sanguo-yanyi:0023:c0007",
         "sanguo-yanyi:0023:c0008",
-        "sanguo-yanyi:0023:c0009",
         "sanguo-yanyi:0023:c0010"
       ],
       "type": "L1",
@@ -4666,13 +4535,14 @@
         "屯土山约三事"
       ],
       "chunkIds": [
+        "sanguo-yanyi:0025:c0001",
         "sanguo-yanyi:0025:c0002",
+        "sanguo-yanyi:0025:c0003",
         "sanguo-yanyi:0025:c0004",
+        "sanguo-yanyi:0025:c0005",
         "sanguo-yanyi:0025:c0006",
         "sanguo-yanyi:0025:c0007",
-        "sanguo-yanyi:0025:c0008",
-        "sanguo-yanyi:0025:c0016",
-        "sanguo-yanyi:0025:c0018"
+        "sanguo-yanyi:0025:c0008"
       ],
       "type": "L1",
       "exampleQuestion": "关羽在屯土山是怎么跟曹操约三事的"
@@ -4717,7 +4587,9 @@
         "挂印封金"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0026:c0002",
+        "sanguo-yanyi:0026:c0011",
+        "sanguo-yanyi:0026:c0012",
+        "sanguo-yanyi:0026:c0013",
         "sanguo-yanyi:0026:c0014",
         "sanguo-yanyi:0026:c0015"
       ],
@@ -4764,8 +4636,16 @@
         "过五关斩六将"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0027:c0018",
-        "sanguo-yanyi:0027:c0020"
+        "sanguo-yanyi:0027:c0008",
+        "sanguo-yanyi:0027:c0009",
+        "sanguo-yanyi:0027:c0010",
+        "sanguo-yanyi:0027:c0011",
+        "sanguo-yanyi:0027:c0012",
+        "sanguo-yanyi:0027:c0013",
+        "sanguo-yanyi:0027:c0014",
+        "sanguo-yanyi:0027:c0015",
+        "sanguo-yanyi:0027:c0016",
+        "sanguo-yanyi:0027:c0017"
       ],
       "type": "L1",
       "exampleQuestion": "关羽过五关斩六将都斩了哪些人"
@@ -4920,7 +4800,6 @@
       "eventId": "E02802",
       "eventName": "古城聚义",
       "aliases": [
-        "古城会",
         "古城聚义"
       ],
       "chunkIds": [
@@ -4999,24 +4878,15 @@
         "孙策斩于吉"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0029:c0001",
-        "sanguo-yanyi:0029:c0002",
         "sanguo-yanyi:0029:c0003",
-        "sanguo-yanyi:0029:c0004",
-        "sanguo-yanyi:0029:c0005",
         "sanguo-yanyi:0029:c0006",
         "sanguo-yanyi:0029:c0007",
         "sanguo-yanyi:0029:c0008",
         "sanguo-yanyi:0029:c0009",
         "sanguo-yanyi:0029:c0010",
-        "sanguo-yanyi:0029:c0011",
         "sanguo-yanyi:0029:c0012",
         "sanguo-yanyi:0029:c0013",
-        "sanguo-yanyi:0029:c0015",
-        "sanguo-yanyi:0029:c0016",
-        "sanguo-yanyi:0029:c0017",
-        "sanguo-yanyi:0029:c0019",
-        "sanguo-yanyi:0029:c0020"
+        "sanguo-yanyi:0029:c0014"
       ],
       "type": "L2",
       "exampleQuestion": "孙策为什么要杀于吉",
@@ -5147,7 +5017,6 @@
       "eventId": "E03001",
       "eventName": "官渡之战",
       "aliases": [
-        "火烧乌巢",
         "官渡之战"
       ],
       "chunkIds": [
@@ -5159,9 +5028,7 @@
         "sanguo-yanyi:0030:c0006",
         "sanguo-yanyi:0030:c0008",
         "sanguo-yanyi:0030:c0009",
-        "sanguo-yanyi:0030:c0011",
-        "sanguo-yanyi:0030:c0019",
-        "sanguo-yanyi:0030:c0020"
+        "sanguo-yanyi:0030:c0011"
       ],
       "type": "L1",
       "exampleQuestion": "官渡之战是怎么回事"
@@ -5173,11 +5040,11 @@
         "夜袭乌巢"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0030:c0008",
         "sanguo-yanyi:0030:c0014",
         "sanguo-yanyi:0030:c0015",
         "sanguo-yanyi:0030:c0016",
         "sanguo-yanyi:0030:c0017",
+        "sanguo-yanyi:0030:c0018",
         "sanguo-yanyi:0030:c0019",
         "sanguo-yanyi:0030:c0020",
         "sanguo-yanyi:0030:c0021",
@@ -5193,26 +5060,16 @@
         "张郃归降曹操"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0030:c0001",
-        "sanguo-yanyi:0030:c0002",
-        "sanguo-yanyi:0030:c0003",
-        "sanguo-yanyi:0030:c0004",
-        "sanguo-yanyi:0030:c0005",
-        "sanguo-yanyi:0030:c0006",
-        "sanguo-yanyi:0030:c0007",
-        "sanguo-yanyi:0030:c0008",
         "sanguo-yanyi:0030:c0009",
         "sanguo-yanyi:0030:c0010",
-        "sanguo-yanyi:0030:c0013",
-        "sanguo-yanyi:0030:c0016",
-        "sanguo-yanyi:0030:c0017",
+        "sanguo-yanyi:0030:c0012",
+        "sanguo-yanyi:0030:c0014",
+        "sanguo-yanyi:0030:c0018",
         "sanguo-yanyi:0030:c0019",
-        "sanguo-yanyi:0030:c0020",
         "sanguo-yanyi:0030:c0021",
         "sanguo-yanyi:0030:c0022",
         "sanguo-yanyi:0030:c0023",
-        "sanguo-yanyi:0030:c0024",
-        "sanguo-yanyi:0030:c0025"
+        "sanguo-yanyi:0030:c0024"
       ],
       "type": "L2",
       "exampleQuestion": "张郃是怎么投降曹操的",
@@ -5344,25 +5201,15 @@
       ],
       "chunkIds": [
         "sanguo-yanyi:0032:c0001",
-        "sanguo-yanyi:0032:c0002",
         "sanguo-yanyi:0032:c0003",
-        "sanguo-yanyi:0032:c0004",
         "sanguo-yanyi:0032:c0005",
-        "sanguo-yanyi:0032:c0006",
         "sanguo-yanyi:0032:c0007",
         "sanguo-yanyi:0032:c0008",
         "sanguo-yanyi:0032:c0009",
         "sanguo-yanyi:0032:c0010",
         "sanguo-yanyi:0032:c0011",
-        "sanguo-yanyi:0032:c0012",
         "sanguo-yanyi:0032:c0013",
-        "sanguo-yanyi:0032:c0014",
-        "sanguo-yanyi:0032:c0015",
-        "sanguo-yanyi:0032:c0016",
-        "sanguo-yanyi:0032:c0017",
-        "sanguo-yanyi:0032:c0018",
-        "sanguo-yanyi:0032:c0019",
-        "sanguo-yanyi:0032:c0021"
+        "sanguo-yanyi:0032:c0019"
       ],
       "type": "L2",
       "exampleQuestion": "袁尚和袁谭是怎么争夺冀州的",
@@ -5378,18 +5225,9 @@
         "决漳河灌冀州"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0032:c0001",
-        "sanguo-yanyi:0032:c0002",
-        "sanguo-yanyi:0032:c0003",
-        "sanguo-yanyi:0032:c0004",
-        "sanguo-yanyi:0032:c0005",
-        "sanguo-yanyi:0032:c0008",
-        "sanguo-yanyi:0032:c0010",
+        "sanguo-yanyi:0032:c0009",
         "sanguo-yanyi:0032:c0011",
-        "sanguo-yanyi:0032:c0012",
-        "sanguo-yanyi:0032:c0013",
         "sanguo-yanyi:0032:c0014",
-        "sanguo-yanyi:0032:c0015",
         "sanguo-yanyi:0032:c0016",
         "sanguo-yanyi:0032:c0017",
         "sanguo-yanyi:0032:c0018",
@@ -5555,13 +5393,14 @@
       "eventId": "E03401",
       "eventName": "跃马过檀溪",
       "aliases": [
-        "跃马檀溪",
         "跃马过檀溪"
       ],
       "chunkIds": [
         "sanguo-yanyi:0034:c0014",
+        "sanguo-yanyi:0034:c0015",
         "sanguo-yanyi:0034:c0016",
-        "sanguo-yanyi:0034:c0017"
+        "sanguo-yanyi:0034:c0017",
+        "sanguo-yanyi:0034:c0018"
       ],
       "type": "L1",
       "exampleQuestion": "刘备跃马过檀溪是怎么回事"
@@ -5590,19 +5429,13 @@
       ],
       "chunkIds": [
         "sanguo-yanyi:0035:c0001",
-        "sanguo-yanyi:0035:c0002",
         "sanguo-yanyi:0035:c0003",
         "sanguo-yanyi:0035:c0004",
         "sanguo-yanyi:0035:c0005",
         "sanguo-yanyi:0035:c0006",
         "sanguo-yanyi:0035:c0007",
         "sanguo-yanyi:0035:c0008",
-        "sanguo-yanyi:0035:c0009",
-        "sanguo-yanyi:0035:c0010",
-        "sanguo-yanyi:0035:c0011",
-        "sanguo-yanyi:0035:c0012",
-        "sanguo-yanyi:0035:c0013",
-        "sanguo-yanyi:0035:c0014"
+        "sanguo-yanyi:0035:c0010"
       ],
       "type": "L2",
       "exampleQuestion": "刘备是怎么遇见水镜先生司马徽的",
@@ -5617,14 +5450,6 @@
         "徐庶投刘备"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0035:c0001",
-        "sanguo-yanyi:0035:c0002",
-        "sanguo-yanyi:0035:c0003",
-        "sanguo-yanyi:0035:c0004",
-        "sanguo-yanyi:0035:c0005",
-        "sanguo-yanyi:0035:c0006",
-        "sanguo-yanyi:0035:c0007",
-        "sanguo-yanyi:0035:c0008",
         "sanguo-yanyi:0035:c0009",
         "sanguo-yanyi:0035:c0010",
         "sanguo-yanyi:0035:c0011",
@@ -5789,13 +5614,15 @@
         "三顾草庐"
       ],
       "chunkIds": [
+        "sanguo-yanyi:0037:c0003",
         "sanguo-yanyi:0037:c0005",
-        "sanguo-yanyi:0037:c0006",
+        "sanguo-yanyi:0037:c0007",
         "sanguo-yanyi:0037:c0010",
+        "sanguo-yanyi:0037:c0014",
+        "sanguo-yanyi:0037:c0015",
+        "sanguo-yanyi:0037:c0019",
         "sanguo-yanyi:0038:c0002",
-        "sanguo-yanyi:0038:c0007",
-        "sanguo-yanyi:0038:c0009",
-        "sanguo-yanyi:0038:c0010"
+        "sanguo-yanyi:0038:c0008"
       ],
       "type": "L1",
       "exampleQuestion": "三顾茅庐是怎么回事",
@@ -5838,7 +5665,14 @@
         "隆中对策"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0038:c0002"
+        "sanguo-yanyi:0038:c0002",
+        "sanguo-yanyi:0038:c0003",
+        "sanguo-yanyi:0038:c0004",
+        "sanguo-yanyi:0038:c0005",
+        "sanguo-yanyi:0038:c0006",
+        "sanguo-yanyi:0038:c0007",
+        "sanguo-yanyi:0038:c0008",
+        "sanguo-yanyi:0038:c0009"
       ],
       "type": "L1",
       "exampleQuestion": "诸葛亮的隆中对是怎么说的"
@@ -5850,23 +5684,13 @@
         "孙权伐黄祖"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0038:c0006",
-        "sanguo-yanyi:0038:c0007",
-        "sanguo-yanyi:0038:c0011",
-        "sanguo-yanyi:0038:c0012",
-        "sanguo-yanyi:0038:c0013",
-        "sanguo-yanyi:0038:c0015",
-        "sanguo-yanyi:0038:c0016",
         "sanguo-yanyi:0038:c0018",
         "sanguo-yanyi:0038:c0019",
         "sanguo-yanyi:0038:c0020",
         "sanguo-yanyi:0038:c0021",
         "sanguo-yanyi:0038:c0022",
         "sanguo-yanyi:0039:c0001",
-        "sanguo-yanyi:0039:c0002",
-        "sanguo-yanyi:0039:c0003",
-        "sanguo-yanyi:0039:c0004",
-        "sanguo-yanyi:0039:c0007"
+        "sanguo-yanyi:0039:c0002"
       ],
       "type": "L2",
       "exampleQuestion": "孙权是怎么为父报仇攻打黄祖的",
@@ -6036,11 +5860,13 @@
         "博望坡军师初用兵"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0039:c0008",
+        "sanguo-yanyi:0039:c0009",
+        "sanguo-yanyi:0039:c0010",
         "sanguo-yanyi:0039:c0011",
         "sanguo-yanyi:0039:c0012",
         "sanguo-yanyi:0039:c0013",
         "sanguo-yanyi:0039:c0014",
+        "sanguo-yanyi:0039:c0015",
         "sanguo-yanyi:0039:c0016",
         "sanguo-yanyi:0039:c0017"
       ],
@@ -6166,13 +5992,11 @@
       ],
       "chunkIds": [
         "sanguo-yanyi:0040:c0001",
-        "sanguo-yanyi:0040:c0005",
-        "sanguo-yanyi:0040:c0007",
-        "sanguo-yanyi:0040:c0008",
-        "sanguo-yanyi:0040:c0011",
         "sanguo-yanyi:0040:c0013",
+        "sanguo-yanyi:0040:c0014",
         "sanguo-yanyi:0040:c0015",
         "sanguo-yanyi:0040:c0016",
+        "sanguo-yanyi:0040:c0017",
         "sanguo-yanyi:0040:c0018",
         "sanguo-yanyi:0040:c0019"
       ],
@@ -6186,7 +6010,6 @@
         "蔡夫人献荆州"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0040:c0001",
         "sanguo-yanyi:0040:c0005",
         "sanguo-yanyi:0040:c0007",
         "sanguo-yanyi:0040:c0008",
@@ -6194,18 +6017,9 @@
         "sanguo-yanyi:0040:c0010",
         "sanguo-yanyi:0040:c0011",
         "sanguo-yanyi:0040:c0012",
-        "sanguo-yanyi:0041:c0001",
-        "sanguo-yanyi:0041:c0005",
-        "sanguo-yanyi:0041:c0006",
         "sanguo-yanyi:0041:c0008",
         "sanguo-yanyi:0041:c0009",
-        "sanguo-yanyi:0041:c0010",
-        "sanguo-yanyi:0041:c0014",
-        "sanguo-yanyi:0041:c0015",
-        "sanguo-yanyi:0041:c0016",
-        "sanguo-yanyi:0041:c0017",
-        "sanguo-yanyi:0041:c0019",
-        "sanguo-yanyi:0041:c0020"
+        "sanguo-yanyi:0041:c0011"
       ],
       "type": "L2",
       "exampleQuestion": "蔡夫人蔡瑁是怎么把荆州献给曹操的",
@@ -6276,9 +6090,11 @@
         "携民渡江"
       ],
       "chunkIds": [
+        "sanguo-yanyi:0041:c0003",
+        "sanguo-yanyi:0041:c0004",
+        "sanguo-yanyi:0041:c0005",
         "sanguo-yanyi:0041:c0006",
-        "sanguo-yanyi:0041:c0007",
-        "sanguo-yanyi:0041:c0009"
+        "sanguo-yanyi:0041:c0007"
       ],
       "type": "L1",
       "exampleQuestion": "刘备为什么要带着百姓一起渡江"
@@ -6287,15 +6103,18 @@
       "eventId": "E04102",
       "eventName": "长坂坡单骑救主",
       "aliases": [
-        "赵子龙单骑救主",
-        "刘备摔阿斗",
         "长坂坡单骑救主"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0041:c0014",
         "sanguo-yanyi:0041:c0015",
+        "sanguo-yanyi:0041:c0016",
         "sanguo-yanyi:0041:c0017",
-        "sanguo-yanyi:0041:c0021"
+        "sanguo-yanyi:0041:c0018",
+        "sanguo-yanyi:0041:c0019",
+        "sanguo-yanyi:0041:c0020",
+        "sanguo-yanyi:0041:c0021",
+        "sanguo-yanyi:0041:c0022",
+        "sanguo-yanyi:0041:c0023"
       ],
       "type": "L1",
       "exampleQuestion": "赵云在长坂坡是怎么单骑救阿斗的"
@@ -6440,7 +6259,6 @@
         "张飞大闹长坂桥"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0042:c0001",
         "sanguo-yanyi:0042:c0004",
         "sanguo-yanyi:0042:c0005",
         "sanguo-yanyi:0042:c0006",
@@ -6461,18 +6279,13 @@
         "刘备败走汉津口"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0042:c0001",
-        "sanguo-yanyi:0042:c0002",
         "sanguo-yanyi:0042:c0007",
-        "sanguo-yanyi:0042:c0008",
         "sanguo-yanyi:0042:c0009",
         "sanguo-yanyi:0042:c0010",
         "sanguo-yanyi:0042:c0011",
-        "sanguo-yanyi:0042:c0012",
         "sanguo-yanyi:0042:c0013",
         "sanguo-yanyi:0042:c0014",
         "sanguo-yanyi:0042:c0015",
-        "sanguo-yanyi:0042:c0016",
         "sanguo-yanyi:0042:c0017"
       ],
       "type": "L2",
@@ -6562,7 +6375,6 @@
         "舌战群儒"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0043:c0001",
         "sanguo-yanyi:0043:c0002",
         "sanguo-yanyi:0043:c0003",
         "sanguo-yanyi:0043:c0004",
@@ -6572,13 +6384,7 @@
         "sanguo-yanyi:0043:c0009",
         "sanguo-yanyi:0043:c0010",
         "sanguo-yanyi:0043:c0011",
-        "sanguo-yanyi:0043:c0012",
-        "sanguo-yanyi:0043:c0013",
-        "sanguo-yanyi:0043:c0014",
-        "sanguo-yanyi:0043:c0015",
-        "sanguo-yanyi:0043:c0016",
-        "sanguo-yanyi:0043:c0017",
-        "sanguo-yanyi:0043:c0018"
+        "sanguo-yanyi:0043:c0012"
       ],
       "type": "L1",
       "exampleQuestion": "诸葛亮舌战群儒是怎么回事"
@@ -6613,17 +6419,15 @@
       ],
       "chunkIds": [
         "sanguo-yanyi:0044:c0001",
-        "sanguo-yanyi:0044:c0003",
+        "sanguo-yanyi:0044:c0002",
+        "sanguo-yanyi:0044:c0004",
         "sanguo-yanyi:0044:c0005",
+        "sanguo-yanyi:0044:c0006",
+        "sanguo-yanyi:0044:c0007",
         "sanguo-yanyi:0044:c0008",
         "sanguo-yanyi:0044:c0009",
-        "sanguo-yanyi:0044:c0010",
         "sanguo-yanyi:0044:c0012",
-        "sanguo-yanyi:0044:c0013",
-        "sanguo-yanyi:0044:c0014",
-        "sanguo-yanyi:0044:c0016",
-        "sanguo-yanyi:0044:c0017",
-        "sanguo-yanyi:0044:c0018"
+        "sanguo-yanyi:0044:c0014"
       ],
       "type": "L1",
       "exampleQuestion": "诸葛亮是怎么智激周瑜决意抗曹的",
@@ -6736,7 +6540,10 @@
       "chunkIds": [
         "sanguo-yanyi:0046:c0003",
         "sanguo-yanyi:0046:c0004",
-        "sanguo-yanyi:0046:c0007"
+        "sanguo-yanyi:0046:c0005",
+        "sanguo-yanyi:0046:c0006",
+        "sanguo-yanyi:0046:c0007",
+        "sanguo-yanyi:0046:c0008"
       ],
       "type": "L1",
       "exampleQuestion": "草船借箭是怎么回事"
@@ -6767,10 +6574,10 @@
         "庞统连环计"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0047:c0008",
         "sanguo-yanyi:0047:c0009",
         "sanguo-yanyi:0047:c0010",
         "sanguo-yanyi:0047:c0011",
+        "sanguo-yanyi:0047:c0012",
         "sanguo-yanyi:0047:c0013",
         "sanguo-yanyi:0047:c0014",
         "sanguo-yanyi:0047:c0015",
@@ -6827,6 +6634,7 @@
         "横槊赋诗"
       ],
       "chunkIds": [
+        "sanguo-yanyi:0048:c0004",
         "sanguo-yanyi:0048:c0005",
         "sanguo-yanyi:0048:c0006"
       ],
@@ -6921,9 +6729,10 @@
         "sanguo-yanyi:0049:c0002",
         "sanguo-yanyi:0049:c0003",
         "sanguo-yanyi:0049:c0004",
+        "sanguo-yanyi:0049:c0005",
+        "sanguo-yanyi:0049:c0006",
         "sanguo-yanyi:0049:c0007",
-        "sanguo-yanyi:0049:c0008",
-        "sanguo-yanyi:0049:c0018"
+        "sanguo-yanyi:0049:c0008"
       ],
       "type": "L1",
       "exampleQuestion": "诸葛亮是怎么借东风的"
@@ -6935,7 +6744,10 @@
         "赤壁之战"
       ],
       "chunkIds": [
+        "sanguo-yanyi:0049:c0017",
         "sanguo-yanyi:0049:c0018",
+        "sanguo-yanyi:0049:c0019",
+        "sanguo-yanyi:0049:c0020",
         "sanguo-yanyi:0050:c0001",
         "sanguo-yanyi:0050:c0002"
       ],
@@ -6966,23 +6778,15 @@
       "eventId": "E05001",
       "eventName": "华容道义释曹操",
       "aliases": [
-        "关云长义释曹操",
         "华容道义释曹操"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0050:c0001",
-        "sanguo-yanyi:0050:c0002",
         "sanguo-yanyi:0050:c0003",
-        "sanguo-yanyi:0050:c0004",
         "sanguo-yanyi:0050:c0007",
-        "sanguo-yanyi:0050:c0008",
         "sanguo-yanyi:0050:c0009",
         "sanguo-yanyi:0050:c0010",
         "sanguo-yanyi:0050:c0011",
-        "sanguo-yanyi:0050:c0012",
-        "sanguo-yanyi:0050:c0013",
-        "sanguo-yanyi:0050:c0014",
-        "sanguo-yanyi:0050:c0015"
+        "sanguo-yanyi:0050:c0013"
       ],
       "type": "L1",
       "exampleQuestion": "关羽在华容道为什么放走曹操",
@@ -7054,21 +6858,14 @@
         "一气周瑜"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0051:c0001",
         "sanguo-yanyi:0051:c0002",
-        "sanguo-yanyi:0051:c0003",
         "sanguo-yanyi:0051:c0004",
         "sanguo-yanyi:0051:c0005",
         "sanguo-yanyi:0051:c0006",
-        "sanguo-yanyi:0051:c0007",
         "sanguo-yanyi:0051:c0008",
-        "sanguo-yanyi:0051:c0009",
-        "sanguo-yanyi:0051:c0010",
         "sanguo-yanyi:0051:c0011",
         "sanguo-yanyi:0051:c0012",
-        "sanguo-yanyi:0051:c0013",
         "sanguo-yanyi:0051:c0014",
-        "sanguo-yanyi:0051:c0015",
         "sanguo-yanyi:0051:c0016",
         "sanguo-yanyi:0051:c0017"
       ],
@@ -7085,23 +6882,16 @@
         "曹仁守南郡"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0051:c0001",
         "sanguo-yanyi:0051:c0002",
         "sanguo-yanyi:0051:c0003",
         "sanguo-yanyi:0051:c0004",
         "sanguo-yanyi:0051:c0005",
-        "sanguo-yanyi:0051:c0006",
         "sanguo-yanyi:0051:c0007",
-        "sanguo-yanyi:0051:c0008",
-        "sanguo-yanyi:0051:c0009",
-        "sanguo-yanyi:0051:c0010",
         "sanguo-yanyi:0051:c0011",
         "sanguo-yanyi:0051:c0012",
-        "sanguo-yanyi:0051:c0013",
         "sanguo-yanyi:0051:c0014",
         "sanguo-yanyi:0051:c0015",
-        "sanguo-yanyi:0051:c0016",
-        "sanguo-yanyi:0051:c0017"
+        "sanguo-yanyi:0051:c0016"
       ],
       "type": "L2",
       "exampleQuestion": "曹仁是怎么守南郡的",
@@ -7119,14 +6909,9 @@
         "sanguo-yanyi:0052:c0001",
         "sanguo-yanyi:0052:c0002",
         "sanguo-yanyi:0052:c0003",
-        "sanguo-yanyi:0052:c0006",
-        "sanguo-yanyi:0052:c0007",
-        "sanguo-yanyi:0052:c0008",
-        "sanguo-yanyi:0052:c0009",
-        "sanguo-yanyi:0052:c0010",
-        "sanguo-yanyi:0052:c0011",
-        "sanguo-yanyi:0052:c0016",
-        "sanguo-yanyi:0052:c0017"
+        "sanguo-yanyi:0052:c0004",
+        "sanguo-yanyi:0052:c0005",
+        "sanguo-yanyi:0052:c0006"
       ],
       "type": "L2",
       "exampleQuestion": "诸葛亮是怎么赖着荆州不还的",
@@ -7142,14 +6927,9 @@
         "赵云计取桂阳"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0052:c0002",
-        "sanguo-yanyi:0052:c0005",
-        "sanguo-yanyi:0052:c0006",
-        "sanguo-yanyi:0052:c0008",
-        "sanguo-yanyi:0052:c0009",
-        "sanguo-yanyi:0052:c0010",
         "sanguo-yanyi:0052:c0011",
         "sanguo-yanyi:0052:c0012",
+        "sanguo-yanyi:0052:c0013",
         "sanguo-yanyi:0052:c0014",
         "sanguo-yanyi:0052:c0015",
         "sanguo-yanyi:0052:c0016",
@@ -7244,7 +7024,6 @@
         "关羽义释黄忠"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0053:c0002",
         "sanguo-yanyi:0053:c0003",
         "sanguo-yanyi:0053:c0004",
         "sanguo-yanyi:0053:c0005",
@@ -7253,8 +7032,7 @@
         "sanguo-yanyi:0053:c0008",
         "sanguo-yanyi:0053:c0009",
         "sanguo-yanyi:0053:c0010",
-        "sanguo-yanyi:0053:c0011",
-        "sanguo-yanyi:0053:c0019"
+        "sanguo-yanyi:0053:c0011"
       ],
       "type": "L1",
       "exampleQuestion": "关羽是怎么义释黄汉升的",
@@ -7441,14 +7219,18 @@
       "eventId": "E05401",
       "eventName": "甘露寺招亲",
       "aliases": [
-        "刘备招亲",
-        "赔了夫人又折兵",
         "甘露寺招亲"
       ],
       "chunkIds": [
+        "sanguo-yanyi:0054:c0011",
         "sanguo-yanyi:0054:c0012",
         "sanguo-yanyi:0054:c0013",
-        "sanguo-yanyi:0054:c0017"
+        "sanguo-yanyi:0054:c0014",
+        "sanguo-yanyi:0054:c0015",
+        "sanguo-yanyi:0054:c0016",
+        "sanguo-yanyi:0054:c0017",
+        "sanguo-yanyi:0054:c0018",
+        "sanguo-yanyi:0054:c0019"
       ],
       "type": "L1",
       "exampleQuestion": "刘备招亲是怎么回事"
@@ -7460,10 +7242,6 @@
         "刘备续娶孙夫人"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0054:c0001",
-        "sanguo-yanyi:0054:c0003",
-        "sanguo-yanyi:0054:c0004",
-        "sanguo-yanyi:0054:c0005",
         "sanguo-yanyi:0054:c0006",
         "sanguo-yanyi:0054:c0007",
         "sanguo-yanyi:0054:c0008",
@@ -7473,10 +7251,7 @@
         "sanguo-yanyi:0054:c0012",
         "sanguo-yanyi:0054:c0013",
         "sanguo-yanyi:0054:c0014",
-        "sanguo-yanyi:0054:c0015",
-        "sanguo-yanyi:0054:c0017",
-        "sanguo-yanyi:0054:c0019",
-        "sanguo-yanyi:0054:c0021"
+        "sanguo-yanyi:0054:c0017"
       ],
       "type": "L2",
       "exampleQuestion": "刘备是怎么跟孙尚香成亲的",
@@ -7492,15 +7267,16 @@
         "二气周瑜"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0055:c0001",
         "sanguo-yanyi:0055:c0002",
+        "sanguo-yanyi:0055:c0003",
+        "sanguo-yanyi:0055:c0004",
+        "sanguo-yanyi:0055:c0005",
+        "sanguo-yanyi:0055:c0006",
         "sanguo-yanyi:0055:c0008",
         "sanguo-yanyi:0055:c0009",
         "sanguo-yanyi:0055:c0010",
-        "sanguo-yanyi:0055:c0012",
         "sanguo-yanyi:0055:c0015",
-        "sanguo-yanyi:0055:c0016",
-        "sanguo-yanyi:0055:c0017"
+        "sanguo-yanyi:0055:c0016"
       ],
       "type": "L1",
       "exampleQuestion": "诸葛亮是怎么二气周瑜的",
@@ -7540,8 +7316,6 @@
       ],
       "chunkIds": [
         "sanguo-yanyi:0056:c0001",
-        "sanguo-yanyi:0056:c0009",
-        "sanguo-yanyi:0056:c0010",
         "sanguo-yanyi:0056:c0012",
         "sanguo-yanyi:0056:c0013",
         "sanguo-yanyi:0056:c0014",
@@ -7573,7 +7347,6 @@
       "eventId": "E05701",
       "eventName": "柴桑口吊丧",
       "aliases": [
-        "卧龙吊丧",
         "柴桑口吊丧"
       ],
       "chunkIds": [
@@ -7746,13 +7519,6 @@
         "割须弃袍"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0058:c0002",
-        "sanguo-yanyi:0058:c0003",
-        "sanguo-yanyi:0058:c0004",
-        "sanguo-yanyi:0058:c0005",
-        "sanguo-yanyi:0058:c0006",
-        "sanguo-yanyi:0058:c0007",
-        "sanguo-yanyi:0058:c0008",
         "sanguo-yanyi:0058:c0009",
         "sanguo-yanyi:0058:c0010",
         "sanguo-yanyi:0058:c0011",
@@ -7762,10 +7528,7 @@
         "sanguo-yanyi:0058:c0015",
         "sanguo-yanyi:0058:c0016",
         "sanguo-yanyi:0058:c0017",
-        "sanguo-yanyi:0058:c0018",
-        "sanguo-yanyi:0058:c0019",
-        "sanguo-yanyi:0058:c0020",
-        "sanguo-yanyi:0058:c0021"
+        "sanguo-yanyi:0058:c0018"
       ],
       "type": "L1",
       "exampleQuestion": "曹操割须弃袍是怎么回事"
@@ -7777,24 +7540,16 @@
         "马超兴兵雪恨"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0058:c0002",
         "sanguo-yanyi:0058:c0003",
         "sanguo-yanyi:0058:c0004",
         "sanguo-yanyi:0058:c0005",
-        "sanguo-yanyi:0058:c0006",
         "sanguo-yanyi:0058:c0007",
-        "sanguo-yanyi:0058:c0008",
         "sanguo-yanyi:0058:c0010",
         "sanguo-yanyi:0058:c0011",
-        "sanguo-yanyi:0058:c0012",
         "sanguo-yanyi:0058:c0013",
         "sanguo-yanyi:0058:c0014",
-        "sanguo-yanyi:0058:c0015",
         "sanguo-yanyi:0058:c0016",
-        "sanguo-yanyi:0058:c0017",
-        "sanguo-yanyi:0058:c0019",
-        "sanguo-yanyi:0058:c0020",
-        "sanguo-yanyi:0058:c0021"
+        "sanguo-yanyi:0058:c0017"
       ],
       "type": "L2",
       "exampleQuestion": "马超为什么要兴兵攻打曹操",
@@ -7923,20 +7678,12 @@
       ],
       "chunkIds": [
         "sanguo-yanyi:0059:c0001",
+        "sanguo-yanyi:0059:c0002",
         "sanguo-yanyi:0059:c0003",
         "sanguo-yanyi:0059:c0004",
         "sanguo-yanyi:0059:c0005",
         "sanguo-yanyi:0059:c0006",
-        "sanguo-yanyi:0059:c0008",
-        "sanguo-yanyi:0059:c0009",
-        "sanguo-yanyi:0059:c0010",
-        "sanguo-yanyi:0059:c0011",
-        "sanguo-yanyi:0059:c0012",
-        "sanguo-yanyi:0059:c0013",
-        "sanguo-yanyi:0059:c0014",
-        "sanguo-yanyi:0059:c0015",
-        "sanguo-yanyi:0059:c0016",
-        "sanguo-yanyi:0059:c0020"
+        "sanguo-yanyi:0059:c0007"
       ],
       "type": "L1",
       "exampleQuestion": "许褚和马超是怎么单挑的",
@@ -7952,10 +7699,6 @@
         "抹书间韩遂"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0059:c0001",
-        "sanguo-yanyi:0059:c0004",
-        "sanguo-yanyi:0059:c0006",
-        "sanguo-yanyi:0059:c0007",
         "sanguo-yanyi:0059:c0008",
         "sanguo-yanyi:0059:c0009",
         "sanguo-yanyi:0059:c0010",
@@ -7963,6 +7706,7 @@
         "sanguo-yanyi:0059:c0012",
         "sanguo-yanyi:0059:c0013",
         "sanguo-yanyi:0059:c0014",
+        "sanguo-yanyi:0059:c0015",
         "sanguo-yanyi:0059:c0016"
       ],
       "type": "L1",
@@ -8032,28 +7776,18 @@
       "eventId": "E06001",
       "eventName": "张松献图",
       "aliases": [
-        "张松献地图",
         "张松献图"
       ],
       "chunkIds": [
         "sanguo-yanyi:0060:c0001",
         "sanguo-yanyi:0060:c0002",
         "sanguo-yanyi:0060:c0003",
-        "sanguo-yanyi:0060:c0004",
-        "sanguo-yanyi:0060:c0007",
+        "sanguo-yanyi:0060:c0005",
         "sanguo-yanyi:0060:c0008",
         "sanguo-yanyi:0060:c0010",
-        "sanguo-yanyi:0060:c0012",
-        "sanguo-yanyi:0060:c0014",
-        "sanguo-yanyi:0060:c0015",
-        "sanguo-yanyi:0060:c0016",
-        "sanguo-yanyi:0060:c0017",
-        "sanguo-yanyi:0060:c0020",
-        "sanguo-yanyi:0060:c0023",
-        "sanguo-yanyi:0060:c0024",
-        "sanguo-yanyi:0060:c0025",
-        "sanguo-yanyi:0060:c0026",
-        "sanguo-yanyi:0060:c0027"
+        "sanguo-yanyi:0060:c0011",
+        "sanguo-yanyi:0060:c0013",
+        "sanguo-yanyi:0060:c0014"
       ],
       "type": "L1",
       "exampleQuestion": "张松是怎么把西川地图献给刘备的",
@@ -8068,54 +7802,16 @@
         "取西川"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0060:c0001",
-        "sanguo-yanyi:0060:c0003",
-        "sanguo-yanyi:0060:c0005",
-        "sanguo-yanyi:0060:c0007",
-        "sanguo-yanyi:0060:c0008",
-        "sanguo-yanyi:0060:c0009",
-        "sanguo-yanyi:0060:c0011",
-        "sanguo-yanyi:0060:c0012",
         "sanguo-yanyi:0060:c0013",
-        "sanguo-yanyi:0060:c0014",
-        "sanguo-yanyi:0060:c0015",
-        "sanguo-yanyi:0060:c0017",
-        "sanguo-yanyi:0060:c0018",
-        "sanguo-yanyi:0060:c0019",
-        "sanguo-yanyi:0060:c0020",
-        "sanguo-yanyi:0060:c0021",
-        "sanguo-yanyi:0060:c0022",
-        "sanguo-yanyi:0060:c0024",
-        "sanguo-yanyi:0060:c0025",
-        "sanguo-yanyi:0060:c0026",
+        "sanguo-yanyi:0060:c0016",
         "sanguo-yanyi:0061:c0001",
-        "sanguo-yanyi:0061:c0003",
-        "sanguo-yanyi:0062:c0001",
-        "sanguo-yanyi:0062:c0003",
-        "sanguo-yanyi:0062:c0004",
-        "sanguo-yanyi:0062:c0011",
-        "sanguo-yanyi:0062:c0013",
-        "sanguo-yanyi:0062:c0019",
-        "sanguo-yanyi:0063:c0001",
-        "sanguo-yanyi:0063:c0003",
-        "sanguo-yanyi:0063:c0004",
-        "sanguo-yanyi:0063:c0007",
-        "sanguo-yanyi:0063:c0014",
-        "sanguo-yanyi:0063:c0015",
+        "sanguo-yanyi:0062:c0006",
+        "sanguo-yanyi:0062:c0008",
+        "sanguo-yanyi:0063:c0006",
+        "sanguo-yanyi:0063:c0021",
         "sanguo-yanyi:0064:c0009",
-        "sanguo-yanyi:0064:c0010",
-        "sanguo-yanyi:0064:c0011",
-        "sanguo-yanyi:0064:c0013",
-        "sanguo-yanyi:0064:c0019",
-        "sanguo-yanyi:0064:c0020",
-        "sanguo-yanyi:0065:c0009",
-        "sanguo-yanyi:0065:c0011",
-        "sanguo-yanyi:0065:c0012",
         "sanguo-yanyi:0065:c0015",
-        "sanguo-yanyi:0065:c0016",
-        "sanguo-yanyi:0065:c0018",
-        "sanguo-yanyi:0065:c0020",
-        "sanguo-yanyi:0065:c0022"
+        "sanguo-yanyi:0065:c0021"
       ],
       "type": "L1",
       "exampleQuestion": "刘备是怎么攻取西川的",
@@ -8128,18 +7824,15 @@
         "庞统议取西蜀"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0060:c0006",
         "sanguo-yanyi:0060:c0010",
         "sanguo-yanyi:0060:c0011",
         "sanguo-yanyi:0060:c0012",
         "sanguo-yanyi:0060:c0013",
         "sanguo-yanyi:0060:c0016",
-        "sanguo-yanyi:0060:c0017",
         "sanguo-yanyi:0060:c0020",
         "sanguo-yanyi:0060:c0021",
         "sanguo-yanyi:0060:c0022",
         "sanguo-yanyi:0060:c0025",
-        "sanguo-yanyi:0060:c0026",
         "sanguo-yanyi:0060:c0027"
       ],
       "type": "L2",
@@ -8287,7 +7980,6 @@
         "赵云截江夺阿斗"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0061:c0004",
         "sanguo-yanyi:0061:c0005",
         "sanguo-yanyi:0061:c0006",
         "sanguo-yanyi:0061:c0007",
@@ -8311,13 +8003,6 @@
         "孙权遗书退曹操"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0061:c0003",
-        "sanguo-yanyi:0061:c0004",
-        "sanguo-yanyi:0061:c0011",
-        "sanguo-yanyi:0061:c0012",
-        "sanguo-yanyi:0061:c0013",
-        "sanguo-yanyi:0061:c0015",
-        "sanguo-yanyi:0061:c0016",
         "sanguo-yanyi:0061:c0017",
         "sanguo-yanyi:0061:c0018",
         "sanguo-yanyi:0061:c0019",
@@ -8503,8 +8188,6 @@
         "张飞义释严颜"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0063:c0013",
-        "sanguo-yanyi:0063:c0014",
         "sanguo-yanyi:0063:c0015",
         "sanguo-yanyi:0063:c0016",
         "sanguo-yanyi:0063:c0017",
@@ -8546,7 +8229,6 @@
       "aliases": [
         "庞统之死",
         "庞统死亡",
-        "落凤坡",
         "庞统去世"
       ],
       "chunkIds": [
@@ -8728,22 +8410,15 @@
       ],
       "chunkIds": [
         "sanguo-yanyi:0065:c0001",
-        "sanguo-yanyi:0065:c0003",
-        "sanguo-yanyi:0065:c0004",
         "sanguo-yanyi:0065:c0005",
-        "sanguo-yanyi:0065:c0006",
         "sanguo-yanyi:0065:c0007",
         "sanguo-yanyi:0065:c0008",
         "sanguo-yanyi:0065:c0009",
         "sanguo-yanyi:0065:c0010",
         "sanguo-yanyi:0065:c0011",
         "sanguo-yanyi:0065:c0012",
-        "sanguo-yanyi:0065:c0013",
         "sanguo-yanyi:0065:c0014",
-        "sanguo-yanyi:0065:c0015",
-        "sanguo-yanyi:0065:c0019",
-        "sanguo-yanyi:0065:c0021",
-        "sanguo-yanyi:0065:c0022"
+        "sanguo-yanyi:0065:c0015"
       ],
       "type": "L1",
       "exampleQuestion": "马超和张飞在葭萌关是怎么大战的",
@@ -8758,22 +8433,10 @@
         "刘备自领益州牧"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0065:c0001",
         "sanguo-yanyi:0065:c0002",
-        "sanguo-yanyi:0065:c0003",
-        "sanguo-yanyi:0065:c0004",
-        "sanguo-yanyi:0065:c0006",
-        "sanguo-yanyi:0065:c0007",
-        "sanguo-yanyi:0065:c0008",
-        "sanguo-yanyi:0065:c0009",
-        "sanguo-yanyi:0065:c0010",
-        "sanguo-yanyi:0065:c0011",
-        "sanguo-yanyi:0065:c0012",
-        "sanguo-yanyi:0065:c0014",
         "sanguo-yanyi:0065:c0015",
-        "sanguo-yanyi:0065:c0016",
-        "sanguo-yanyi:0065:c0017",
         "sanguo-yanyi:0065:c0018",
+        "sanguo-yanyi:0065:c0019",
         "sanguo-yanyi:0065:c0020",
         "sanguo-yanyi:0065:c0021",
         "sanguo-yanyi:0065:c0022"
@@ -8792,27 +8455,15 @@
       ],
       "chunkIds": [
         "sanguo-yanyi:0065:c0001",
-        "sanguo-yanyi:0065:c0002",
-        "sanguo-yanyi:0065:c0003",
-        "sanguo-yanyi:0065:c0004",
         "sanguo-yanyi:0065:c0005",
-        "sanguo-yanyi:0065:c0006",
         "sanguo-yanyi:0065:c0007",
         "sanguo-yanyi:0065:c0008",
         "sanguo-yanyi:0065:c0009",
         "sanguo-yanyi:0065:c0010",
         "sanguo-yanyi:0065:c0011",
         "sanguo-yanyi:0065:c0012",
-        "sanguo-yanyi:0065:c0013",
         "sanguo-yanyi:0065:c0014",
-        "sanguo-yanyi:0065:c0015",
-        "sanguo-yanyi:0065:c0016",
-        "sanguo-yanyi:0065:c0017",
-        "sanguo-yanyi:0065:c0018",
-        "sanguo-yanyi:0065:c0019",
-        "sanguo-yanyi:0065:c0020",
-        "sanguo-yanyi:0065:c0021",
-        "sanguo-yanyi:0065:c0022"
+        "sanguo-yanyi:0065:c0015"
       ],
       "type": "L2",
       "exampleQuestion": "马超是怎么投降刘备的",
@@ -8830,6 +8481,8 @@
       "chunkIds": [
         "sanguo-yanyi:0066:c0005",
         "sanguo-yanyi:0066:c0006",
+        "sanguo-yanyi:0066:c0007",
+        "sanguo-yanyi:0066:c0008",
         "sanguo-yanyi:0066:c0009",
         "sanguo-yanyi:0066:c0010"
       ],
@@ -8919,7 +8572,6 @@
         "张辽威震逍遥津"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0067:c0017",
         "sanguo-yanyi:0067:c0018",
         "sanguo-yanyi:0067:c0019",
         "sanguo-yanyi:0067:c0020",
@@ -8948,11 +8600,7 @@
         "sanguo-yanyi:0067:c0009",
         "sanguo-yanyi:0067:c0010",
         "sanguo-yanyi:0067:c0011",
-        "sanguo-yanyi:0067:c0013",
-        "sanguo-yanyi:0067:c0014",
-        "sanguo-yanyi:0067:c0015",
-        "sanguo-yanyi:0067:c0018",
-        "sanguo-yanyi:0067:c0022"
+        "sanguo-yanyi:0067:c0013"
       ],
       "type": "L2",
       "exampleQuestion": "曹操是怎么拿下汉中的",
@@ -8967,20 +8615,13 @@
         "张鲁归降曹操"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0067:c0001",
-        "sanguo-yanyi:0067:c0003",
         "sanguo-yanyi:0067:c0005",
         "sanguo-yanyi:0067:c0006",
         "sanguo-yanyi:0067:c0007",
-        "sanguo-yanyi:0067:c0008",
         "sanguo-yanyi:0067:c0009",
         "sanguo-yanyi:0067:c0010",
         "sanguo-yanyi:0067:c0011",
-        "sanguo-yanyi:0067:c0013",
-        "sanguo-yanyi:0067:c0014",
-        "sanguo-yanyi:0067:c0015",
-        "sanguo-yanyi:0067:c0018",
-        "sanguo-yanyi:0067:c0022"
+        "sanguo-yanyi:0067:c0013"
       ],
       "type": "L2",
       "exampleQuestion": "张鲁是怎么投降曹操的",
@@ -9091,7 +8732,7 @@
         "甘宁百骑劫魏营"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0068:c0002",
+        "sanguo-yanyi:0068:c0001",
         "sanguo-yanyi:0068:c0003",
         "sanguo-yanyi:0068:c0004"
       ],
@@ -9105,19 +8746,9 @@
       "eventId": "E06802",
       "eventName": "左慈掷杯戏曹操",
       "aliases": [
-        "左慈戏曹操",
         "左慈掷杯戏曹操"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0068:c0001",
-        "sanguo-yanyi:0068:c0003",
-        "sanguo-yanyi:0068:c0004",
-        "sanguo-yanyi:0068:c0005",
-        "sanguo-yanyi:0068:c0006",
-        "sanguo-yanyi:0068:c0007",
-        "sanguo-yanyi:0068:c0009",
-        "sanguo-yanyi:0068:c0010",
-        "sanguo-yanyi:0068:c0011",
         "sanguo-yanyi:0068:c0013",
         "sanguo-yanyi:0068:c0015",
         "sanguo-yanyi:0068:c0016",
@@ -9255,7 +8886,6 @@
       "eventId": "E06902",
       "eventName": "五臣讨贼死节",
       "aliases": [
-        "五臣死节",
         "五臣讨贼死节"
       ],
       "chunkIds": [
@@ -9432,9 +9062,7 @@
         "sanguo-yanyi:0070:c0006",
         "sanguo-yanyi:0070:c0007",
         "sanguo-yanyi:0070:c0008",
-        "sanguo-yanyi:0070:c0009",
-        "sanguo-yanyi:0070:c0010",
-        "sanguo-yanyi:0070:c0019"
+        "sanguo-yanyi:0070:c0009"
       ],
       "type": "L1",
       "exampleQuestion": "张飞是怎么智取瓦口隘的",
@@ -9449,7 +9077,6 @@
         "黄忠计夺天荡山"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0070:c0010",
         "sanguo-yanyi:0070:c0011",
         "sanguo-yanyi:0070:c0012",
         "sanguo-yanyi:0070:c0013",
@@ -9474,19 +9101,14 @@
         "汉中之战"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0070:c0008",
-        "sanguo-yanyi:0070:c0009",
-        "sanguo-yanyi:0070:c0011",
-        "sanguo-yanyi:0070:c0013",
-        "sanguo-yanyi:0070:c0016",
         "sanguo-yanyi:0070:c0019",
-        "sanguo-yanyi:0071:c0001",
         "sanguo-yanyi:0071:c0002",
-        "sanguo-yanyi:0071:c0005",
-        "sanguo-yanyi:0071:c0006",
-        "sanguo-yanyi:0071:c0020",
+        "sanguo-yanyi:0071:c0007",
+        "sanguo-yanyi:0071:c0011",
         "sanguo-yanyi:0072:c0002",
-        "sanguo-yanyi:0072:c0005"
+        "sanguo-yanyi:0072:c0005",
+        "sanguo-yanyi:0072:c0009",
+        "sanguo-yanyi:0073:c0001"
       ],
       "type": "L1",
       "exampleQuestion": "汉中之战是怎么打的",
@@ -9556,19 +9178,14 @@
         "定军山斩夏侯渊"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0071:c0002",
-        "sanguo-yanyi:0071:c0005",
-        "sanguo-yanyi:0071:c0006",
+        "sanguo-yanyi:0071:c0001",
         "sanguo-yanyi:0071:c0007",
         "sanguo-yanyi:0071:c0008",
         "sanguo-yanyi:0071:c0009",
         "sanguo-yanyi:0071:c0010",
         "sanguo-yanyi:0071:c0011",
         "sanguo-yanyi:0071:c0012",
-        "sanguo-yanyi:0071:c0013",
-        "sanguo-yanyi:0071:c0014",
-        "sanguo-yanyi:0071:c0016",
-        "sanguo-yanyi:0071:c0021"
+        "sanguo-yanyi:0071:c0013"
       ],
       "type": "L1",
       "exampleQuestion": "黄忠在定军山是怎么斩夏侯渊的",
@@ -9583,9 +9200,6 @@
         "赵云汉水寡胜众"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0071:c0001",
-        "sanguo-yanyi:0071:c0012",
-        "sanguo-yanyi:0071:c0013",
         "sanguo-yanyi:0071:c0014",
         "sanguo-yanyi:0071:c0015",
         "sanguo-yanyi:0071:c0016",
@@ -9593,8 +9207,7 @@
         "sanguo-yanyi:0071:c0018",
         "sanguo-yanyi:0071:c0019",
         "sanguo-yanyi:0071:c0020",
-        "sanguo-yanyi:0071:c0021",
-        "sanguo-yanyi:0071:c0022"
+        "sanguo-yanyi:0071:c0021"
       ],
       "type": "L2",
       "exampleQuestion": "赵云在汉水是怎么以少胜多的",
@@ -9650,13 +9263,9 @@
         "sanguo-yanyi:0072:c0003",
         "sanguo-yanyi:0072:c0004",
         "sanguo-yanyi:0072:c0006",
-        "sanguo-yanyi:0072:c0008",
         "sanguo-yanyi:0072:c0009",
-        "sanguo-yanyi:0072:c0010",
         "sanguo-yanyi:0072:c0011",
         "sanguo-yanyi:0072:c0012",
-        "sanguo-yanyi:0072:c0014",
-        "sanguo-yanyi:0072:c0015",
         "sanguo-yanyi:0072:c0017",
         "sanguo-yanyi:0072:c0018"
       ],
@@ -9694,7 +9303,13 @@
         "襄樊之战"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0074:c0014"
+        "sanguo-yanyi:0073:c0012",
+        "sanguo-yanyi:0073:c0014",
+        "sanguo-yanyi:0073:c0015",
+        "sanguo-yanyi:0073:c0017",
+        "sanguo-yanyi:0074:c0005",
+        "sanguo-yanyi:0074:c0012",
+        "sanguo-yanyi:0074:c0016"
       ],
       "type": "L1",
       "exampleQuestion": "襄樊之战是怎么回事",
@@ -9711,14 +9326,8 @@
         "sanguo-yanyi:0073:c0002",
         "sanguo-yanyi:0073:c0003",
         "sanguo-yanyi:0073:c0004",
-        "sanguo-yanyi:0073:c0005",
-        "sanguo-yanyi:0073:c0006",
-        "sanguo-yanyi:0073:c0007",
-        "sanguo-yanyi:0073:c0009",
         "sanguo-yanyi:0073:c0010",
-        "sanguo-yanyi:0073:c0011",
-        "sanguo-yanyi:0073:c0013",
-        "sanguo-yanyi:0073:c0014"
+        "sanguo-yanyi:0073:c0011"
       ],
       "type": "L2",
       "exampleQuestion": "刘备是怎么当上汉中王的",
@@ -9733,11 +9342,6 @@
         "关羽攻拔襄阳"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0073:c0003",
-        "sanguo-yanyi:0073:c0007",
-        "sanguo-yanyi:0073:c0008",
-        "sanguo-yanyi:0073:c0009",
-        "sanguo-yanyi:0073:c0010",
         "sanguo-yanyi:0073:c0011",
         "sanguo-yanyi:0073:c0012",
         "sanguo-yanyi:0073:c0013",
@@ -9798,18 +9402,13 @@
         "庞德抬榇决死战"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0074:c0001",
-        "sanguo-yanyi:0074:c0002",
+        "sanguo-yanyi:0074:c0003",
         "sanguo-yanyi:0074:c0004",
         "sanguo-yanyi:0074:c0005",
         "sanguo-yanyi:0074:c0006",
         "sanguo-yanyi:0074:c0007",
         "sanguo-yanyi:0074:c0008",
-        "sanguo-yanyi:0074:c0009",
-        "sanguo-yanyi:0074:c0011",
-        "sanguo-yanyi:0074:c0012",
-        "sanguo-yanyi:0074:c0013",
-        "sanguo-yanyi:0074:c0015"
+        "sanguo-yanyi:0074:c0009"
       ],
       "type": "L1",
       "exampleQuestion": "庞德抬着棺材跟关羽打仗是怎么回事",
@@ -9824,12 +9423,13 @@
         "水淹七军"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0074:c0001",
-        "sanguo-yanyi:0074:c0009",
         "sanguo-yanyi:0074:c0010",
         "sanguo-yanyi:0074:c0011",
+        "sanguo-yanyi:0074:c0012",
         "sanguo-yanyi:0074:c0013",
-        "sanguo-yanyi:0074:c0017"
+        "sanguo-yanyi:0074:c0014",
+        "sanguo-yanyi:0074:c0015",
+        "sanguo-yanyi:0074:c0016"
       ],
       "type": "L1",
       "exampleQuestion": "关羽水淹七军是怎么回事"
@@ -9843,20 +9443,14 @@
       "chunkIds": [
         "sanguo-yanyi:0074:c0001",
         "sanguo-yanyi:0074:c0003",
-        "sanguo-yanyi:0074:c0004",
-        "sanguo-yanyi:0074:c0005",
         "sanguo-yanyi:0074:c0006",
-        "sanguo-yanyi:0074:c0007",
         "sanguo-yanyi:0074:c0008",
-        "sanguo-yanyi:0074:c0009",
         "sanguo-yanyi:0074:c0010",
         "sanguo-yanyi:0074:c0011",
         "sanguo-yanyi:0074:c0012",
         "sanguo-yanyi:0074:c0013",
-        "sanguo-yanyi:0074:c0014",
         "sanguo-yanyi:0074:c0015",
-        "sanguo-yanyi:0074:c0016",
-        "sanguo-yanyi:0074:c0017"
+        "sanguo-yanyi:0074:c0016"
       ],
       "type": "L2",
       "exampleQuestion": "于禁是怎么投降关羽的",
@@ -9948,7 +9542,10 @@
         "刮骨疗毒"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0075:c0003"
+        "sanguo-yanyi:0075:c0002",
+        "sanguo-yanyi:0075:c0003",
+        "sanguo-yanyi:0075:c0004",
+        "sanguo-yanyi:0075:c0005"
       ],
       "type": "L1",
       "exampleQuestion": "关羽刮骨疗毒是怎么回事"
@@ -9960,7 +9557,13 @@
         "白衣渡江"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0075:c0012"
+        "sanguo-yanyi:0075:c0007",
+        "sanguo-yanyi:0075:c0008",
+        "sanguo-yanyi:0075:c0009",
+        "sanguo-yanyi:0075:c0010",
+        "sanguo-yanyi:0075:c0011",
+        "sanguo-yanyi:0075:c0012",
+        "sanguo-yanyi:0075:c0013"
       ],
       "type": "L1",
       "exampleQuestion": "吕蒙白衣渡江是怎么回事"
@@ -9973,13 +9576,19 @@
       ],
       "chunkIds": [
         "sanguo-yanyi:0076:c0003",
+        "sanguo-yanyi:0076:c0006",
         "sanguo-yanyi:0076:c0011",
-        "sanguo-yanyi:0076:c0013",
         "sanguo-yanyi:0076:c0014",
-        "sanguo-yanyi:0076:c0016"
+        "sanguo-yanyi:0076:c0016",
+        "sanguo-yanyi:0076:c0017",
+        "sanguo-yanyi:0077:c0001",
+        "sanguo-yanyi:0077:c0002",
+        "sanguo-yanyi:0077:c0004",
+        "sanguo-yanyi:0077:c0005"
       ],
       "type": "L1",
-      "exampleQuestion": "关羽是怎么败走麦城的"
+      "exampleQuestion": "关羽是怎么败走麦城的",
+      "crossChapter": "076–077"
     },
     {
       "eventId": "E07602",
@@ -10027,22 +9636,15 @@
       ],
       "chunkIds": [
         "sanguo-yanyi:0077:c0001",
-        "sanguo-yanyi:0077:c0002",
         "sanguo-yanyi:0077:c0003",
         "sanguo-yanyi:0077:c0004",
-        "sanguo-yanyi:0077:c0005",
-        "sanguo-yanyi:0077:c0006",
         "sanguo-yanyi:0077:c0007",
         "sanguo-yanyi:0077:c0008",
         "sanguo-yanyi:0077:c0009",
         "sanguo-yanyi:0077:c0010",
-        "sanguo-yanyi:0077:c0011",
         "sanguo-yanyi:0077:c0012",
         "sanguo-yanyi:0077:c0013",
-        "sanguo-yanyi:0077:c0014",
-        "sanguo-yanyi:0077:c0015",
-        "sanguo-yanyi:0077:c0016",
-        "sanguo-yanyi:0077:c0017"
+        "sanguo-yanyi:0077:c0015"
       ],
       "type": "L2",
       "exampleQuestion": "关羽死后显圣是怎么回事",
@@ -10206,8 +9808,6 @@
       "eventId": "E07901",
       "eventName": "曹植七步诗",
       "aliases": [
-        "七步成诗",
-        "煮豆燃豆萁",
         "曹植七步诗"
       ],
       "chunkIds": [
@@ -10428,16 +10028,12 @@
         "sanguo-yanyi:0081:c0002",
         "sanguo-yanyi:0081:c0003",
         "sanguo-yanyi:0081:c0004",
-        "sanguo-yanyi:0081:c0005",
         "sanguo-yanyi:0081:c0006",
-        "sanguo-yanyi:0081:c0008",
+        "sanguo-yanyi:0081:c0007",
         "sanguo-yanyi:0081:c0009",
         "sanguo-yanyi:0081:c0010",
-        "sanguo-yanyi:0081:c0011",
         "sanguo-yanyi:0081:c0012",
-        "sanguo-yanyi:0081:c0013",
-        "sanguo-yanyi:0081:c0014",
-        "sanguo-yanyi:0081:c0015"
+        "sanguo-yanyi:0081:c0013"
       ],
       "type": "L2",
       "exampleQuestion": "刘备为什么要兴兵伐吴",
@@ -10825,11 +10421,15 @@
         "火烧连营"
       ],
       "chunkIds": [
+        "sanguo-yanyi:0084:c0001",
         "sanguo-yanyi:0084:c0002",
         "sanguo-yanyi:0084:c0004",
-        "sanguo-yanyi:0084:c0005",
+        "sanguo-yanyi:0084:c0008",
+        "sanguo-yanyi:0084:c0009",
         "sanguo-yanyi:0084:c0010",
-        "sanguo-yanyi:0084:c0013"
+        "sanguo-yanyi:0084:c0011",
+        "sanguo-yanyi:0084:c0012",
+        "sanguo-yanyi:0084:c0018"
       ],
       "type": "L1",
       "exampleQuestion": "陆逊火烧连营七百里是怎么回事"
@@ -10841,7 +10441,9 @@
         "八阵图"
       ],
       "chunkIds": [
+        "sanguo-yanyi:0084:c0019",
         "sanguo-yanyi:0084:c0020",
+        "sanguo-yanyi:0084:c0021",
         "sanguo-yanyi:0084:c0022"
       ],
       "type": "L1",
@@ -11061,7 +10663,6 @@
       "eventId": "E08601",
       "eventName": "秦宓逞天辩",
       "aliases": [
-        "秦宓天辩",
         "秦宓逞天辩"
       ],
       "chunkIds": [
@@ -11119,68 +10720,17 @@
       "eventId": "E08701",
       "eventName": "七擒孟获",
       "aliases": [
-        "七擒七纵",
         "七纵七擒"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0087:c0001",
-        "sanguo-yanyi:0087:c0012",
-        "sanguo-yanyi:0087:c0018",
-        "sanguo-yanyi:0087:c0019",
-        "sanguo-yanyi:0087:c0020",
+        "sanguo-yanyi:0087:c0002",
         "sanguo-yanyi:0087:c0021",
-        "sanguo-yanyi:0088:c0001",
-        "sanguo-yanyi:0088:c0002",
-        "sanguo-yanyi:0088:c0003",
-        "sanguo-yanyi:0088:c0004",
-        "sanguo-yanyi:0088:c0006",
-        "sanguo-yanyi:0088:c0007",
-        "sanguo-yanyi:0088:c0008",
         "sanguo-yanyi:0088:c0009",
-        "sanguo-yanyi:0088:c0010",
-        "sanguo-yanyi:0088:c0011",
-        "sanguo-yanyi:0088:c0012",
-        "sanguo-yanyi:0088:c0013",
-        "sanguo-yanyi:0088:c0014",
-        "sanguo-yanyi:0088:c0015",
         "sanguo-yanyi:0088:c0016",
-        "sanguo-yanyi:0088:c0017",
-        "sanguo-yanyi:0088:c0019",
-        "sanguo-yanyi:0088:c0020",
-        "sanguo-yanyi:0089:c0001",
-        "sanguo-yanyi:0089:c0002",
-        "sanguo-yanyi:0089:c0003",
-        "sanguo-yanyi:0089:c0004",
-        "sanguo-yanyi:0089:c0005",
         "sanguo-yanyi:0089:c0006",
-        "sanguo-yanyi:0089:c0008",
-        "sanguo-yanyi:0089:c0009",
-        "sanguo-yanyi:0089:c0010",
-        "sanguo-yanyi:0089:c0011",
-        "sanguo-yanyi:0089:c0016",
-        "sanguo-yanyi:0089:c0017",
-        "sanguo-yanyi:0089:c0020",
-        "sanguo-yanyi:0089:c0021",
         "sanguo-yanyi:0089:c0022",
-        "sanguo-yanyi:0089:c0023",
-        "sanguo-yanyi:0090:c0001",
-        "sanguo-yanyi:0090:c0002",
-        "sanguo-yanyi:0090:c0005",
-        "sanguo-yanyi:0090:c0006",
-        "sanguo-yanyi:0090:c0008",
-        "sanguo-yanyi:0090:c0009",
-        "sanguo-yanyi:0090:c0011",
-        "sanguo-yanyi:0090:c0012",
         "sanguo-yanyi:0090:c0013",
-        "sanguo-yanyi:0090:c0014",
-        "sanguo-yanyi:0090:c0015",
-        "sanguo-yanyi:0090:c0018",
-        "sanguo-yanyi:0090:c0020",
-        "sanguo-yanyi:0090:c0022",
-        "sanguo-yanyi:0090:c0023",
         "sanguo-yanyi:0090:c0024",
-        "sanguo-yanyi:0090:c0025",
-        "sanguo-yanyi:0090:c0026",
         "sanguo-yanyi:0090:c0027"
       ],
       "type": "L1",
@@ -11275,20 +10825,15 @@
       ],
       "chunkIds": [
         "sanguo-yanyi:0088:c0001",
-        "sanguo-yanyi:0088:c0002",
         "sanguo-yanyi:0088:c0003",
         "sanguo-yanyi:0088:c0004",
         "sanguo-yanyi:0088:c0005",
-        "sanguo-yanyi:0088:c0006",
         "sanguo-yanyi:0088:c0007",
+        "sanguo-yanyi:0088:c0008",
         "sanguo-yanyi:0088:c0009",
         "sanguo-yanyi:0088:c0010",
         "sanguo-yanyi:0088:c0011",
-        "sanguo-yanyi:0088:c0014",
-        "sanguo-yanyi:0088:c0015",
-        "sanguo-yanyi:0088:c0017",
-        "sanguo-yanyi:0088:c0018",
-        "sanguo-yanyi:0088:c0019"
+        "sanguo-yanyi:0088:c0017"
       ],
       "type": "L2",
       "exampleQuestion": "孟获是怎么被二擒的"
@@ -11300,14 +10845,6 @@
         "识诈降三擒孟获"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0088:c0001",
-        "sanguo-yanyi:0088:c0002",
-        "sanguo-yanyi:0088:c0003",
-        "sanguo-yanyi:0088:c0004",
-        "sanguo-yanyi:0088:c0006",
-        "sanguo-yanyi:0088:c0007",
-        "sanguo-yanyi:0088:c0008",
-        "sanguo-yanyi:0088:c0009",
         "sanguo-yanyi:0088:c0010",
         "sanguo-yanyi:0088:c0011",
         "sanguo-yanyi:0088:c0012",
@@ -11390,18 +10927,12 @@
       ],
       "chunkIds": [
         "sanguo-yanyi:0089:c0001",
-        "sanguo-yanyi:0089:c0002",
         "sanguo-yanyi:0089:c0003",
-        "sanguo-yanyi:0089:c0004",
-        "sanguo-yanyi:0089:c0005",
         "sanguo-yanyi:0089:c0006",
-        "sanguo-yanyi:0089:c0008",
         "sanguo-yanyi:0089:c0009",
         "sanguo-yanyi:0089:c0010",
-        "sanguo-yanyi:0089:c0011",
         "sanguo-yanyi:0089:c0016",
         "sanguo-yanyi:0089:c0017",
-        "sanguo-yanyi:0089:c0020",
         "sanguo-yanyi:0089:c0021",
         "sanguo-yanyi:0089:c0022",
         "sanguo-yanyi:0089:c0023"
@@ -11416,7 +10947,6 @@
       "eventId": "E09001",
       "eventName": "火烧藤甲兵",
       "aliases": [
-        "火烧藤甲军",
         "火烧藤甲兵"
       ],
       "chunkIds": [
@@ -11438,24 +10968,15 @@
         "六擒七擒孟获"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0090:c0001",
-        "sanguo-yanyi:0090:c0002",
-        "sanguo-yanyi:0090:c0005",
         "sanguo-yanyi:0090:c0006",
         "sanguo-yanyi:0090:c0008",
         "sanguo-yanyi:0090:c0009",
         "sanguo-yanyi:0090:c0011",
-        "sanguo-yanyi:0090:c0012",
         "sanguo-yanyi:0090:c0013",
-        "sanguo-yanyi:0090:c0014",
         "sanguo-yanyi:0090:c0015",
-        "sanguo-yanyi:0090:c0018",
-        "sanguo-yanyi:0090:c0020",
         "sanguo-yanyi:0090:c0022",
-        "sanguo-yanyi:0090:c0023",
         "sanguo-yanyi:0090:c0024",
         "sanguo-yanyi:0090:c0025",
-        "sanguo-yanyi:0090:c0026",
         "sanguo-yanyi:0090:c0027"
       ],
       "type": "L2",
@@ -11738,9 +11259,7 @@
       ],
       "chunkIds": [
         "sanguo-yanyi:0093:c0001",
-        "sanguo-yanyi:0093:c0002",
         "sanguo-yanyi:0093:c0003",
-        "sanguo-yanyi:0093:c0004",
         "sanguo-yanyi:0093:c0005",
         "sanguo-yanyi:0093:c0006",
         "sanguo-yanyi:0093:c0007",
@@ -11923,19 +11442,13 @@
       ],
       "chunkIds": [
         "sanguo-yanyi:0095:c0001",
-        "sanguo-yanyi:0095:c0002",
         "sanguo-yanyi:0095:c0003",
         "sanguo-yanyi:0095:c0004",
-        "sanguo-yanyi:0095:c0005",
+        "sanguo-yanyi:0095:c0006",
         "sanguo-yanyi:0095:c0007",
-        "sanguo-yanyi:0095:c0008",
+        "sanguo-yanyi:0095:c0009",
         "sanguo-yanyi:0095:c0010",
-        "sanguo-yanyi:0095:c0011",
-        "sanguo-yanyi:0095:c0012",
-        "sanguo-yanyi:0095:c0013",
-        "sanguo-yanyi:0095:c0014",
-        "sanguo-yanyi:0095:c0015",
-        "sanguo-yanyi:0095:c0020"
+        "sanguo-yanyi:0095:c0011"
       ],
       "type": "L1",
       "exampleQuestion": "马谡是怎么失街亭的"
@@ -11947,10 +11460,10 @@
         "空城计"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0095:c0014",
         "sanguo-yanyi:0095:c0016",
-        "sanguo-yanyi:0095:c0019",
-        "sanguo-yanyi:0095:c0023"
+        "sanguo-yanyi:0095:c0017",
+        "sanguo-yanyi:0095:c0018",
+        "sanguo-yanyi:0095:c0019"
       ],
       "type": "L1",
       "exampleQuestion": "空城计是怎么回事"
@@ -11965,20 +11478,13 @@
         "sanguo-yanyi:0095:c0001",
         "sanguo-yanyi:0095:c0002",
         "sanguo-yanyi:0095:c0003",
-        "sanguo-yanyi:0095:c0005",
         "sanguo-yanyi:0095:c0007",
         "sanguo-yanyi:0095:c0008",
         "sanguo-yanyi:0095:c0009",
         "sanguo-yanyi:0095:c0010",
-        "sanguo-yanyi:0095:c0012",
-        "sanguo-yanyi:0095:c0013",
         "sanguo-yanyi:0095:c0014",
         "sanguo-yanyi:0095:c0016",
-        "sanguo-yanyi:0095:c0017",
-        "sanguo-yanyi:0095:c0018",
-        "sanguo-yanyi:0095:c0019",
-        "sanguo-yanyi:0095:c0020",
-        "sanguo-yanyi:0095:c0022"
+        "sanguo-yanyi:0095:c0017"
       ],
       "type": "L2",
       "exampleQuestion": "司马懿是怎么出山挂帅的",
@@ -12071,23 +11577,18 @@
       "eventId": "E09701",
       "eventName": "诸葛亮再上出师表",
       "aliases": [
-        "后出师表",
         "诸葛亮再上出师表"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0097:c0001",
         "sanguo-yanyi:0097:c0002",
-        "sanguo-yanyi:0097:c0004",
+        "sanguo-yanyi:0097:c0005",
+        "sanguo-yanyi:0097:c0006",
         "sanguo-yanyi:0097:c0007",
         "sanguo-yanyi:0097:c0008",
-        "sanguo-yanyi:0097:c0009",
-        "sanguo-yanyi:0097:c0010",
         "sanguo-yanyi:0097:c0011",
         "sanguo-yanyi:0097:c0012",
-        "sanguo-yanyi:0097:c0013",
         "sanguo-yanyi:0097:c0014",
         "sanguo-yanyi:0097:c0016",
-        "sanguo-yanyi:0097:c0017",
         "sanguo-yanyi:0097:c0019"
       ],
       "type": "L2",
@@ -12282,9 +11783,7 @@
         "sanguo-yanyi:0099:c0011",
         "sanguo-yanyi:0099:c0012",
         "sanguo-yanyi:0099:c0013",
-        "sanguo-yanyi:0099:c0017",
-        "sanguo-yanyi:0099:c0018",
-        "sanguo-yanyi:0099:c0021"
+        "sanguo-yanyi:0099:c0018"
       ],
       "type": "L2",
       "exampleQuestion": "诸葛亮是怎么大破魏兵的"
@@ -12301,15 +11800,10 @@
         "sanguo-yanyi:0099:c0003",
         "sanguo-yanyi:0099:c0005",
         "sanguo-yanyi:0099:c0006",
-        "sanguo-yanyi:0099:c0007",
         "sanguo-yanyi:0099:c0009",
-        "sanguo-yanyi:0099:c0010",
         "sanguo-yanyi:0099:c0012",
         "sanguo-yanyi:0099:c0013",
-        "sanguo-yanyi:0099:c0015",
-        "sanguo-yanyi:0099:c0016",
         "sanguo-yanyi:0099:c0017",
-        "sanguo-yanyi:0099:c0019",
         "sanguo-yanyi:0099:c0021"
       ],
       "type": "L2",
@@ -12365,10 +11859,7 @@
         "斗阵辱仲达"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0100:c0001",
-        "sanguo-yanyi:0100:c0002",
         "sanguo-yanyi:0100:c0007",
-        "sanguo-yanyi:0100:c0009",
         "sanguo-yanyi:0100:c0011",
         "sanguo-yanyi:0100:c0012",
         "sanguo-yanyi:0100:c0013",
@@ -12597,10 +12088,11 @@
         "上方谷之战"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0103:c0006",
         "sanguo-yanyi:0103:c0007",
-        "sanguo-yanyi:0103:c0009",
-        "sanguo-yanyi:0103:c0010"
+        "sanguo-yanyi:0103:c0010",
+        "sanguo-yanyi:0103:c0011",
+        "sanguo-yanyi:0103:c0012",
+        "sanguo-yanyi:0103:c0013"
       ],
       "type": "L1",
       "exampleQuestion": "上方谷是怎么回事"
@@ -12612,10 +12104,9 @@
         "五丈原禳星"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0103:c0015",
-        "sanguo-yanyi:0103:c0017",
-        "sanguo-yanyi:0103:c0020",
-        "sanguo-yanyi:0103:c0022"
+        "sanguo-yanyi:0103:c0021",
+        "sanguo-yanyi:0103:c0022",
+        "sanguo-yanyi:0104:c0001"
       ],
       "type": "L1",
       "exampleQuestion": "诸葛亮在五丈原禳星是怎么回事"
@@ -12624,7 +12115,6 @@
       "eventId": "E10401",
       "eventName": "死诸葛吓走活仲达",
       "aliases": [
-        "死诸葛走生仲达",
         "死诸葛吓走活仲达"
       ],
       "chunkIds": [
@@ -12685,27 +12175,20 @@
       "eventId": "E10501",
       "eventName": "武侯锦囊斩魏延",
       "aliases": [
-        "锦囊妙计",
-        "锦囊杀魏延",
         "武侯锦囊斩魏延"
       ],
       "chunkIds": [
+        "sanguo-yanyi:0104:c0002",
         "sanguo-yanyi:0105:c0001",
-        "sanguo-yanyi:0105:c0002",
-        "sanguo-yanyi:0105:c0003",
-        "sanguo-yanyi:0105:c0004",
-        "sanguo-yanyi:0105:c0005",
         "sanguo-yanyi:0105:c0006",
         "sanguo-yanyi:0105:c0007",
         "sanguo-yanyi:0105:c0008",
         "sanguo-yanyi:0105:c0009",
-        "sanguo-yanyi:0105:c0010",
-        "sanguo-yanyi:0105:c0011",
-        "sanguo-yanyi:0105:c0014",
-        "sanguo-yanyi:0105:c0015"
+        "sanguo-yanyi:0105:c0010"
       ],
       "type": "L1",
       "exampleQuestion": "诸葛亮留下的锦囊计是怎么回事",
+      "crossChapter": "104–105",
       "characters": [
         "诸葛亮",
         "魏延"
@@ -12789,37 +12272,16 @@
         "司马懿诈病赚曹爽"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0106:c0001",
-        "sanguo-yanyi:0106:c0003",
-        "sanguo-yanyi:0106:c0004",
-        "sanguo-yanyi:0106:c0005",
-        "sanguo-yanyi:0106:c0007",
-        "sanguo-yanyi:0106:c0008",
-        "sanguo-yanyi:0106:c0009",
-        "sanguo-yanyi:0106:c0010",
-        "sanguo-yanyi:0106:c0011",
-        "sanguo-yanyi:0106:c0012",
         "sanguo-yanyi:0106:c0013",
-        "sanguo-yanyi:0106:c0014",
         "sanguo-yanyi:0106:c0015",
         "sanguo-yanyi:0106:c0017",
         "sanguo-yanyi:0106:c0018",
         "sanguo-yanyi:0107:c0001",
-        "sanguo-yanyi:0107:c0002",
         "sanguo-yanyi:0107:c0003",
-        "sanguo-yanyi:0107:c0004",
         "sanguo-yanyi:0107:c0005",
-        "sanguo-yanyi:0107:c0006",
         "sanguo-yanyi:0107:c0007",
         "sanguo-yanyi:0107:c0008",
-        "sanguo-yanyi:0107:c0009",
-        "sanguo-yanyi:0107:c0010",
-        "sanguo-yanyi:0107:c0011",
-        "sanguo-yanyi:0107:c0012",
-        "sanguo-yanyi:0107:c0013",
-        "sanguo-yanyi:0107:c0014",
-        "sanguo-yanyi:0107:c0015",
-        "sanguo-yanyi:0107:c0021"
+        "sanguo-yanyi:0107:c0009"
       ],
       "type": "L1",
       "exampleQuestion": "司马懿是怎么装病骗曹爽的",
@@ -12919,15 +12381,11 @@
         "sanguo-yanyi:0107:c0003",
         "sanguo-yanyi:0107:c0004",
         "sanguo-yanyi:0107:c0005",
+        "sanguo-yanyi:0107:c0006",
         "sanguo-yanyi:0107:c0007",
         "sanguo-yanyi:0107:c0008",
         "sanguo-yanyi:0107:c0009",
-        "sanguo-yanyi:0107:c0011",
-        "sanguo-yanyi:0107:c0012",
-        "sanguo-yanyi:0107:c0013",
-        "sanguo-yanyi:0107:c0014",
-        "sanguo-yanyi:0107:c0015",
-        "sanguo-yanyi:0107:c0021"
+        "sanguo-yanyi:0107:c0012"
       ],
       "type": "L1",
       "exampleQuestion": "高平陵之变是怎么回事"
@@ -13096,15 +12554,9 @@
         "sanguo-yanyi:0109:c0003",
         "sanguo-yanyi:0109:c0005",
         "sanguo-yanyi:0109:c0007",
-        "sanguo-yanyi:0109:c0010",
-        "sanguo-yanyi:0109:c0011",
-        "sanguo-yanyi:0109:c0012",
-        "sanguo-yanyi:0109:c0013",
-        "sanguo-yanyi:0109:c0014",
-        "sanguo-yanyi:0109:c0016",
-        "sanguo-yanyi:0109:c0017",
-        "sanguo-yanyi:0109:c0019",
-        "sanguo-yanyi:0109:c0020"
+        "sanguo-yanyi:0109:c0008",
+        "sanguo-yanyi:0109:c0009",
+        "sanguo-yanyi:0109:c0010"
       ],
       "type": "L2",
       "exampleQuestion": "姜维是怎么困住司马师的"
@@ -13348,8 +12800,6 @@
         "诸葛诞讨司马昭"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0111:c0003",
-        "sanguo-yanyi:0111:c0009",
         "sanguo-yanyi:0111:c0010",
         "sanguo-yanyi:0111:c0011",
         "sanguo-yanyi:0111:c0012",
@@ -13357,21 +12807,9 @@
         "sanguo-yanyi:0111:c0014",
         "sanguo-yanyi:0112:c0001",
         "sanguo-yanyi:0112:c0002",
-        "sanguo-yanyi:0112:c0003",
         "sanguo-yanyi:0112:c0004",
         "sanguo-yanyi:0112:c0005",
-        "sanguo-yanyi:0112:c0006",
-        "sanguo-yanyi:0112:c0007",
-        "sanguo-yanyi:0112:c0008",
-        "sanguo-yanyi:0112:c0009",
-        "sanguo-yanyi:0112:c0010",
-        "sanguo-yanyi:0112:c0011",
-        "sanguo-yanyi:0112:c0012",
-        "sanguo-yanyi:0112:c0013",
-        "sanguo-yanyi:0112:c0014",
-        "sanguo-yanyi:0112:c0015",
-        "sanguo-yanyi:0112:c0017",
-        "sanguo-yanyi:0112:c0018"
+        "sanguo-yanyi:0112:c0009"
       ],
       "type": "L2",
       "exampleQuestion": "诸葛诞为什么要起兵讨伐司马昭",
@@ -13743,19 +13181,13 @@
         "姜维屯田避祸"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0115:c0001",
         "sanguo-yanyi:0115:c0002",
-        "sanguo-yanyi:0115:c0003",
-        "sanguo-yanyi:0115:c0004",
         "sanguo-yanyi:0115:c0005",
         "sanguo-yanyi:0115:c0006",
-        "sanguo-yanyi:0115:c0007",
         "sanguo-yanyi:0115:c0008",
         "sanguo-yanyi:0115:c0009",
         "sanguo-yanyi:0115:c0010",
-        "sanguo-yanyi:0115:c0011",
-        "sanguo-yanyi:0115:c0013",
-        "sanguo-yanyi:0115:c0014"
+        "sanguo-yanyi:0115:c0011"
       ],
       "type": "L2",
       "exampleQuestion": "姜维为什么要去屯田",
@@ -13807,12 +13239,7 @@
         "钟会分兵取汉中"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0116:c0001",
         "sanguo-yanyi:0116:c0002",
-        "sanguo-yanyi:0116:c0003",
-        "sanguo-yanyi:0116:c0004",
-        "sanguo-yanyi:0116:c0005",
-        "sanguo-yanyi:0116:c0006",
         "sanguo-yanyi:0116:c0007",
         "sanguo-yanyi:0116:c0008",
         "sanguo-yanyi:0116:c0009",
@@ -13820,10 +13247,6 @@
         "sanguo-yanyi:0116:c0012",
         "sanguo-yanyi:0116:c0013",
         "sanguo-yanyi:0116:c0014",
-        "sanguo-yanyi:0116:c0015",
-        "sanguo-yanyi:0116:c0016",
-        "sanguo-yanyi:0116:c0017",
-        "sanguo-yanyi:0116:c0018",
         "sanguo-yanyi:0116:c0019"
       ],
       "type": "L2",
@@ -13898,25 +13321,14 @@
         "邓艾偷度阴平"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0117:c0002",
         "sanguo-yanyi:0117:c0003",
         "sanguo-yanyi:0117:c0004",
         "sanguo-yanyi:0117:c0005",
         "sanguo-yanyi:0117:c0006",
         "sanguo-yanyi:0117:c0007",
-        "sanguo-yanyi:0117:c0008",
         "sanguo-yanyi:0117:c0009",
         "sanguo-yanyi:0117:c0010",
-        "sanguo-yanyi:0117:c0011",
-        "sanguo-yanyi:0117:c0012",
-        "sanguo-yanyi:0117:c0013",
-        "sanguo-yanyi:0117:c0014",
-        "sanguo-yanyi:0117:c0015",
-        "sanguo-yanyi:0117:c0016",
-        "sanguo-yanyi:0117:c0017",
-        "sanguo-yanyi:0117:c0018",
-        "sanguo-yanyi:0117:c0019",
-        "sanguo-yanyi:0117:c0020"
+        "sanguo-yanyi:0117:c0012"
       ],
       "type": "L1",
       "exampleQuestion": "邓艾偷渡阴平是怎么回事",
@@ -14262,7 +13674,6 @@
       ],
       "chunkIds": [
         "sanguo-yanyi:0120:c0009",
-        "sanguo-yanyi:0120:c0024",
         "sanguo-yanyi:0120:c0025"
       ],
       "type": "L2",
