@@ -68,6 +68,8 @@ export interface RunResult {
   chapterRefs: number[];
   rank: number;
   status: RunStatus;
+  /** bug-00063：期望回目 chapterRefs 在本题检索候选池（top50）中最早出现的名次（1 起）；未出现 / chapterRefs 为空 = 0。 */
+  chapterRank: number;
   /** bug-00052：无有效证据锚（零锚 / 锚不可定位）→ 不参与判分、单列（页面据此与 summary.noAnchor 展示）。 */
   noAnchor: boolean;
   hit: HitInfo | null;
@@ -80,6 +82,8 @@ export interface CategoryCount {
   top5: number;
   tail: number;
   miss: number;
+  /** bug-00063：本类中回级命中 chapterRank ∈ [1,5] 的题数（noAnchor 题不计入）。 */
+  chapterTop5: number;
 }
 
 /** 汇总（字段与 CLI 产物逐一同构）。 */
@@ -98,6 +102,8 @@ export interface RunSummary {
   top3: number;
   top10: number;
   inPool50: number;
+  /** bug-00063：全量中回级命中 chapterRank ∈ [1,5] 的题数（noAnchor 题不计入）。 */
+  chapterTop5: number;
   noAnchorCount: number;
   noAnchor: string[];
   category: Record<string, CategoryCount>;
@@ -219,6 +225,7 @@ export async function runBenchmark(index: SangoIndex, benchmarkFile: string, res
     const isNoAnchor = noAnchorSet.has(it.id);
     let status: RunStatus = isNoAnchor ? 'noAnchor' : 'miss';
     let rank = 0;
+    let chapterRank = 0;
     let hit: HitInfo | null = null;
     let candidates: CandidateInfo[] = [];
     if (!isNoAnchor) {
@@ -229,6 +236,11 @@ export async function runBenchmark(index: SangoIndex, benchmarkFile: string, res
       else if (m.rank >= 6 && m.rank <= 10) status = 'tail';
       hit = m.hit ? { id: m.hit.id, chapter: m.hit.chapter, title: m.hit.title, text: m.hit.text.slice(0, 80) } : null;
       candidates = res.entries.map((e) => ({ id: e.id, chapter: e.chapter, title: e.title }));
+      // bug-00063：回级维度——期望回目 chapterRefs 在本题候选池（top50）中最早出现的名次（1 起）；未出现 / 为空 = 0。
+      if (it.chapterRefs.length > 0) {
+        const idx = res.entries.findIndex((e) => it.chapterRefs.includes(e.chapter));
+        chapterRank = idx >= 0 ? idx + 1 : 0;
+      }
     }
     results.push({
       id: it.id,
@@ -239,6 +251,7 @@ export async function runBenchmark(index: SangoIndex, benchmarkFile: string, res
       titleAnchors: it.titleAnchors,
       chapterRefs: it.chapterRefs,
       rank,
+      chapterRank,
       status,
       noAnchor: isNoAnchor,
       hit,
@@ -253,13 +266,15 @@ export async function runBenchmark(index: SangoIndex, benchmarkFile: string, res
     if (r.status === 'noAnchor') continue;
     byStatus[r.status]++;
     const catKey = r.id.split('#')[0];
-    const c = (byCategory[catKey] ??= { total: 0, top5: 0, tail: 0, miss: 0 });
+    const c = (byCategory[catKey] ??= { total: 0, top5: 0, tail: 0, miss: 0, chapterTop5: 0 });
     c.total++;
     c[r.status]++;
+    if (r.chapterRank >= 1 && r.chapterRank <= 5) c.chapterTop5++;
   }
   const top3 = results.filter((r) => r.rank >= 1 && r.rank <= 3).length;
   const top10 = results.filter((r) => r.rank >= 1 && r.rank <= 10).length;
   const inPool50 = results.filter((r) => r.rank > 0).length;
+  const chapterTop5 = results.filter((r) => r.chapterRank >= 1 && r.chapterRank <= 5).length;
 
   // FEAT-A015 test-2241 计时口径：run 开始 → 逐题检索判分结束；落盘（writeRun）与 HTTP 传输不计入。
   // 保留 0.1ms 精度：避免极小样本（单测合成语料）被四舍五入成 0，读数恒为正。
@@ -282,6 +297,7 @@ export async function runBenchmark(index: SangoIndex, benchmarkFile: string, res
     top3,
     top10,
     inPool50,
+    chapterTop5,
     noAnchorCount: noAnchor.length,
     noAnchor,
     category: byCategory,

@@ -238,3 +238,108 @@ test('⑦ bug-00052 零锚题：不参与判分、不进通过率分母；结果
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+/**
+ * bug-00063 夹具：4 回归档（ch1/ch2/ch3 各 2 段、ch4 1 段）+ 注入打分器按问题指定候选次序，
+ * 使 chapterRank（取 entry.chapter 回目）可确定性断言——检索名次由打分器分数决定，不依赖真实召回。
+ */
+function fixtureChapter(): Fixture {
+  const dir = mkdtempSync(path.join(tmpdir(), 'a015-chrank-'));
+  const corpusDir = path.join(dir, 'corpus', 'sanguo-yanyi');
+  mkdirSync(corpusDir, { recursive: true });
+  // 共享前缀：保证每题检索均召回全量候选，回级名次由注入打分器控序决定。
+  const PRE = '三国人物 ';
+  const chapters: { chapter: number; texts: string[] }[] = [
+    { chapter: 1, texts: ['刘备字玄德，涿郡涿县人。', '关羽字云长，河东解良人。'] },
+    { chapter: 2, texts: ['曹操字孟德，沛国谯人。', '夏侯惇字元让，沛国谯人。'] },
+    { chapter: 3, texts: ['孙权字仲谋，吴郡富春人。', '周瑜字公瑾，庐江舒县人。'] },
+    { chapter: 4, texts: ['诸葛亮字孔明，琅琊阳都人。'] },
+  ];
+  for (const ch of chapters) {
+    const chunks = ch.texts.map((text, i) => ({
+      id: `sanguo-yanyi:000${ch.chapter}:c000${i + 1}`,
+      text: PRE + text,
+      type: 'narration',
+      segFrom: i + 1,
+      segTo: i + 1,
+    }));
+    writeFileSync(path.join(corpusDir, `00${ch.chapter}.json`), JSON.stringify({ source: 'sanguo-yanyi', chapter: ch.chapter, title: `第${ch.chapter}回 合成`, chunks }), 'utf8');
+  }
+  const benchmarkFile = path.join(dir, 'bench.md');
+  writeFileSync(
+    benchmarkFile,
+    [
+      '# 合成评测集',
+      '',
+      '## 一、人物',
+      '',
+      '| # | 问题 | 标准答案 | 证据 |',
+      '|---|---|---|---|',
+      '| 1 | 三国人物 曹操字孟德 是谁 | 曹操 | 第2回：“曹操字孟德” |',
+      '| 2 | 三国人物 关羽字云长 孙权字仲谋 | 孙权 | 第1回：“刘备字玄德”。第3回：“孙权字仲谋” |',
+      '| 3 | 三国人物 刘备字玄德 官职 | 刘备 | 第9回：“刘备字玄德” |',
+      '| 4 | 三国人物 零锚 | 无明确记载 | 无明确记载 |',
+      '',
+      '## 二、典故',
+      '',
+      '| # | 问题 | 标准答案 | 证据 |',
+      '|---|---|---|---|',
+      '| 5 | 三国人物 回级过五 | 诸葛亮 | 第4回：“诸葛亮字孔明” |',
+    ].join('\n'),
+    'utf8',
+  );
+  // 按问题给出期望候选文本次序（未列出者排在其后），控制各题检索名次。
+  const ORDER: Record<string, string[]> = {
+    '三国人物 曹操字孟德 是谁': [PRE + '曹操字孟德，沛国谯人。'],
+    '三国人物 关羽字云长 孙权字仲谋': [PRE + '关羽字云长，河东解良人。', PRE + '孙权字仲谋，吴郡富春人。'],
+    '三国人物 回级过五': [PRE + '曹操字孟德，沛国谯人。', PRE + '夏侯惇字元让，沛国谯人。', PRE + '孙权字仲谋，吴郡富春人。', PRE + '周瑜字公瑾，庐江舒县人。', PRE + '关羽字云长，河东解良人。', PRE + '诸葛亮字孔明，琅琊阳都人。'],
+  };
+  const scorer: RerankScorer = async (query, passages) => {
+    const want = ORDER[query] ?? [];
+    return passages.map((t) => {
+      const i = want.indexOf(t);
+      return i < 0 ? -1 : want.length - i;
+    });
+  };
+  const index = new SangoIndex(dir, { rerankScorer: scorer });
+  index.load();
+  return { dir, index, benchmarkFile, resultsDir: path.join(dir, 'results') };
+}
+
+test('⑧ bug-00063 回级维度：单回命中 / 多回取最早 / 回不在池 = 0 / noAnchor = 0', async () => {
+  const { dir, index, benchmarkFile, resultsDir } = fixtureChapter();
+  try {
+    const run = await runBenchmark(index, benchmarkFile, resultsDir, 'feat-A015-2026-10-13-1200');
+    const by = (id: string) => run.results.find((r) => r.id === id);
+    const q1 = by('人物#1');
+    const q2 = by('人物#2');
+    const q3 = by('人物#3');
+    const q4 = by('人物#4');
+    const q5 = by('典故#5');
+    assert.ok(q1 && q2 && q3 && q4 && q5, '五题均在结果中');
+    assert.equal(q1!.chapterRank, 1, '单回命中：期望回目第 2 回在候选第 1 名 → 1');
+    assert.equal(q2!.chapterRank, 1, '多回取最早：期望回目 {1,3} 最早命中在第 1 名 → 1');
+    assert.equal(q2!.rank, 2, 'rank 语义不变：证据段（第 3 回）在第 2 名 → rank 2');
+    assert.equal(q3!.chapterRank, 0, '回不在池：期望回目第 9 回未出现 → 0');
+    assert.equal(q4!.noAnchor, true, '零锚题标记 noAnchor');
+    assert.equal(q4!.chapterRank, 0, 'noAnchor 不检索 → chapterRank 0');
+    assert.equal(q5!.chapterRank, 6, '期望回目第 4 回在候选第 6 名 → 6');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('⑨ bug-00063 回级汇总：chapterTop5 分类与合计口径（chapterRank∈[1,5]，noAnchor 与 >5 剔除）', async () => {
+  const { dir, index, benchmarkFile, resultsDir } = fixtureChapter();
+  try {
+    const run = await runBenchmark(index, benchmarkFile, resultsDir, 'feat-A015-2026-10-13-1201');
+    const s = run.summary;
+    assert.equal(s.category['人物']!.chapterTop5, 2, '人物类回级命中 = 2（第 1、2 题）');
+    assert.equal(s.category['典故']!.chapterTop5, 0, '典故类回级命中 = 0（第 6 名剔除）');
+    assert.equal(s.chapterTop5, 2, '顶层回级命中 = 各分类合计 2');
+    assert.equal(s.category['人物']!.total, 3, '类别 total 口径不变（noAnchor 不进类别计数）');
+    assert.equal(s.top5 + s.tail + s.miss, s.judged, '既有判分口径不变');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
