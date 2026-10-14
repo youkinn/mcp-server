@@ -1,8 +1,8 @@
 {
   "meta": {
     "schemaVersion": 1,
-    "normVersion": "bc41a2e9",
-    "generatedAt": "2026-10-13T01:52:22.465Z",
+    "normVersion": "7c1b22af",
+    "generatedAt": "2026-10-14T02:38:16.906Z",
     "corpusChunkCount": 2344
   },
   "rows": [
@@ -61,25 +61,6 @@
       "exampleQuestion": "刘备是怎么打黄巾军立功的",
       "characters": [
         "刘备"
-      ]
-    },
-    {
-      "eventId": "E00104",
-      "eventName": "张角之死",
-      "aliases": [
-        "张角之死",
-        "张角死亡",
-        "张角去世"
-      ],
-      "chunkIds": [
-        "sanguo-yanyi:0001:c0005",
-        "sanguo-yanyi:0001:c0006",
-        "sanguo-yanyi:0001:c0007"
-      ],
-      "type": "L3",
-      "exampleQuestion": "张角是怎么死的",
-      "characters": [
-        "张角"
       ]
     },
     {
@@ -405,6 +386,25 @@
       ]
     },
     {
+      "eventId": "E00214",
+      "eventName": "张角之死",
+      "aliases": [
+        "张角之死",
+        "张角死亡",
+        "张角去世"
+      ],
+      "chunkIds": [
+        "sanguo-yanyi:0002:c0002",
+        "sanguo-yanyi:0002:c0003",
+        "sanguo-yanyi:0002:c0004"
+      ],
+      "type": "L3",
+      "exampleQuestion": "张角是怎么死的",
+      "characters": [
+        "张角"
+      ]
+    },
+    {
       "eventId": "E00301",
       "eventName": "李肃说吕布",
       "aliases": [
@@ -691,8 +691,9 @@
     },
     {
       "eventId": "E00406",
-      "eventName": "少帝之死",
+      "eventName": "刘辩之死",
       "aliases": [
+        "刘辩之死",
         "少帝之死",
         "少帝死亡",
         "少帝去世"
@@ -705,7 +706,7 @@
       "type": "L3",
       "exampleQuestion": "少帝是怎么死的",
       "characters": [
-        "少帝"
+        "刘辩"
       ]
     },
     {
@@ -4499,9 +4500,8 @@
         "董承去世"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0024:c0002",
-        "sanguo-yanyi:0024:c0003",
-        "sanguo-yanyi:0024:c0004"
+        "sanguo-yanyi:0024:c0001",
+        "sanguo-yanyi:0024:c0002"
       ],
       "type": "L3",
       "exampleQuestion": "董承是怎么死的",
