@@ -50,15 +50,15 @@ test('① 真实表加载：启动日志行 + rewriteKeyCount / normVersion / ro
   }
   const log = cap.lines.find((l) => l.includes('entity-table loaded'));
   assert.ok(log, '应输出 [sango] entity-table loaded 日志行');
-  assert.match(log, /rows=407 keys=689 normVersion=\w{8}/, 'rows / keys / normVersion 齐全（bug-00046 登场行 14 键删除后 keys=689）');
+  assert.match(log, /rows=407 keys=689 normVersion=\w{8}/, 'rows / keys / normVersion 齐全（加载期剔键后 keys=689）');
   assert.equal(rowsCount(), 407, 'person 193 + nonPerson 214');
   assert.equal(normVersion().length, 8, 'normVersion 为 8 位内容 hash');
   const table = JSON.parse(readFileSync(path.join(REAL_DATA_DIR, 'entity-table.json'), 'utf8')) as {
     rows: Array<{ rewriteKeys?: string[] }>;
   };
   const rawKeyCount = new Set(table.rows.flatMap((r) => r.rewriteKeys ?? [])).size;
-  assert.equal(rawKeyCount, 691, '原始表键数（锚点，703 - 14：bug-00046 登场行 rewriteKeys 整列删除）');
-  assert.equal(rewriteKeyCount(), rawKeyCount - 2, '模块生效计数 = 原始键 - 2 条 ambiguityGuard 禁入（晋王 / 舌战）');
+  assert.equal(rawKeyCount, 692, '原始表键数（锚点，703 - 14 + 1「曹叡」异体字键 = 692）');
+  assert.equal(rewriteKeyCount(), rawKeyCount - 3, '模块生效计数 = 原始键 - 3 条加载期剔键（晋王 / 舌战 / 百骑劫魏营 §8 #8）');
 });
 
 test('② 行为样例（接口 §6 / 表设计 §8 验证方式）：rewriteKeys 替换、fragmentOnly 不替换、禁入词恒等', () => {

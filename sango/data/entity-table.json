@@ -1,8 +1,8 @@
 {
   "meta": {
     "schemaVersion": 1,
-    "normVersion": "5252f5bc",
-    "generatedAt": "2026-09-28T17:26:58.248Z"
+    "normVersion": "f47de113",
+    "generatedAt": "2026-10-14T02:38:13.576Z"
   },
   "rows": [
     {
@@ -193,11 +193,13 @@
       "aliases": [
         "元仲",
         "魏明帝",
-        "明帝"
+        "明帝",
+        "曹叡"
       ],
       "rewriteKeys": [
         "元仲",
-        "魏明帝"
+        "魏明帝",
+        "曹叡"
       ],
       "fragmentOnly": [
         "明帝"
