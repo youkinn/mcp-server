@@ -1,72 +1,107 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""sango 语料构建脚本（构建期 side-car，线上只读）。
+'''sango 语料构建脚本（构建期 side-car，线上只读）。
 
-读取 dev-docs 的《三国演义.txt》（只读），清洗站点杂质（更新时间/本章字数行、行首缩进等），
-按回切分为段级语料，再按 dev-docs/docs/sango-corpus-spec.md §3 的六步算法装箱为 chunk 级语料
-（schema v2）。构建期自检 I1~I8，任一失败即构建失败。
+读取 dev-docs 的《三国演义.txt》（只读），清洗站点杂质与行首缩进，按
+dev-docs/docs/sango-corpus-split-scheme.md（切分 v2）切段、装块：
 
-产物（三份，勿混）：
-1. data/corpus/sanguo-yanyi/{001..120}.json
-   —— schema v2：{ source, chapter, title, chunks[] }，运行期读这份。
-2. data/corpus/_segments/sanguo-yanyi/{001..120}.json
-   —— 段级中间产物：{ source, chapter, title, segments[] }，供探针 B 复跑切分决策证据
-      （scripts/probe/chunk-sweep.mjs），运行期不读。
+- 段 = 源文件一行；回目行不入段，只作章节元数据（回号 + 回目名）。
+- 块 = 段长 ≤ CAP 时整段一块；段长 > CAP 的正文段在段内按句装箱为子块；
+  诗词段整段成块、不切（超 CAP 走 §9 白名单豁免）。
+- 切点只在句末标点（。！？；，含其后紧跟的收尾引号）之后，且该处引号深度为 0（“” 与 ‘’ 均计入深度）。
+- 块不跨段、不跨段混装；子块按序拼接逐字等于父段原文。
 
-清洗边界：只删除站点杂质与行首缩进空白；合并被网页折行拆开的行（内容零增删改）；
-不修改任何正文文字。
+构建期自检 I1~I13，任一不变量不满足即构建失败（I12 属注入侧运行时，不在此校验）。
 
-切分参数（规范 §0，已拍板）：TARGET=250 / CAP=400 硬上限 / 重叠 0 /
-软下限 MIN=100 / 同回内连续 narration 可跨段 / verse 与 comment 段内独立 / 只在 。！？； 切分。
-"""
+产物：
+1. data/corpus/sanguo-yanyi/{001..120}.json —— 运行期读这份。
+   文件 { source, chapter, title, chunks[] }；块字段
+   { chunk_id, parent_id, seq_in_parent, type, text, char_count, role }，
+   成组的块另带 group_id（孤立段不带该键）；role ∈ 主体|引题（§4 引题行，不出检索索引），
+   type ∈ 正文|诗词；parent_id = {source}:{回号4位}:p{段号4位}，
+   chunk_id = {parent_id}:c{seq_in_parent 2位}。
+2. <系统临时目录>/sango-segments-dump/{001..120}.json + INDEX.json —— 段清单（段号、
+   类型、role、组、字数、首尾片段），默认不落盘；SANGO_EMIT_SEGMENTS=1 时输出，供人工核对 /
+   文档同源使用，运行期不读。
+
+切分参数（split-scheme §3）：TARGET=350 / CAP=600 / 尾块下限 TINY=60。
+'''
 import io
 import json
+import math
 import os
 import re
 import sys
+import tempfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)  # sango/
-OUT_DIR = os.path.join(ROOT, "data", "corpus", "sanguo-yanyi")
-SEG_DIR = os.path.join(ROOT, "data", "corpus", "_segments", "sanguo-yanyi")
-DEFAULT_SRC = r"D:\workplace\dev-docs\docs\三国演义.txt"
+OUT_DIR = os.path.join(ROOT, 'data', 'corpus', 'sanguo-yanyi')
+SEG_DUMP_DIR = os.path.join(tempfile.gettempdir(), 'sango-segments-dump')
+SEG_DUMP_CHARS = 20  # 段清单里首／尾片段的字数
+DEFAULT_SRC = r'D:\workplace\dev-docs\docs\三国演义.txt'
 
-SOURCE = "sanguo-yanyi"
+SOURCE = 'sanguo-yanyi'
+# §6 上下文组定义表（人工维护的单一真源）：语料 group_id 由本表按段区间 join 得出
+GROUP_TABLE = os.path.join(ROOT, 'data', 'corpus', 'context-groups.json')
 
-# ===================== 规范 §3 参数 =====================
-TARGET = 250      # 目标尺寸（§4.1）
-CAP = 400         # 硬上限
-MIN = 100         # 尾部碎片软下限（§4.4）
-TERM = "。！？；"  # 句末标点（唯一切分边界）
+# ===================== 切分参数（split-scheme §3） =====================
+TARGET = 350    # 段内装箱目标：累积 ≥ TARGET 时在最近一个合法切点收口
+CAP = 600       # 块硬上限（诗词段与 §9 白名单段除外）
+TINY = 60       # 尾块下限：严格 < TINY 且回并前块后仍 ≤ CAP 时回并（恰好等于 TINY 不回并）
+TERM = '。！？；'  # 句末标点（唯一切分边界）
+CLOSING = '”’』」》】'  # 收尾引号：紧跟句末标点，归前句
+QUOTE_OPEN = '“‘'   # 计入引号深度的起始引号
+QUOTE_CLOSE = '”’'  # 计入引号深度的收尾引号
+QUOTE_ALL = '“‘”’'
+
+TYPE_PROSE = '正文'
+TYPE_VERSE = '诗词'
+
+# §4 索引角色：引题行 = 行尾「：」+ 行内无句末标点 + ≤ LEAD_MAX_CHARS 字（照常出块、不出检索索引）
+ROLE_MAIN = '主体'
+ROLE_LEAD = '引题'
+LEAD_MAX_CHARS = 12
 
 CN_DIGITS = {
-    "零": 0, "〇": 0, "一": 1, "二": 2, "两": 2, "三": 3, "四": 4, "五": 5,
-    "六": 6, "七": 7, "八": 8, "九": 9,
+    '零': 0, '〇': 0, '一': 1, '二': 2, '两': 2, '三': 3, '四': 4, '五': 5,
+    '六': 6, '七': 7, '八': 8, '九': 9,
 }
 
-HEADER_RE = re.compile(r"^\s*(?:正文\s*)?第([一二三四五六七八九十百零〇两]+)回\s*(.*)$")
-# 句末字符：以这些结尾的行视为完整段落（不与其后行合并）
-SENTENCE_END = set("。！？…”』」》】;；:：")
-# 诗词标记（用于把含标记的段标为 verse）
+HEADER_RE = re.compile(r'^\s*(?:正文\s*)?第([一二三四五六七八九十百零〇两]+)回\s*(.*)$')
+
+# 诗词标记（§4；引号内的标记不计）
 VERSE_MARKERS = [
-    "诗曰", "诗云", "诗赞", "有诗", "古风", "调寄", "歌曰", "赞曰",
-    "词曰", "赋曰", "诗一首", "后人有诗", "后人诗曰", "诗吟", "诗罢",
+    '诗', '歌', '词', '赋', '吟', '赞', '谣', '偈', '古风', '一绝',
+    '联', '祭文', '单道', '正是', '为证', '一首', '八句', '十六字', '口占',
 ]
-# 诗句级切分（§4.6 选项 ①）的最小拆分长度：两侧都够长才拆，避免把尾注拆成碎片
-VERSE_MIN_PREFIX = 20
-VERSE_MIN_REST = 10
+# §4 第 3 条「多行韵文续行」的句式判据：不含引号，且满足两种对仗形态之一
+VERSE_CONT_MIN_SEMI = 2    # 长句对仗：分号 ≥ 2
+VERSE_CONT_MAX_CLAUSE = 9  # 长句对仗：各分句（按 ，。；！？： 切分）≤ 9 字
+VERSE_CONT_MIN_CLAUSE = 4  # 短句体：分句 ≥ 4（按 ，。；！？：、 切分，含顿号）
+VERSE_CONT_MAX_SHORT = 5   # 短句体：各分句 ≤ 5 字
+CLAUSE_SPLIT_RE = re.compile('[，。；！？：]')
+CLAUSE_SPLIT_ALL_RE = re.compile('[，。；！？：、]')
+
+# §9 白名单：超 CAP 豁免段 / 源文本自身引号不配平段（段号 = 回内正文行序号，从 1 起）
+WL_OVER_CAP = ((69, 3),)
+WL_UNBALANCED_QUOTE = ((44, 8), (114, 4), (114, 5))
+
+# §1／§4 读数（与 split-scheme 文档同步维护）：全书段数 2129、引题块 19
+EXPECT_SEGMENTS = 2129
+EXPECT_LEAD_BLOCKS = 19
 
 
 def cn2int(s):
-    """中文数字转整数，如 '一百二十' -> 120。"""
+    '''中文数字转整数，如 一百二十 -> 120。'''
     total = 0
     section = 0
     num = 0
     for ch in s:
-        if ch == "十":
+        if ch == '十':
             section += (num or 1) * 10
             num = 0
-        elif ch == "百":
+        elif ch == '百':
             section += num * 100
             num = 0
         elif ch in CN_DIGITS:
@@ -77,88 +112,215 @@ def cn2int(s):
 
 
 def clean_line(line):
-    return line.strip(" \u3000\t\r\n")
+    return line.strip(' \u3000\t\r\n')
 
 
-def classify(line, chapter, first_huashuo_seen, prev):
-    """返回 narration|verse|comment（行级判定，诗句级切分见 refine_verse）。"""
-    # 第一回开篇《临江仙》特殊处理（调寄标记在末行，诗行本身无标记）
-    if chapter == 1 and not first_huashuo_seen:
-        return "verse"
-    if "评曰" in line or "【评" in line or line.startswith("评："):
-        return "comment"
-    if any(mk in line for mk in VERSE_MARKERS):
-        return "verse"
-    # 诗前引句（如「后人有古风一篇，以叙其事曰：」）后的正文行视为诗词
-    if prev and prev["type"] == "verse" and prev["text"].endswith("："):
-        return "verse"
-    return "narration"
+def depth0_marker(text):
+    '''首个诗词标记的下标（引号深度为 0 处）；无则 -1（§4 第 4 条）。'''
+    depth = 0
+    for i, ch in enumerate(text):
+        if ch in QUOTE_OPEN:
+            depth += 1
+        elif ch in QUOTE_CLOSE:
+            if depth > 0:
+                depth -= 1
+        elif depth == 0:
+            for mk in VERSE_MARKERS:
+                if text.startswith(mk, i):
+                    return i
+    return -1
 
 
-def first_verse_marker(text):
-    """首个诗词标记的位置；无标记返回 -1。"""
-    pos = -1
-    for mk in VERSE_MARKERS:
-        p = text.find(mk)
-        if p >= 0 and (pos < 0 or p < pos):
-            pos = p
-    return pos
+def lead_phrase(text):
+    '''段尾引题短语：段末两个句子（最后一个句末标点之前的尾句 + 其后的收尾）。
+
+    引题常写作「…写下八句言语，付与刘璝。其文曰：」两小句，标记落在前一小句；
+    更早的叙述句不算（§4 第 5 条：书略曰／表曰／诏曰 这类文书引题的标记不在引题短语内）。
+    '''
+    cuts = [i for i, ch in enumerate(text) if ch in TERM]
+    return text[cuts[-2] + 1:] if len(cuts) >= 2 else text
 
 
-def sentence_start_at(text, pos):
-    """返回 pos 所在句的起点（最近一个句末标点之后）；无则 0。"""
-    start = 0
-    for i in range(min(pos, len(text))):
-        if text[i] in TERM:
-            start = i + 1
-    return start
+def is_verse_continuation(text):
+    '''§4 第 3 条：多行韵文续行 —— 不含量角引号，且满足两种对仗形态之一：
+
+    ① 长句对仗：≥2 个分号且各分句都 ≤ 9 字（赋／祭文一类的长句对仗）；
+    ② 短句体：≥4 个分句且各分句都 ≤ 5 字（四言／五言短句体）。
+    '''
+    if any(ch in QUOTE_ALL for ch in text):
+        return False
+    clauses = [c for c in CLAUSE_SPLIT_RE.split(text) if c]
+    if (text.count('；') >= VERSE_CONT_MIN_SEMI and clauses
+            and max(len(c) for c in clauses) <= VERSE_CONT_MAX_CLAUSE):
+        return True
+    short = [c for c in CLAUSE_SPLIT_ALL_RE.split(text) if c]
+    return (len(short) >= VERSE_CONT_MIN_CLAUSE
+            and max(len(c) for c in short) <= VERSE_CONT_MAX_SHORT)
 
 
-def refine_verse(segments):
-    """诗句级切分（§4.6 选项 ①）：把「叙述 + 诗」融合段按句边界拆成 叙述段 + 诗段。
+def classify_segments(lines):
+    '''行级诗词判定（§4 四条，次序即优先级）；返回与 lines 等长的类型列表。'''
+    base = []
+    for i, text in enumerate(lines):
+        # 1. 独占一行、行首至行尾无正文、带诗词标记的引题
+        if text.endswith('：') and not any(c in TERM for c in text) and depth0_marker(text) >= 0:
+            base.append(TYPE_VERSE)
+            continue
+        # 2. 前一自然段以「：」结尾，且其段尾引题短语（段末两句）内含诗词标记
+        #    （§4 第 5 条：标记只在引题短语内匹配——「写书曰／表曰／诏曰」这类文书引题，
+        #     标记出现在更早的叙述句里，故不入诗）
+        prev = lines[i - 1] if i > 0 else None
+        if prev is not None and prev.endswith('：') and depth0_marker(lead_phrase(prev)) >= 0:
+            base.append(TYPE_VERSE)
+            continue
+        base.append(TYPE_PROSE)
+    # 3. 多行韵文的续行：紧跟上一条诗词段（含续行本身，逐行级联）
+    types = list(base)
+    for i, text in enumerate(lines):
+        if (types[i] == TYPE_PROSE and i > 0 and types[i - 1] == TYPE_VERSE
+                and is_verse_continuation(text)):
+            types[i] = TYPE_VERSE
+    return types
 
-    行级 classify() 判定后，折行合并会把叙述与诗并入同一段（规范 §4.6 登记：88% 的
-    verse 段是融合段）。本函数在段级产物上按「首个诗词标记所在句的起点」切开，
-    只拆不增删改（不变量 I1 仍成立），使 type 字段可作为「这段是诗」的语义保证。
-    """
+
+def classify_role(text):
+    '''§4 索引角色：引题行 = 行尾「：」+ 行内无句末标点 + ≤ LEAD_MAX_CHARS 字。'''
+    if text.endswith('：') and len(text) <= LEAD_MAX_CHARS and not any(c in TERM for c in text):
+        return ROLE_LEAD
+    return ROLE_MAIN
+
+
+def body_lines(body):
+    '''回内正文行：去除站点杂质行与空行，保留行序（段号 = 本列表序号 = 底本行号）。'''
+    lines = []
+    for raw in body:
+        if '更新时间' in raw:  # 站点杂质行（含 本章字数）
+            continue
+        line = clean_line(raw)
+        if line:
+            lines.append(line)
+    return lines
+
+
+def segmentize(lines):
+    '''把一回的正文行切成段：一行一段、段号 = 行号；不做任何段级合并（§1）。'''
+    types = classify_segments(lines)
+    return [{'index': i + 1, 'type': types[i], 'role': classify_role(lines[i]),
+             'text': lines[i]} for i in range(len(lines))]
+
+
+def iter_sentences(text):
+    '''按句末标点切句，返回 [(句文本, 句末是否为合法切点)]。
+
+    合法切点 = 句末标点（含其后紧跟的收尾引号）之后引号深度为 0（§2 第 2~3 条）。
+    '''
     out = []
-    for seg in segments:
-        pos = first_verse_marker(seg["text"])
-        start = sentence_start_at(seg["text"], pos) if pos >= 0 else 0
-        if start <= 0:
-            out.append(seg)
-            continue
-        prefix, rest = seg["text"][:start], seg["text"][start:]
-        if len(prefix) < VERSE_MIN_PREFIX or len(rest) < VERSE_MIN_REST:
-            out.append(seg)
-            continue
-        out.append({"index": 0, "type": "narration", "text": prefix})
-        out.append({"index": 0, "type": "verse", "text": rest})
-    for i, seg in enumerate(out):
-        seg["index"] = i + 1
+    start = 0
+    i = 0
+    n = len(text)
+    depth = 0
+    while i < n:
+        ch = text[i]
+        if ch in QUOTE_OPEN:
+            depth += 1
+            i += 1
+        elif ch in QUOTE_CLOSE:
+            if depth > 0:
+                depth -= 1
+            i += 1
+        elif ch in TERM:
+            j = i + 1
+            while j < n and text[j] in CLOSING:
+                if text[j] in QUOTE_CLOSE and depth > 0:
+                    depth -= 1
+                j += 1
+            out.append((text[start:j], depth == 0))
+            start = j
+            i = j
+        else:
+            i += 1
+    if start < n:
+        out.append((text[start:], False))
     return out
 
 
-def segmentize(body, chapter):
-    """把一回的文字行切成段级 segments。"""
-    segments = []
-    first_huashuo_seen = False
-    for raw in body:
-        if "更新时间" in raw:  # 站点杂质行（含 本章字数）
-            continue
-        line = clean_line(raw)
-        if not line:
-            continue
-        # 合并折行：前一段未以句末字符结尾，说明被网页折行拆开
-        if segments and not segments[-1]["text"].endswith(tuple(SENTENCE_END)):
-            segments[-1]["text"] += line
-            continue
-        if chapter == 1 and line.startswith("话说天下大势"):
-            first_huashuo_seen = True
-        seg_type = classify(line, chapter, first_huashuo_seen,
-                            segments[-1] if segments else None)
-        segments.append({"index": len(segments) + 1, "type": seg_type, "text": line})
-    return refine_verse(segments)
+def split_segment(text):
+    '''§2：段内装箱为子块；返回子块列表（按序拼接逐字等于 text）。'''
+    if len(text) <= CAP:
+        return [text]
+    sents = iter_sentences(text)
+    blocks = []
+    cur = []  # [(句文本, 句末是否为合法切点)]
+
+    def total():
+        return sum(len(s) for s, _ in cur)
+
+    def legal_end():
+        acc = 0
+        best = 0
+        for s, ok in cur:
+            acc += len(s)
+            if ok:
+                best = acc
+        return best
+
+    def close_at(cut):
+        head = []
+        tail = []
+        acc = 0
+        for s, ok in cur:
+            if acc + len(s) <= cut:
+                head.append(s)
+            else:
+                tail.append((s, ok))
+            acc += len(s)
+        return ''.join(head), tail
+
+    for s, ok in sents:
+        while cur and total() + len(s) > CAP:
+            cut = legal_end()
+            if cut == 0:
+                break  # 引号内无处可切：整段引语留在同一块（§9 白名单）
+            head, cur = close_at(cut)
+            blocks.append(head)
+        cur.append((s, ok))
+        if total() >= TARGET:
+            cut = legal_end()
+            if cut == total() and cut > 0:
+                head, cur = close_at(cut)
+                blocks.append(head)
+    if cur:
+        blocks.append(''.join(s for s, _ in cur))
+    if len(blocks) >= 2 and len(blocks[-1]) < TINY and len(blocks[-2]) + len(blocks[-1]) <= CAP:
+        tail_block = blocks.pop()
+        blocks[-1] += tail_block
+    return blocks
+
+
+def build_chunks(chapter, group_of):
+    '''段 -> 块（块不跨段；诗词段整段一块）；块上写 role 与 group_id（§4／§6）。'''
+    chunks = []
+    for seg in chapter['segments']:
+        parent_id = '%s:%04d:p%04d' % (SOURCE, chapter['chapter'], seg['index'])
+        if seg['type'] == TYPE_VERSE:
+            blocks = [seg['text']]
+        else:
+            blocks = split_segment(seg['text'])
+        gid = group_of.get((chapter['chapter'], seg['index']))
+        for k, b in enumerate(blocks, 1):
+            chunk = {
+                'chunk_id': '%s:c%02d' % (parent_id, k),
+                'parent_id': parent_id,
+                'seq_in_parent': k,
+                'type': seg['type'],
+                'text': b,
+                'char_count': len(b),
+            }
+            if gid:
+                chunk['group_id'] = '%s:%s' % (SOURCE, gid)
+            chunk['role'] = seg['role']
+            chunks.append(chunk)
+    return chunks
 
 
 def build_chapters(text):
@@ -167,341 +329,351 @@ def build_chapters(text):
     for i, l in enumerate(lines):
         m = HEADER_RE.match(l)
         if m:
-            n = cn2int(m.group(1))
-            headers.append((i, n, m.group(2).strip()))
+            headers.append((i, cn2int(m.group(1)), m.group(2).strip()))
     if len(headers) != 120:
-        raise RuntimeError("expected 120 chapters, got %d" % len(headers))
+        raise RuntimeError('expected 120 chapters, got %d' % len(headers))
     if [n for _, n, _ in headers] != list(range(1, 121)):
-        raise RuntimeError("chapter numbers not 1..120 in order")
+        raise RuntimeError('chapter numbers not 1..120 in order')
     chapters = []
     for k, (start, num, title) in enumerate(headers):
         end = headers[k + 1][0] if k + 1 < len(headers) else len(lines)
-        body = lines[start + 1:end]
-        segs = segmentize(body, num)
+        seg_lines = body_lines(lines[start + 1:end])
         chapters.append({
-            "source": SOURCE,
-            "chapter": num,
-            "title": title,
-            "segments": segs,
+            'source': SOURCE,
+            'chapter': num,
+            'title': title,
+            'lines': seg_lines,
+            'segments': segmentize(seg_lines),
         })
     return chapters
 
 
-# ===================== 步骤 1~3：切句 / 装箱（§3 参考实现移植） =====================
-def split_sentences(text):
-    return [s for s in re.split(r"(?<=[。！？；])", text) if s.strip()]
+def balanced(text):
+    '''段内引号配平（不跨段继承）：深度全程非负且收尾归零。'''
+    depth = 0
+    for ch in text:
+        if ch in QUOTE_OPEN:
+            depth += 1
+        elif ch in QUOTE_CLOSE:
+            depth -= 1
+            if depth < 0:
+                return False
+    return depth == 0
 
 
-def to_units(text):
-    """步骤 1 切句。"""
-    return [{"s": s} for s in split_sentences(text)]
+def pct(vals, p):
+    '''最近秩分位（ceil 取位），与 split-scheme §3 的读数口径一致。'''
+    idx = int(math.ceil(p * len(vals))) - 1
+    return vals[max(0, min(len(vals) - 1, idx))]
 
 
-def pack_units(units, target):
-    """步骤 3：顺序装箱到 target，至少装 1 句。"""
-    out = []
-    start = 0
-    while start < len(units):
-        end = start
-        length = 0
-        while end < len(units) and (length == 0 or length + len(units[end]["s"]) <= target):
-            length += len(units[end]["s"])
-            end += 1
-        out.append(units[start:end])
-        if end >= len(units):
-            break
-        start = end
-    return out
+def self_check(chapters, chunks_by_chapter, seg_block_count, group_of):
+    '''§7 I1~I13 构建期自检 + 统计输出；返回是否全部通过（I12 属注入侧运行时，不在此校验）。'''
+    fails = []
+    all_chunks = [c for ch in chapters for c in chunks_by_chapter[ch['chapter']]]
+    seg_total = sum(len(ch['segments']) for ch in chapters)
+    verse_total = sum(1 for ch in chapters for s in ch['segments'] if s['type'] == TYPE_VERSE)
+    prose_total = seg_total - verse_total
 
+    def seg_of(ch, c):
+        return ch['segments'][int(c['parent_id'].split(':p')[-1]) - 1]
 
-def build_chunks(segments):
-    """步骤 4~5：同回内连续 narration 跨段装箱 + verse/comment 段内独立 + 软下限。"""
-    chunks = []
+    def parents_of(ch):
+        out = {}
+        for c in chunks_by_chapter[ch['chapter']]:
+            out.setdefault(c['parent_id'], []).append(c)
+        return out
 
-    def emit(items, seg_type, part_idx, part_n):
-        if not items:
-            return
-        seg_ids = []
-        for it in items:
-            if not seg_ids or seg_ids[-1] != it["seg"]:
-                seg_ids.append(it["seg"])
-        chunks.append({
-            "text": "".join(it["s"] for it in items),
-            "type": seg_type,
-            "segFrom": seg_ids[0],
-            "segTo": seg_ids[-1],
-            "_partIdx": part_idx,
-            "_partN": part_n,
-        })
-
-    # 步骤 4：分组（跨段仅 narration）
-    groups = []
-    for seg in segments:
-        items = [dict(u, seg=seg["index"]) for u in to_units(seg["text"])]
-        last = groups[-1] if groups else None
-        joinable = seg["type"] == "narration" and last is not None and last["type"] == "narration"
-        if joinable:
-            last["items"].extend(items)
-        else:
-            groups.append({"type": seg["type"], "items": items})
-    for g in groups:
-        parts = pack_units(g["items"], TARGET)
-        for pi, part in enumerate(parts):
-            emit(part, g["type"], pi, len(parts))
-
-    # 步骤 5：软下限——长度 < MIN 的块并入同回同类型前块（并入后越 CAP 则不并）
-    if MIN > 0:
-        merged = []
-        for c in chunks:
-            prev = merged[-1] if merged else None
-            if (prev is not None and prev["type"] == c["type"]
-                    and len(c["text"]) < MIN
-                    and len(prev["text"]) + len(c["text"]) <= TARGET * 1.6):
-                prev["text"] += c["text"]
-                prev["segTo"] = c["segTo"]
-            else:
-                merged.append(dict(c))
-        chunks = merged
-
-    return chunks
-
-
-# ===================== 构建期自检 I1~I9（§7） =====================
-CASES = [
-    ("孙权遣人向关羽求亲，关羽是怎么回复使者的", "虎女安肯嫁犬子"),
-    ("关羽求亲", "虎女安肯嫁犬子"),
-    ("关羽怎么拒绝孙权的联姻", "虎女安肯嫁犬子"),
-    ("关羽为何辱骂孙权", "虎女安肯嫁犬子"),
-    ("诸葛瑾去荆州做什么", "虎女安肯嫁犬子"),
-    ("曹操献刀", "献刀"),
-    ("关羽水淹七军", "水淹七军"),
-    ("曹操割发代首", "割发"),
-    ("张辽威震逍遥津", "逍遥津"),
-    ("吕布辕门射戟", "射戟"),
-    ("许褚裸衣斗马超", "裸衣"),
-    ("关羽刮骨疗毒", "刮骨"),
-    ("关羽单刀赴会", "单刀赴会"),
-    ("诸葛亮骂死王朗", "骂死"),
-    ("赵云截江救阿斗", "截江"),
-    ("诸葛亮空城计", "空城"),
-    ("关羽斩颜良", "斩颜良"),
-    ("张飞喝断当阳桥", "当阳桥"),
-    ("刘备托孤", "托孤"),
-    ("七擒孟获", "孟获"),
-    ("火烧赤壁", "赤壁"),
-    ("三顾茅庐", "三顾"),
-    ("桃园结义", "桃园结义"),
-    ("曹操煮酒论英雄", "煮酒"),
-    ("诸葛亮隆中对", "隆中"),
-]
-
-
-def classify_cuts(chapters, chunks_by_chapter):
-    """I3 真口径：把每个切点分类为「句末标点」「源段边界」「切在句内」。"""
-    out = {"sent": 0, "seg": 0, "mid": 0, "forced": 0, "chosen": 0,
-           "chosenBad": 0, "forcedChars": {}, "chosenChars": {}, "examples": []}
+    # I1 拼接一个父段的全部子块 = 父段原文（逐字）
     for ch in chapters:
-        segs = ch["segments"]
-        stream = ""
-        sent_ends = set()
-        seg_ends = set()
-        for d in segs:
-            for s in split_sentences(d["text"]):
-                stream += s
-                if s and s[-1] in TERM:
-                    sent_ends.add(len(stream))
-            seg_ends.add(len(stream))
-        off = 0
-        for c in chunks_by_chapter[ch["chapter"]]:
-            off += len(c["text"])
-            is_group_end = c["_partIdx"] == c["_partN"] - 1
-            last_char = c["text"][-1]
-            if is_group_end:
-                out["forced"] += 1
-                out["forcedChars"][last_char] = out["forcedChars"].get(last_char, 0) + 1
-            else:
-                out["chosen"] += 1
-                out["chosenChars"][last_char] = out["chosenChars"].get(last_char, 0) + 1
-                if last_char not in TERM:
-                    out["chosenBad"] += 1
-            if off == len(stream):
+        by_parent = parents_of(ch)
+        for seg in ch['segments']:
+            pid = '%s:%04d:p%04d' % (SOURCE, ch['chapter'], seg['index'])
+            if ''.join(c['text'] for c in by_parent.get(pid, [])) != seg['text']:
+                fails.append('I1 拼接不等于原文 %s' % pid)
+
+    # I2 正文块 ≤ CAP；诗词块整段不切；超 CAP 的块必须命中 §9 白名单
+    over_cap = []
+    wl_hit_over = 0
+    for ch in chapters:
+        for c in chunks_by_chapter[ch['chapter']]:
+            if c['type'] == TYPE_VERSE and (c['seq_in_parent'] != 1 or c['text'] != seg_of(ch, c)['text']):
+                fails.append('I2 诗词段被切 %s' % c['chunk_id'])
+            if len(c['text']) > CAP:
+                over_cap.append((ch['chapter'], c))
+                if (ch['chapter'], int(c['parent_id'].split(':p')[-1])) in WL_OVER_CAP:
+                    wl_hit_over += 1
+                else:
+                    fails.append('I2 超 CAP 未登记白名单 %s len=%d' % (c['chunk_id'], len(c['text'])))
+
+    # I3 切点落在句末标点之后且该处引号深度为 0
+    for ch in chapters:
+        for pid, cs in parents_of(ch).items():
+            if len(cs) < 2:
                 continue
-            if off in sent_ends:
-                out["sent"] += 1
-            elif off in seg_ends:
-                out["seg"] += 1
-                if last_char not in TERM:
-                    out["examples"].append({
-                        "chapter": ch["chapter"], "from": c["segFrom"], "to": c["segTo"],
-                        "len": len(c["text"]), "tail": c["text"][-14:],
-                    })
+            seg = seg_of(ch, cs[0])
+            legal = set()
+            acc = 0
+            for s, ok in iter_sentences(seg['text']):
+                acc += len(s)
+                if ok:
+                    legal.add(acc)
+            acc = 0
+            for c in cs[:-1]:
+                acc += len(c['text'])
+                if acc not in legal:
+                    fails.append('I3 非法切点 %s off=%d' % (pid, acc))
+
+    # I4 块 ⊆ 父段；子块有序；chunk_id 可由 parent_id + seq_in_parent 回放
+    for ch in chapters:
+        for pid, cs in parents_of(ch).items():
+            seg = seg_of(ch, cs[0])
+            off = 0
+            for i, c in enumerate(cs):
+                if c['seq_in_parent'] != i + 1:
+                    fails.append('I4 seq 不连续 %s' % pid)
+                if c['chunk_id'] != '%s:c%02d' % (pid, c['seq_in_parent']):
+                    fails.append('I4 chunk_id 不可回放 %s' % c['chunk_id'])
+                if seg['text'][off:off + len(c['text'])] != c['text']:
+                    fails.append('I4 块非父段子串 %s' % c['chunk_id'])
+                off += len(c['text'])
+
+    # I5 块内引号配平（段内校验）；例外段见 §9
+    wl_hit_quote = 0
+    for ch in chapters:
+        for c in chunks_by_chapter[ch['chapter']]:
+            if balanced(c['text']):
+                continue
+            if (ch['chapter'], int(c['parent_id'].split(':p')[-1])) in WL_UNBALANCED_QUOTE:
+                wl_hit_quote += 1
             else:
-                out["mid"] += 1
-    return out
+                fails.append('I5 引号不配平 %s' % c['chunk_id'])
 
-
-def self_check(chapters, chunks_by_chapter):
-    """I1~I8 构建期自检；返回是否全部通过。"""
-    all_chunks = [c for ch in chapters for c in chunks_by_chapter[ch["chapter"]]]
-    ok = True
-
-    # I1 同回 chunk 拼接逐字节等于原文段拼接
-    i1_bad = 0
+    # I6 不存在跨段合并 / 跨段混装：每个块只来自单一父段
     for ch in chapters:
-        joined = "".join(c["text"] for c in chunks_by_chapter[ch["chapter"]])
-        origin = "".join(s["text"] for s in ch["segments"])
-        if joined != origin:
-            i1_bad += 1
-    ok &= i1_bad == 0
+        for c in chunks_by_chapter[ch['chapter']]:
+            pid = c['parent_id']
+            want = '%s:%04d:p%04d' % (SOURCE, ch['chapter'], int(pid.split(':p')[-1]))
+            if pid != want:
+                fails.append('I6 跨段块 %s' % c['chunk_id'])
 
-    # I2 chunk 不跨回（按回构建，恒为 0；仍显式统计）
-    i2 = sum(1 for ch in chapters for c in chunks_by_chapter[ch["chapter"]]
-             if c["_chapter"] != ch["chapter"])
-    ok &= i2 == 0
-
-    # I3 切点落在句末标点或源段边界
-    cut = classify_cuts(chapters, chunks_by_chapter)
-    ok &= cut["mid"] == 0 and cut["chosenBad"] == 0
-
-    # I4 答案句不被切碎
-    texts = [c["text"] for c in all_chunks]
-    cases = [(q, pat) for q, pat in CASES if any(pat in t for t in texts) or True]
-    i4_total = 0
-    i4_bad = 0
-    for q, pat in CASES:
-        if not any(pat in t for t in texts):
-            continue
-        i4_total += 1
-        if not any(pat in t for t in texts):
-            i4_bad += 1
-    ok &= i4_bad == 0
-
-    # I5 元数据完整
-    i5_bad = sum(1 for c in all_chunks if not (c["id"] and c["type"]
-                 and c["segFrom"] and c["segTo"] and c["_chapter"] and c["_title"]))
-    ok &= i5_bad == 0
-
-    # I6 文本为纯原文，不含元数据
-    meta_re = re.compile(r"【出处】|第\d+回|段\d+")
-    i6 = sum(1 for c in all_chunks if meta_re.search(c["text"]))
-    ok &= i6 == 0
-
-    # I7 无 chunk 超 CAP
-    i7 = sum(1 for c in all_chunks if len(c["text"]) > CAP)
-    ok &= i7 == 0
-
-    # I8 长度 < 80 字的残余块，分两类：
-    #  - 非 verse：与规范 §4.4 注同口径（成因 = 前块卡 CAP 余量 / 该回首块 / 前块类型不同），接受 ≤12；
-    #  - verse：C3 诗句级切分后，完整诗篇自成一块（均 40~60 字），是语义自足的最小检索单元，
-    #    不是「碎片噪声」，单列计数、不设上限。
-    # 规范 §4.4 记载的「残余 10」是 C3 落地**之前**的读数（那时 verse 段是 619 字的叙述+诗融合段）；
-    # C3 落地后诗篇独立成段，短块必然出现——属口径更新，非回归。
-    tiny = [c for c in all_chunks if len(c["text"]) < 80]
-    tiny_verse = [c for c in tiny if c["type"] == "verse"]
-    tiny_other = [c for c in tiny if c["type"] != "verse"]
-    ok &= len(tiny_other) <= 12
-
-
-    lens = sorted(len(c["text"]) for c in all_chunks)
-    def pct(p):
-        return lens[min(len(lens) - 1, int((len(lens) - 1) * p))]
-    types = {}
+    # I7 尾块 < TINY 必须已回并前块，或登记为「并入即超 CAP」的例外
+    tiny_tail = []
     for ch in chapters:
-        for s in ch["segments"]:
-            types[s["type"]] = types.get(s["type"], 0) + 1
-    chunk_types = {}
+        for pid, cs in parents_of(ch).items():
+            last = cs[-1]
+            if len(last['text']) < TINY and len(cs) > 1:
+                if len(cs[-2]['text']) + len(last['text']) <= CAP:
+                    fails.append('I7 尾块可回并未回并 %s len=%d' % (last['chunk_id'], len(last['text'])))
+                else:
+                    tiny_tail.append((ch['chapter'], last['chunk_id'], len(last['text'])))
+
+    # I8 类型只能是 正文／诗词，不出现 comment
     for c in all_chunks:
-        chunk_types[c["type"]] = chunk_types.get(c["type"], 0) + 1
+        if c['type'] not in (TYPE_PROSE, TYPE_VERSE):
+            fails.append('I8 非法类型 %s' % c['chunk_id'])
 
-    print("=== 构建期自检（规范 §7）===")
-    print("  I1 同回 chunk 拼接 === 原文段拼接：%s" % ("PASS" if i1_bad == 0 else "FAIL（%d 回）" % i1_bad))
-    print("  I2 chunk 跨回（应为 0）：%d" % i2)
-    print("  I3 切点分类：句末标点 %d｜源段边界 %d｜切在句内 %d（应为 0）"
-          % (cut["sent"], cut["seg"], cut["mid"]))
-    print("     强制边界 %d｜组内主动切点 %d（其中非句末标点 %d，应为 0）"
-          % (cut["forced"], cut["chosen"], cut["chosenBad"]))
-    for b in cut["examples"]:
-        print("     非句末标点强制边界：第%d回 段%d-%d 长%d 尾「%s」"
-              % (b["chapter"], b["from"], b["to"], b["len"], b["tail"]))
-    print("  I4 答案句被切碎（应为 0）：%d / %d 例" % (i4_bad, i4_total))
-    print("  I5 chunk 元数据完整性：%s" % ("PASS" if i5_bad == 0 else "FAIL（%d）" % i5_bad))
-    print("  I6 文本内含元数据（应为 0）：%d" % i6)
-    print("  I7 chunk 超 %d 字硬上限（应为 0）：%d" % (CAP, i7))
-    print("  I8 长度 < 80 字的 chunk：%d（占 %.1f%%）｜其中 verse 完整诗篇 %d（单列）／非 verse 残余 %d（接受 ≤12）"
-          % (len(tiny), len(tiny) * 100.0 / len(all_chunks), len(tiny_verse), len(tiny_other)))
-    print("  参考：chunk %d｜均 %d｜p50 %d｜p90 %d｜max %d｜超 %d 字 %d 个"
-          % (len(lens), sum(lens) // len(lens), pct(0.5), pct(0.9), lens[-1],
-             TARGET, sum(1 for l in lens if l > TARGET)))
-    print("  段级 types：%s" % types)
-    print("  chunk types：%s" % chunk_types)
-    return bool(ok)
+    # I9 段号 = 行号（段文本逐段等于回内正文行，无合并／无丢弃）；段数 = §1 读数
+    if seg_total != EXPECT_SEGMENTS:
+        fails.append('I9 段数 %d != §1 读数 %d' % (seg_total, EXPECT_SEGMENTS))
+    for ch in chapters:
+        if len(ch['segments']) != len(ch['lines']):
+            fails.append('I9 段数 != 行数（回 %d）' % ch['chapter'])
+        for i, seg in enumerate(ch['segments']):
+            if seg['index'] != i + 1 or seg['text'] != ch['lines'][i]:
+                fails.append('I9 段号/文本与底本行不符（回 %d 段 %d）' % (ch['chapter'], seg['index']))
+
+    # I10 组表自检在 load_groups 内完成（groupId 唯一、区间不重叠、组内连号不跨回）
+
+    # I11 role=引题 块数 = §4 读数（不出检索索引由消费端保证）
+    lead_blocks = [c for c in all_chunks if c['role'] == ROLE_LEAD]
+    if len(lead_blocks) != EXPECT_LEAD_BLOCKS:
+        fails.append('I11 引题块 %d != §4 读数 %d' % (len(lead_blocks), EXPECT_LEAD_BLOCKS))
+
+    # I13 语料 group_id 与组表逐段一致（表中每段都有对应块且带同组 ID，反之亦然）
+    for ch in chapters:
+        for c in chunks_by_chapter[ch['chapter']]:
+            seg_no = int(c['parent_id'].split(':p')[-1])
+            want = group_of.get((ch['chapter'], seg_no))
+            got = c['group_id'].split(':')[-1] if c.get('group_id') else None
+            if got != want:
+                fails.append('I13 组不一致 %s：语料 %s / 表 %s' % (c['chunk_id'], got, want))
+
+    # ---------- 统计（§3） ----------
+    lens = sorted(len(c['text']) for c in all_chunks)
+    split_ids = set(pid for pid, n in seg_block_count.items() if n > 1)
+    sub_lens = sorted(len(c['text']) for c in all_chunks
+                      if c['parent_id'] in split_ids and len(c['text']) <= CAP)
+    split_parents = len(split_ids)
+    one_block = seg_total - split_parents
+    sub_blocks = sum(seg_block_count[pid] for pid in split_ids)
+    sub_tiny60 = sum(1 for c in all_chunks
+                     if c['parent_id'] in split_ids and len(c['text']) < 60)
+    sub_tiny80 = sum(1 for c in all_chunks
+                     if c['parent_id'] in split_ids and len(c['text']) < 80)
+
+    print('=== 构建期自检（split-scheme §6 I1~I8）===')
+    print('  I1 子块拼接 = 父段原文（逐字）：%s'
+          % ('PASS' if not any(f.startswith('I1') for f in fails) else 'FAIL'))
+    print('  I2 正文块 ≤ %d / 诗词不切 / 超 CAP 命中白名单：%s（超 CAP %d 个，白名单命中 %d）'
+          % (CAP, 'PASS' if not any(f.startswith('I2') for f in fails) else 'FAIL',
+             len(over_cap), wl_hit_over))
+    print('  I3 切点在句末标点后且引号深度 0：%s'
+          % ('PASS' if not any(f.startswith('I3') for f in fails) else 'FAIL'))
+    print('  I4 块 ⊆ 父段／有序／chunk_id 可回放：%s'
+          % ('PASS' if not any(f.startswith('I4') for f in fails) else 'FAIL'))
+    print('  I5 块内引号配平：%s（白名单命中 %d）'
+          % ('PASS' if not any(f.startswith('I5') for f in fails) else 'FAIL', wl_hit_quote))
+    print('  I6 无跨段合并／混装：%s'
+          % ('PASS' if not any(f.startswith('I6') for f in fails) else 'FAIL'))
+    print('  I7 尾块 < %d 已回并或登记例外：%s'
+          % (TINY, 'PASS' if not any(f.startswith('I7') for f in fails) else 'FAIL'))
+    print('  I8 类型仅 正文／诗词：%s'
+          % ('PASS' if not any(f.startswith('I8') for f in fails) else 'FAIL'))
+    print('  I9 段号 = 行号／段数 = %d：%s'
+          % (EXPECT_SEGMENTS, 'PASS' if not any(f.startswith('I9') for f in fails) else 'FAIL'))
+    print('  I10 组表 groupId 唯一／区间不重叠：PASS（load_groups 校验）')
+    print('  I11 role=引题 块 %d：%s'
+          % (len(lead_blocks), 'PASS' if not any(f.startswith('I11') for f in fails) else 'FAIL'))
+    print('  I13 语料 group_id 与组表一致：%s'
+          % ('PASS' if not any(f.startswith('I13') for f in fails) else 'FAIL'))
+    for f in fails:
+        print('  !! %s' % f)
+
+    print('--- 统计（§3）---')
+    print('  段数 %d（正文 %d / 诗词 %d）' % (seg_total, prose_total, verse_total))
+    print('  块数 %d' % len(all_chunks))
+    print('  一段一块 %d（%.1f%%）' % (one_block, one_block * 100.0 / seg_total))
+    print('  被切父段 %d｜子块 %d（均 %.2f 块/段）'
+          % (split_parents, sub_blocks, float(sub_blocks) / split_parents))
+    print('  块长 p50 %d / p90 %d / 均值 %d / max %d'
+          % (pct(lens, 0.5), pct(lens, 0.9), sum(lens) // len(lens), lens[-1]))
+    if sub_lens:
+        print('  子块长 p50 %d / p90 %d（不含超 CAP 白名单块）｜子块 <60：%d；<80：%d'
+              % (pct(sub_lens, 0.5), pct(sub_lens, 0.9), sub_tiny60, sub_tiny80))
+    print('  全库块长 <60：%d；<80：%d'
+          % (sum(1 for l in lens if l < 60), sum(1 for l in lens if l < 80)))
+    print('  超 CAP 块：%d（%s）' % (len(over_cap), ', '.join(
+        '%d回 %s len=%d' % (ch, c['chunk_id'], len(c['text'])) for ch, c in over_cap) or '-'))
+    print('  尾块 <60 例外（并入即超 CAP）：%s' % ('; '.join(
+        '%s len=%d' % (cid, ln) for _, cid, ln in tiny_tail) or '-'))
+    groups = sorted(set(group_of.values()))
+    glens = sorted(sum(len(s['text']) for c in chapters for s in c['segments']
+                       if group_of.get((c['chapter'], s['index'])) == g)
+                   for g in groups)
+    print('  组 %d / 覆盖段 %d（%.1f%%）｜组字数 p50 %d / p90 %d / max %d'
+          % (len(groups), len(group_of), len(group_of) * 100.0 / seg_total,
+             pct(glens, 0.5), pct(glens, 0.9), glens[-1]))
+    print('  引题块（role=引题）%d' % len(lead_blocks))
+    return not fails
+
+
+def load_groups(path):
+    '''读 §6 组定义表 -> {(回号, 段号): groupId}；顺带做 I10 校验（唯一／不重叠／连号）。'''
+    with io.open(path, encoding='utf-8') as fh:
+        rows = json.load(fh)['rows']
+    group_of = {}
+    seen = set()
+    for r in rows:
+        gid = r['groupId']
+        ch, s, e = r['chapter'], r['segStart'], r['segEnd']
+        if gid in seen:
+            raise RuntimeError('I10 groupId 重复：%s' % gid)
+        seen.add(gid)
+        if not (1 <= s <= e):
+            raise RuntimeError('I10 组区间非法：%s' % gid)
+        for k in range(s, e + 1):
+            if (ch, k) in group_of:
+                raise RuntimeError('I10 组区间重叠：%s（回 %d 段 %d）' % (gid, ch, k))
+            group_of[(ch, k)] = gid
+    return group_of
 
 
 def main():
     src = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_SRC
     if not os.path.exists(src):
-        print("corpus source not found: %s" % src, file=sys.stderr)
+        print('corpus source not found: %s' % src, file=sys.stderr)
         return 1
-    raw = open(src, "rb").read()
-    text = raw.decode("utf-8-sig")
+    text = open(src, 'rb').read().decode('utf-8-sig')
     chapters = build_chapters(text)
 
+    group_of = load_groups(GROUP_TABLE)
+    print('groups loaded: %d groups / %d segments' % (len(set(group_of.values())), len(group_of)))
     chunks_by_chapter = {}
+    seg_block_count = {}
     for ch in chapters:
-        chunks = build_chunks(ch["segments"])
-        for i, c in enumerate(chunks):
-            c["id"] = "%s:%04d:c%04d" % (SOURCE, ch["chapter"], i + 1)
-            c["_chapter"] = ch["chapter"]
-            c["_title"] = ch["title"]
-        chunks_by_chapter[ch["chapter"]] = chunks
+        chunks = build_chunks(ch, group_of)
+        for c in chunks:
+            seg_block_count[c['parent_id']] = seg_block_count.get(c['parent_id'], 0) + 1
+        chunks_by_chapter[ch['chapter']] = chunks
 
-    passed = self_check(chapters, chunks_by_chapter)
+    passed = self_check(chapters, chunks_by_chapter, seg_block_count, group_of)
 
-    # 落盘 1：chunk 级（schema v2，运行期读）
     os.makedirs(OUT_DIR, exist_ok=True)
     for ch in chapters:
         out = {
-            "source": ch["source"],
-            "chapter": ch["chapter"],
-            "title": ch["title"],
-            "chunks": [
-                {k: v for k, v in c.items() if not k.startswith("_")}
-                for c in chunks_by_chapter[ch["chapter"]]
-            ],
+            'source': ch['source'],
+            'chapter': ch['chapter'],
+            'title': ch['title'],
+            'chunks': chunks_by_chapter[ch['chapter']],
         }
-        fname = "%03d.json" % ch["chapter"]
-        with io.open(os.path.join(OUT_DIR, fname), "w", encoding="utf-8") as fh:
+        with io.open(os.path.join(OUT_DIR, '%03d.json' % ch['chapter']), 'w',
+                     encoding='utf-8', newline='') as fh:
             json.dump(out, fh, ensure_ascii=False, indent=1)
+            fh.write('\n')
 
-    # 落盘 2：段级中间产物（探针 B 复跑用，运行期不读）
-    os.makedirs(SEG_DIR, exist_ok=True)
-    for ch in chapters:
-        out = {
-            "source": ch["source"],
-            "chapter": ch["chapter"],
-            "title": ch["title"],
-            "segments": ch["segments"],
-        }
-        fname = "%03d.json" % ch["chapter"]
-        with io.open(os.path.join(SEG_DIR, fname), "w", encoding="utf-8") as fh:
-            json.dump(out, fh, ensure_ascii=False, indent=1)
+    if os.environ.get('SANGO_EMIT_SEGMENTS'):
+        os.makedirs(SEG_DUMP_DIR, exist_ok=True)
+        index = []
+        for ch in chapters:
+            rows = [{
+                'index': s['index'],
+                'type': s['type'],
+                'role': s['role'],
+                'group': group_of.get((ch['chapter'], s['index'])),
+                'char_count': len(s['text']),
+                'head': s['text'][:SEG_DUMP_CHARS],
+                'tail': s['text'][-SEG_DUMP_CHARS:],
+            } for s in ch['segments']]
+            out = {
+                'source': ch['source'],
+                'chapter': ch['chapter'],
+                'title': ch['title'],
+                'segments': rows,
+            }
+            with io.open(os.path.join(SEG_DUMP_DIR, '%03d.json' % ch['chapter']), 'w',
+                         encoding='utf-8', newline='') as fh:
+                json.dump(out, fh, ensure_ascii=False, indent=1)
+                fh.write('\n')
+            index.append({
+                'chapter': ch['chapter'],
+                'title': ch['title'],
+                'segments': len(rows),
+                'prose': sum(1 for r in rows if r['type'] == TYPE_PROSE),
+                'verse': sum(1 for r in rows if r['type'] == TYPE_VERSE),
+            })
+        total_segments = sum(r['segments'] for r in index)
+        with io.open(os.path.join(SEG_DUMP_DIR, 'INDEX.json'), 'w',
+                     encoding='utf-8', newline='') as fh:
+            json.dump({'source': SOURCE, 'total_segments': total_segments,
+                       'chapters': index}, fh, ensure_ascii=False, indent=1)
+        print('segments dumped: %d chapters, %d segments -> %s'
+              % (len(index), total_segments, SEG_DUMP_DIR))
 
     total_chunks = sum(len(v) for v in chunks_by_chapter.values())
-    print("corpus written: %d chapters, %d chunks -> %s" % (len(chapters), total_chunks, OUT_DIR))
-    print("segments written: %d chapters -> %s" % (len(chapters), SEG_DIR))
+    print('corpus written: %d chapters, %d chunks -> %s' % (len(chapters), total_chunks, OUT_DIR))
 
-    # 杂质残留自检
-    joined = "".join(c["text"] for v in chunks_by_chapter.values() for c in v)
-    for bad in ("更新时间", "本章字数"):
+    joined = ''.join(c['text'] for v in chunks_by_chapter.values() for c in v)
+    for bad in ('更新时间', '本章字数'):
         if bad in joined:
-            print("WARN impurity remains: %s" % bad, file=sys.stderr)
+            print('WARN impurity remains: %s' % bad, file=sys.stderr)
             passed = False
     if not passed:
-        print("BUILD FAILED: 构建期自检未通过", file=sys.stderr)
+        print('BUILD FAILED: 构建期自检未通过', file=sys.stderr)
         return 1
-    print("BUILD OK")
+    print('BUILD OK')
     return 0
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     sys.exit(main())
