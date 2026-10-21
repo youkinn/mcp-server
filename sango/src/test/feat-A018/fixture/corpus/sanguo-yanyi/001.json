@@ -4,53 +4,67 @@
  "title": "第一回 试设计",
  "chunks": [
   {
-   "id": "sanguo-yanyi:0001:c0001",
+   "chunk_id": "sanguo-yanyi:0001:p0001:c01",
+   "parent_id": "sanguo-yanyi:0001:p0001",
+   "seq_in_parent": 1,
+   "type": "prose",
+   "role": "body",
    "text": "甲乙丙丁。",
-   "type": "narration",
-   "segFrom": 1,
-   "segTo": 1
+   "char_count": 5
   },
   {
-   "id": "sanguo-yanyi:0001:c0002",
+   "chunk_id": "sanguo-yanyi:0001:p0002:c01",
+   "parent_id": "sanguo-yanyi:0001:p0002",
+   "seq_in_parent": 1,
+   "type": "prose",
+   "role": "body",
    "text": "丙丁甲乙。丙丁丙丁。",
-   "type": "narration",
-   "segFrom": 1,
-   "segTo": 1
+   "char_count": 10
   },
   {
-   "id": "sanguo-yanyi:0001:c0003",
+   "chunk_id": "sanguo-yanyi:0001:p0003:c01",
+   "parent_id": "sanguo-yanyi:0001:p0003",
+   "seq_in_parent": 1,
+   "type": "prose",
+   "role": "body",
    "text": "丙丁。",
-   "type": "narration",
-   "segFrom": 1,
-   "segTo": 1
+   "char_count": 3
   },
   {
-   "id": "sanguo-yanyi:0001:c0004",
+   "chunk_id": "sanguo-yanyi:0001:p0004:c01",
+   "parent_id": "sanguo-yanyi:0001:p0004",
+   "seq_in_parent": 1,
+   "type": "prose",
+   "role": "body",
    "text": "丙丁丙丁。",
-   "type": "narration",
-   "segFrom": 1,
-   "segTo": 1
+   "char_count": 5
   },
   {
-   "id": "sanguo-yanyi:0001:c0005",
+   "chunk_id": "sanguo-yanyi:0001:p0005:c01",
+   "parent_id": "sanguo-yanyi:0001:p0005",
+   "seq_in_parent": 1,
+   "type": "prose",
+   "role": "body",
    "text": "丙丁与壬癸。丙丁。",
-   "type": "narration",
-   "segFrom": 1,
-   "segTo": 1
+   "char_count": 9
   },
   {
-   "id": "sanguo-yanyi:0001:c0006",
+   "chunk_id": "sanguo-yanyi:0001:p0006:c01",
+   "parent_id": "sanguo-yanyi:0001:p0006",
+   "seq_in_parent": 1,
+   "type": "prose",
+   "role": "body",
    "text": "午未申酉；子丑寅卯。",
-   "type": "narration",
-   "segFrom": 1,
-   "segTo": 1
+   "char_count": 10
   },
   {
-   "id": "sanguo-yanyi:0001:c0007",
+   "chunk_id": "sanguo-yanyi:0001:p0007:c01",
+   "parent_id": "sanguo-yanyi:0001:p0007",
+   "seq_in_parent": 1,
+   "type": "prose",
+   "role": "body",
    "text": "辰巳午未，申酉戌亥。",
-   "type": "narration",
-   "segFrom": 1,
-   "segTo": 1
+   "char_count": 10
   }
  ]
 }

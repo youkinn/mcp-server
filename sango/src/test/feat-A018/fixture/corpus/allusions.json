@@ -13,8 +13,8 @@
     "割发代首"
    ],
    "chunkIds": [
-    "sanguo-yanyi:0002:c0002",
-    "sanguo-yanyi:0002:c0001"
+    "sanguo-yanyi:0002:p0001:c02",
+    "sanguo-yanyi:0002:p0001:c01"
    ],
    "type": "典故",
    "exampleQuestion": "割发代首是怎么回事"
@@ -26,7 +26,7 @@
     "鸡肋"
    ],
    "chunkIds": [
-    "sanguo-yanyi:0001:c0006"
+    "sanguo-yanyi:0001:p0006:c01"
    ],
    "type": "典故",
    "exampleQuestion": "鸡肋这个典故是什么意思"
@@ -38,7 +38,7 @@
     "乐不思蜀"
    ],
    "chunkIds": [
-    "sanguo-yanyi:0001:c0007"
+    "sanguo-yanyi:0001:p0007:c01"
    ],
    "type": "典故",
    "exampleQuestion": "乐不思蜀出自哪一回"
@@ -50,7 +50,7 @@
     "夜战马超"
    ],
    "chunkIds": [
-    "sanguo-yanyi:0001:c0005"
+    "sanguo-yanyi:0001:p0005:c01"
    ],
    "type": "典故",
    "exampleQuestion": "夜战马超是哪一回的事"
@@ -63,7 +63,7 @@
     "谜"
    ],
    "chunkIds": [
-    "sanguo-yanyi:0002:c0001"
+    "sanguo-yanyi:0002:p0001:c01"
    ],
    "type": "典故",
    "exampleQuestion": "这个典故叫什么"

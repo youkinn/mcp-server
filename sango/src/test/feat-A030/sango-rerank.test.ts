@@ -17,7 +17,7 @@ import type { RetrievalDiagnostics } from '../../types.ts';
 const CHUNK_COUNT = 60;
 const Q_RULE = '战况';
 const Q_L3 = '甲甲之死战况';
-const PIN_ID = 'sanguo-yanyi:0001:c0006';
+const PIN_ID = 'sanguo-yanyi:0001:p0006:c01';
 
 /** 合成语料：CHUNK_COUNT 段同题（均含「甲甲」「战况」），「战况」词频随段号递减形成唯一规则序。 */
 function writeCorpus(dir: string, withL3 = false): void {
@@ -26,13 +26,9 @@ function writeCorpus(dir: string, withL3 = false): void {
   const chunks = [];
   for (let i = 1; i <= CHUNK_COUNT; i++) {
     const repeats = '战况'.repeat(CHUNK_COUNT - i + 1);
-    chunks.push({
-      id: `sanguo-yanyi:0001:c${String(i).padStart(4, '0')}`,
-      text: `第${i}阵甲甲甲甲。${repeats}标记K${i}。`,
-      type: 'narration',
-      segFrom: i,
-      segTo: i,
-    });
+    const text = `第${i}阵甲甲甲甲。${repeats}标记K${i}。`;
+    const parent = `sanguo-yanyi:0001:p${String(i).padStart(4, '0')}`;
+    chunks.push({ chunk_id: `${parent}:c01`, parent_id: parent, seq_in_parent: 1, type: 'prose', role: 'body', text, char_count: text.length });
   }
   writeFileSync(
     path.join(corpusDir, '001.json'),
@@ -66,7 +62,7 @@ function load(dir: string, rerankScorer: RerankScorer | null): SangoIndex {
 /** 规则序（无重排基线）出参 id：limit 给满即可读回整池顺序。 */
 async function ruleOrder(dir: string, query: string, limit = CHUNK_COUNT): Promise<string[]> {
   const base = load(dir, null);
-  return (await base.search(query, limit)).entries.map((e) => e.id);
+  return (await base.search(query, limit)).entries.map((e) => e.chunk_id);
 }
 
 test('① 50→10（§3.3⑤）：规则序 top50 进 cross-encoder，窗内重排后取 limit 10，窗外候选高分也不进窗', async () => {
@@ -81,10 +77,10 @@ test('① 50→10（§3.3⑤）：规则序 top50 进 cross-encoder，窗内重�
     const { entries } = await index.search(Q_RULE, 10);
 
     assert.equal(entries.length, 10, '返回 limit=10');
-    assert.equal(entries[0].id, rule[2], '窗内低规则序候选被重排抬到 rank1');
-    assert.equal(entries[1].id, rule[49], '窗口内最后一位（规则序第 50）参与重排');
-    assert.equal(entries[2].id, rule[0], '其余候选同分保持规则序（稳定排序）');
-    assert.ok(!entries.some((e) => e.id === rule[54]), '规则序第 55 位在 50 路窗外，评分再高也不进窗');
+    assert.equal(entries[0].chunk_id, rule[2], '窗内低规则序候选被重排抬到 rank1');
+    assert.equal(entries[1].chunk_id, rule[49], '窗口内最后一位（规则序第 50）参与重排');
+    assert.equal(entries[2].chunk_id, rule[0], '其余候选同分保持规则序（稳定排序）');
+    assert.ok(!entries.some((e) => e.chunk_id === rule[54]), '规则序第 55 位在 50 路窗外，评分再高也不进窗');
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -100,9 +96,9 @@ test('② 输出顺序与诊断一致（可读证）：出参序 = candidates �
     const d = diagnostics as RetrievalDiagnostics;
 
     assert.ok(d);
-    assert.notEqual(entries[0].id, rule[0], '重排确实改变了规则序首位（否则下面的等式恒真）');
+    assert.notEqual(entries[0].chunk_id, rule[0], '重排确实改变了规则序首位（否则下面的等式恒真）');
     assert.deepEqual(
-      entries.map((e) => e.id),
+      entries.map((e) => e.chunk_id),
       d.candidates.slice(0, 10).map((c) => c.chunkId),
       '出参序 = 诊断候选池序前 limit（同序可读证）',
     );
@@ -126,7 +122,7 @@ test('③ 保证区置顶段不参与重排（§3.3②/⑤）：L3 锚点段低�
     const index = load(dir, scorer);
     const { entries, diagnostics } = await index.search(Q_L3, 10, { diagnostics: true });
 
-    assert.equal(entries[0].id, PIN_ID, '置顶段即使被打 -999 分仍占 rank1（保证区不参与重排）');
+    assert.equal(entries[0].chunk_id, PIN_ID, '置顶段即使被打 -999 分仍占 rank1（保证区不参与重排）');
     assert.equal((diagnostics as RetrievalDiagnostics).candidates[0].chunkId, PIN_ID);
     assert.equal(seen.length, 1, '打分器只调用一次');
     assert.ok(!seen[0].some((t) => t.includes('标记K6')), 'L3 锚点段文本不进入 cross-encoder 输入');
@@ -167,7 +163,7 @@ test('⑤ 重排不可用降级：打分器返回 null 时保持规则序、不�
     const rule = await ruleOrder(dir, Q_RULE, 10);
     const index = load(dir, async () => null);
     const { entries } = await index.search(Q_RULE, 10);
-    assert.deepEqual(entries.map((e) => e.id), rule, '重排不可用 → 出参与无重排基线逐条一致');
+    assert.deepEqual(entries.map((e) => e.chunk_id), rule, '重排不可用 → 出参与无重排基线逐条一致');
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -228,7 +224,7 @@ test('⑦ 保证区整窗跳过（§3.3②/⑤）：窗口全为置顶段 → �
       },
       '窗口 1 全为 L3 保证区 → 跳过重排',
     );
-    assert.equal(entries[0].id, PIN_ID, '跳过重排 → 规则序保持（保证区置顶段 rank1）');
+    assert.equal(entries[0].chunk_id, PIN_ID, '跳过重排 → 规则序保持（保证区置顶段 rank1）');
     assert.equal(seen.length, 0, '窗口内无参与候选 → 打分器不被调用');
     assert.equal(d.timing.rerank, null, '重排段未执行 → timing.rerank null');
   } finally {
@@ -250,7 +246,7 @@ test('⑧ 打分器抛错降级：applied=false、reason=重排打分异常、�
     );
     const { entries, diagnostics } = await index.search(Q_RULE, 10, { diagnostics: true });
     const d = diagnostics as RetrievalDiagnostics;
-    assert.deepEqual(entries.map((e) => e.id), rule, '打分异常 → 出参与无重排基线逐条一致');
+    assert.deepEqual(entries.map((e) => e.chunk_id), rule, '打分异常 → 出参与无重排基线逐条一致');
     assert.ok(d);
     assert.equal(d.rerank.applied, false);
     assert.equal(d.rerank.reason, '重排打分异常');
@@ -268,7 +264,7 @@ test('⑨ 分数长度非法降级：applied=false、reason=重排分数非法�
     const index = load(dir, async () => [1, 2, 3]); // 长度 3 ≠ 参与条数 50
     const { entries, diagnostics } = await index.search(Q_RULE, 10, { diagnostics: true });
     const d = diagnostics as RetrievalDiagnostics;
-    assert.deepEqual(entries.map((e) => e.id), rule, '分数非法 → 出参与无重排基线逐条一致');
+    assert.deepEqual(entries.map((e) => e.chunk_id), rule, '分数非法 → 出参与无重排基线逐条一致');
     assert.ok(d);
     assert.equal(d.rerank.applied, false);
     assert.equal(d.rerank.reason, '重排分数非法');

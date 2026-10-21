@@ -4,11 +4,13 @@
   "title": "假投降巧计成虚话 再受禅依样画葫芦",
   "chunks": [
     {
-      "id": "sanguo-yanyi:0119:c0001",
+      "chunk_id": "sanguo-yanyi:0119:p0001:c01",
+      "parent_id": "sanguo-yanyi:0119:p0001",
+      "seq_in_parent": 1,
+      "type": "prose",
+      "role": "body",
       "text": "却说姜维乃天水人也，字伯约。",
-      "type": "narration",
-      "segFrom": 1,
-      "segTo": 1
+      "char_count": 14
     }
   ]
 }

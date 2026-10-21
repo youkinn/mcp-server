@@ -4,7 +4,7 @@
  * nextRank/deathIntent）/ 漏斗管道约束 / 降级环境 / 死亡意图置顶 / 64KB 预算截断 / 工具层 traceId 透传回传
  * result._meta.diagnostics（content 契约零改动）/ 旁路（产出失败不影响 content）/ 候选命中的标签文本
  * （hitLabels：与 labelHit 自洽、标签表成员、双字词元求交，另用真实语料 data/corpus 核对一次）。
- * 夹具与 feat-A004 同源：4 chunk（第 1 回 1 个 / 第 73 回 3 个）、无向量文件（降级纯 BM25）、
+ * 夹具与 feat-A004 同源：5 chunk（第 1 回 1 个 / 第 73 回 4 个，含 1 个引题块）、无向量文件（降级纯 BM25）、
  * entity-table 2 条 rewriteKeys / 2 人物行（FEAT-A016 单表；rewriteKeyCount=2 为 env.aliasCount 新口径，
  * env.normVersion=5f0a1c2d 为夹具表 meta；query.rewrites 为 query 侧实际改写命中明细）。
  */
@@ -75,7 +75,7 @@ test('① 未请求诊断（无 traceId / diagnostics 未开启）：search 返�
   assert.ok(result.entries.length > 0);
   assert.deepEqual(
     Object.keys(result.entries[0]).sort(),
-    ['chapter', 'id', 'segFrom', 'segTo', 'text', 'title', 'type'],
+    ['chapter', 'char_count', 'chunk_id', 'parent_id', 'role', 'seq_in_parent', 'text', 'title', 'type'],
     '出参条目字段集与 A004 一致',
   );
 });
@@ -144,9 +144,9 @@ test('④ 环境与降级：夹具无向量 → degradedBm25Only=true、vectorSc
   assert.equal(diagnostics.env.degradedBm25Only, true);
   assert.equal(diagnostics.env.vectorScheme, null);
   assert.equal(diagnostics.env.vectorDim, null);
-  assert.equal(diagnostics.env.corpusChunks, 4);
+  assert.equal(diagnostics.env.corpusChunks, 5);
   assert.equal(diagnostics.env.aliasCount, 2, 'env.aliasCount = 表内 rewriteKeys 总数（人物 孟德 + 云长）');
-  assert.equal(diagnostics.funnel.corpusChunks, 4);
+  assert.equal(diagnostics.funnel.corpusChunks, 5);
   assert.equal(diagnostics.funnel.vectorTop50, 0, '降级时向量路为 0');
 });
 
@@ -192,7 +192,7 @@ test('⑥ 候选分数表：字段齐全、按最终返回序、≤20 条、rank
       assert.ok(chunkTags.includes(label), 'rank' + c.rank + ' hitLabels 项「' + label + '」必在该 chunk 标签表内');
     }
   });
-  assert.equal(diagnostics.candidates[0].chunkId, entries[0].id, '候选表 rank=1 对应出参首条');
+  assert.equal(diagnostics.candidates[0].chunkId, entries[0].chunk_id, '候选表 rank=1 对应出参首条');
   assert.equal(diagnostics.candidates[0].rank, 1);
   for (let i = 1; i < diagnostics.candidates.length; i++) {
     assert.ok(diagnostics.candidates[i - 1].finalScore >= diagnostics.candidates[i].finalScore, '普通问法按 finalScore 降序');
@@ -202,9 +202,9 @@ test('⑥ 候选分数表：字段齐全、按最终返回序、≤20 条、rank
   assert.deepEqual(
     diagnostics.candidates.map((c) => [c.chunkId, c.hitLabels]),
     [
-      ['sanguo-yanyi:0073:c0001', ['人物之死-关羽之死']],
-      ['sanguo-yanyi:0073:c0002', ['人物之死-关羽之死', '政治事件-关羽托孤']],
-      ['sanguo-yanyi:0073:c0003', ['政治事件-关羽入川']],
+      ['sanguo-yanyi:0073:p0001:c01', ['人物之死-关羽之死']],
+      ['sanguo-yanyi:0073:p0005:c01', ['人物之死-关羽之死', '政治事件-关羽托孤']],
+      ['sanguo-yanyi:0073:p0006:c02', ['政治事件-关羽入川']],
     ],
     '命中标签逐条可读（夹具标签表 event.json 三条 chunk）',
   );
@@ -238,9 +238,9 @@ test('⑧ 死亡意图：非死亡问法 detected=false；死亡问法 detected=
   assert.ok(death.diagnostics);
   assert.equal(death.diagnostics.deathIntent.detected, true);
   assert.equal(death.diagnostics.deathIntent.pinned, true);
-  assert.ok(death.diagnostics.deathIntent.chunkIds.includes('sanguo-yanyi:0073:c0001'));
-  assert.ok(death.diagnostics.deathIntent.chunkIds.includes('sanguo-yanyi:0073:c0002'));
-  assert.deepEqual(death.entries.slice(0, 2).map((e) => e.id), death.diagnostics.deathIntent.chunkIds.slice(0, 2).sort(), '置顶候选与出参首位一致');
+  assert.ok(death.diagnostics.deathIntent.chunkIds.includes('sanguo-yanyi:0073:p0001:c01'));
+  assert.ok(death.diagnostics.deathIntent.chunkIds.includes('sanguo-yanyi:0073:p0005:c01'));
+  assert.deepEqual(death.entries.slice(0, 2).map((e) => e.chunk_id), death.diagnostics.deathIntent.chunkIds.slice(0, 2).sort(), '置顶候选与出参首位一致');
   assert.equal(death.diagnostics.birthIntent.detected, false, '死亡问法不含登场语义，不误触发登场意图');
 });
 
@@ -248,7 +248,7 @@ test('⑨ 64KB 预算截断（硬约束 3）：超限诊断 truncated=true、tru
   const bigText = 'x'.repeat(120);
   const candidate = {
     rank: 1,
-    chunkId: 'sanguo-yanyi:0073:c0001',
+    chunkId: 'sanguo-yanyi:0073:p0001:c01',
     chapter: 73,
     title: bigText,
     bm25: 12.34,

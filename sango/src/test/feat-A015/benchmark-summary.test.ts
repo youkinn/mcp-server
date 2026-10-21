@@ -38,13 +38,10 @@ function fixture(scorer: RerankScorer | null = null): Fixture {
   const dir = mkdtempSync(path.join(tmpdir(), 'a015-sum-'));
   const corpusDir = path.join(dir, 'corpus', 'sanguo-yanyi');
   mkdirSync(corpusDir, { recursive: true });
-  const chunks = ['刘备字玄德，涿郡涿县人。', '曹操字孟德，沛国谯人。', '孙权字仲谋，吴郡富春人。'].map((text, i) => ({
-    id: `sanguo-yanyi:0001:c000${i + 1}`,
-    text,
-    type: 'narration',
-    segFrom: i + 1,
-    segTo: i + 1,
-  }));
+  const chunks = ['刘备字玄德，涿郡涿县人。', '曹操字孟德，沛国谯人。', '孙权字仲谋，吴郡富春人。'].map((text, i) => {
+    const parent = `sanguo-yanyi:0001:p${String(i + 1).padStart(4, '0')}`;
+    return { chunk_id: `${parent}:c01`, parent_id: parent, seq_in_parent: 1, type: 'prose', role: 'body', text, char_count: text.length };
+  });
   writeFileSync(path.join(corpusDir, '001.json'), JSON.stringify({ source: 'sanguo-yanyi', chapter: 1, title: '第一回 合成', chunks }), 'utf8');
   const benchmarkFile = path.join(dir, 'bench.md');
   writeFileSync(
@@ -71,13 +68,10 @@ function fixtureWithNoAnchor(scorer: RerankScorer | null = null): Fixture {
   const dir = mkdtempSync(path.join(tmpdir(), 'a015-noanchor-'));
   const corpusDir = path.join(dir, 'corpus', 'sanguo-yanyi');
   mkdirSync(corpusDir, { recursive: true });
-  const chunks = ['刘备字玄德，涿郡涿县人。', '曹操字孟德，沛国谯人。'].map((text, i) => ({
-    id: `sanguo-yanyi:0001:c000${i + 1}`,
-    text,
-    type: 'narration',
-    segFrom: i + 1,
-    segTo: i + 1,
-  }));
+  const chunks = ['刘备字玄德，涿郡涿县人。', '曹操字孟德，沛国谯人。'].map((text, i) => {
+    const parent = `sanguo-yanyi:0001:p${String(i + 1).padStart(4, '0')}`;
+    return { chunk_id: `${parent}:c01`, parent_id: parent, seq_in_parent: 1, type: 'prose', role: 'body', text, char_count: text.length };
+  });
   writeFileSync(path.join(corpusDir, '001.json'), JSON.stringify({ source: 'sanguo-yanyi', chapter: 1, title: '第一回 合成', chunks }), 'utf8');
   const benchmarkFile = path.join(dir, 'bench.md');
   writeFileSync(
@@ -256,13 +250,10 @@ function fixtureChapter(): Fixture {
     { chapter: 4, texts: ['诸葛亮字孔明，琅琊阳都人。'] },
   ];
   for (const ch of chapters) {
-    const chunks = ch.texts.map((text, i) => ({
-      id: `sanguo-yanyi:000${ch.chapter}:c000${i + 1}`,
-      text: PRE + text,
-      type: 'narration',
-      segFrom: i + 1,
-      segTo: i + 1,
-    }));
+    const chunks = ch.texts.map((text, i) => {
+      const parent = `sanguo-yanyi:000${ch.chapter}:p${String(i + 1).padStart(4, '0')}`;
+      return { chunk_id: `${parent}:c01`, parent_id: parent, seq_in_parent: 1, type: 'prose', role: 'body', text: PRE + text, char_count: (PRE + text).length };
+    });
     writeFileSync(path.join(corpusDir, `00${ch.chapter}.json`), JSON.stringify({ source: 'sanguo-yanyi', chapter: ch.chapter, title: `第${ch.chapter}回 合成`, chunks }), 'utf8');
   }
   const benchmarkFile = path.join(dir, 'bench.md');

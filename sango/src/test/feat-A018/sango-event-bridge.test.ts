@@ -52,13 +52,10 @@ function writeRerankCorpus(dir: string, withEvents: boolean): void {
   mkdirSync(corpusDir, { recursive: true });
   const texts = ['赤壁之战大破曹军。', '火攻之计甚是精妙。'];
   for (let i = 0; i < 8; i++) texts.push('周郎火攻，战况如何？战况如何？');
-  const chunks = texts.map((text, i) => ({
-    id: `sanguo-yanyi:0001:c${String(i + 1).padStart(4, '0')}`,
-    text,
-    type: 'narration',
-    segFrom: 1,
-    segTo: 1,
-  }));
+  const chunks = texts.map((text, i) => {
+    const parent = `sanguo-yanyi:0001:p${String(i + 1).padStart(4, '0')}`;
+    return { chunk_id: `${parent}:c01`, parent_id: parent, seq_in_parent: 1, type: 'prose', role: 'body', text, char_count: text.length };
+  });
   writeFileSync(
     path.join(corpusDir, '001.json'),
     JSON.stringify({ source: 'sanguo-yanyi', chapter: 1, title: '第一回 合成', chunks }),
@@ -70,8 +67,8 @@ function writeRerankCorpus(dir: string, withEvents: boolean): void {
       JSON.stringify({
         meta: { schemaVersion: 1, normVersion: 'feed0001', generatedAt: '2026-09-28T00:00:00.000Z', corpusChunkCount: 10 },
         rows: [
-          { eventId: 'E1', eventName: '赤壁之战', aliases: ['周郎火攻'], chunkIds: ['sanguo-yanyi:0001:c0001'], type: 'L1' },
-          { eventId: 'E2', eventName: '火攻之计', aliases: ['火攻'], chunkIds: ['sanguo-yanyi:0001:c0002'], type: 'L1' },
+          { eventId: 'E1', eventName: '赤壁之战', aliases: ['周郎火攻'], chunkIds: ['sanguo-yanyi:0001:p0001:c01'], type: 'L1' },
+          { eventId: 'E2', eventName: '火攻之计', aliases: ['火攻'], chunkIds: ['sanguo-yanyi:0001:p0002:c01'], type: 'L1' },
         ],
       }),
       'utf8',
@@ -80,17 +77,17 @@ function writeRerankCorpus(dir: string, withEvents: boolean): void {
 }
 
 const RERANK_QUERY = '周郎火攻的战况如何';
-const ANSWER_ID = 'sanguo-yanyi:0001:c0001';
+const ANSWER_ID = 'sanguo-yanyi:0001:p0001:c01';
 
 test('① 并池（§3.3③）：三路 combined 空 + L1 事件命中 → 组 chunk 并池构成出参（事件内序）', async () => {
   const dir = tempFixture();
   try {
     const index = loadFixture(dir);
-    // 表内该行 chunkIds 书序为 [0002:c0001, 0001:c0006]（乱序），事件内序应为 [0001:c0006, 0002:c0001]。
+    // 表内该行 chunkIds 书序为 [0002:p0001:c01, 0001:p0006:c01]（乱序），事件内序应为 [0001:p0006:c01, 0002:p0001:c01]。
     const result = await index.search('温酒斩华雄是怎么斩的', 5, { diagnostics: true });
     assert.deepEqual(
-      result.entries.map((e) => e.id),
-      ['sanguo-yanyi:0001:c0006', 'sanguo-yanyi:0002:c0001'],
+      result.entries.map((e) => e.chunk_id),
+      ['sanguo-yanyi:0001:p0006:c01', 'sanguo-yanyi:0002:p0001:c01'],
       '三路空时由并池构成出参，事件内序',
     );
     const d = result.diagnostics;
@@ -100,7 +97,7 @@ test('① 并池（§3.3③）：三路 combined 空 + L1 事件命中 → 组 c
     assert.equal(d.funnel.topN, 2);
     assert.deepEqual(
       d.candidates.map((c) => c.chunkId),
-      ['sanguo-yanyi:0001:c0006', 'sanguo-yanyi:0002:c0001'],
+      ['sanguo-yanyi:0001:p0006:c01', 'sanguo-yanyi:0002:p0001:c01'],
       'candidates 按重排后池序（并池构成）',
     );
     assert.ok(d.candidates.every((c) => c.sources.includes('event')), '并池候选带 event 来源');
@@ -115,7 +112,7 @@ test('① 并池（§3.3③）：三路 combined 空 + L1 事件命中 → 组 c
     assert.equal(hit.groups[0].type, 'L1');
     assert.equal(hit.groups[0].groupSize, 2);
     assert.equal(hit.groups[0].placedCount, 2);
-    assert.deepEqual(hit.groups[0].placedChunkIds, ['sanguo-yanyi:0001:c0006', 'sanguo-yanyi:0002:c0001']);
+    assert.deepEqual(hit.groups[0].placedChunkIds, ['sanguo-yanyi:0001:p0006:c01', 'sanguo-yanyi:0002:p0001:c01']);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -125,8 +122,8 @@ test('② 并池去重（§3.3③）：组 chunk 已在三路池内 → doc 下�
   const dir = tempFixture();
   try {
     const index = loadFixture(dir);
-    // 三路词法命中 0001:c0001..c0005（含「丙丁」）；组 E00506 chunk 0001:c0001 已在池内（去重），
-    // 组 E00505 chunk 0002:c0001/c0002 池内缺席（并入）→ 合并池共 7 条。
+    // 三路词法命中 0001:p0001:c01..p0005:c01（含「丙丁」）；组 E00506 chunk 0001:p0001:c01 已在池内（去重），
+    // 组 E00505 chunk 0002:p0001:c01/c02 池内缺席（并入）→ 合并池共 7 条。
     const result = await index.search('丙丁新篇', 5, { diagnostics: true });
     const d = result.diagnostics;
     assert.ok(d);
@@ -134,9 +131,9 @@ test('② 并池去重（§3.3③）：组 chunk 已在三路池内 → doc 下�
     assert.equal(d.candidates.length, 7, '并池后 7 条（并集去重）');
     const ids = d.candidates.map((c) => c.chunkId);
     assert.equal(new Set(ids).size, ids.length, '无重复候选（doc 下标并集去重）');
-    assert.ok(ids.includes('sanguo-yanyi:0001:c0001'), '与三路重叠的组 chunk 只出现一次');
-    assert.equal(ids.filter((id) => id === 'sanguo-yanyi:0001:c0001').length, 1);
-    assert.ok(ids.includes('sanguo-yanyi:0002:c0001') && ids.includes('sanguo-yanyi:0002:c0002'), '池内缺席的组 chunk 并入');
+    assert.ok(ids.includes('sanguo-yanyi:0001:p0001:c01'), '与三路重叠的组 chunk 只出现一次');
+    assert.equal(ids.filter((id) => id === 'sanguo-yanyi:0001:p0001:c01').length, 1);
+    assert.ok(ids.includes('sanguo-yanyi:0002:p0001:c01') && ids.includes('sanguo-yanyi:0002:p0001:c02'), '池内缺席的组 chunk 并入');
     assert.deepEqual(d.eventHit.groups.map((g) => g.eventId), ['E00506', 'E00505'], '多组命中按组优先级（长 alias 先行）');
     assert.equal(d.eventHit.groupCount, 2);
   } finally {
@@ -152,10 +149,10 @@ test('③ 增强查询重排（§3.3④）：「赤壁之战」答案段借增�
     writeRerankCorpus(dir, true);
     const idxB = loadFixture(base); // 无事件表：无并池 / 无增强重排
     const b = await idxB.search(RERANK_QUERY, 5, { diagnostics: true });
-    assert.ok(!b.entries.some((e) => e.id === ANSWER_ID), '基线：答案段（仅含事件名词元）不在 top5');
+    assert.ok(!b.entries.some((e) => e.chunk_id === ANSWER_ID), '基线：答案段（仅含事件名词元）不在 top5');
     const idxA = loadFixture(dir);
     const a = await idxA.search(RERANK_QUERY, 5, { diagnostics: true });
-    assert.equal(a.entries[0].id, ANSWER_ID, '增强查询重排后答案段进 top5（第 1 名）');
+    assert.equal(a.entries[0].chunk_id, ANSWER_ID, '增强查询重排后答案段进 top5（第 1 名）');
     const d = a.diagnostics;
     assert.ok(d);
     const group = d.eventHit.groups.find((g) => g.eventId === 'E1');
@@ -186,9 +183,9 @@ test('④ 多组命中（§3.3④）：全部命中组并池、诊断按组优�
       '组优先级：命中 alias 长度降序（周郎火攻 4 > 火攻 2）',
     );
     const ids = d.candidates.map((c) => c.chunkId);
-    assert.ok(ids.includes('sanguo-yanyi:0001:c0001') && ids.includes('sanguo-yanyi:0001:c0002'), '两组 chunk 全部并池');
-    assert.equal(result.entries[0].id, ANSWER_ID, '增强查询取最高优先组（赤壁之战）→ 答案段进 top5');
-    assert.ok(!result.entries.some((e) => e.id === 'sanguo-yanyi:0001:c0002'), '次组 chunk 不因增强查询进窗（增强只取最高组）');
+    assert.ok(ids.includes('sanguo-yanyi:0001:p0001:c01') && ids.includes('sanguo-yanyi:0001:p0002:c01'), '两组 chunk 全部并池');
+    assert.equal(result.entries[0].chunk_id, ANSWER_ID, '增强查询取最高优先组（赤壁之战）→ 答案段进 top5');
+    assert.ok(!result.entries.some((e) => e.chunk_id === 'sanguo-yanyi:0001:p0002:c01'), '次组 chunk 不因增强查询进窗（增强只取最高组）');
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -198,11 +195,11 @@ test('⑤ L3 锚点置顶（§3.3②）：锚点段 ±N 小位点组进保证区
   const dir = tempFixture();
   try {
     const index = loadFixture(dir);
-    // E00199 落表口径 = 锚点 ±1 小位点组 0001:c0003/c0004/c0005；query 同时命中 L1 组 E00505（丙丁）。
+    // E00199 落表口径 = 锚点 ±1 小位点组 0001:p0003:c01/p0004:c01/p0005:c01；query 同时命中 L1 组 E00505（丙丁）。
     const result = await index.search('丙丁刘备之死', 5, { diagnostics: true });
     assert.deepEqual(
-      result.entries.slice(0, 3).map((e) => e.id),
-      ['sanguo-yanyi:0001:c0003', 'sanguo-yanyi:0001:c0004', 'sanguo-yanyi:0001:c0005'],
+      result.entries.slice(0, 3).map((e) => e.chunk_id),
+      ['sanguo-yanyi:0001:p0003:c01', 'sanguo-yanyi:0001:p0004:c01', 'sanguo-yanyi:0001:p0005:c01'],
       'L3 锚点小位点组置顶保证区（事件内序）',
     );
     const d = result.diagnostics;
@@ -213,7 +210,7 @@ test('⑤ L3 锚点置顶（§3.3②）：锚点段 ±N 小位点组进保证区
     assert.equal(group.groupSize, 3, '组 chunkIds = 落表口径「锚点 ±1」小位点组（3 段，运行期不二次扩展）');
     assert.equal(group.matchedAlias, '刘备之死');
     assert.equal(group.placedCount, 3);
-    assert.deepEqual(group.placedChunkIds, ['sanguo-yanyi:0001:c0003', 'sanguo-yanyi:0001:c0004', 'sanguo-yanyi:0001:c0005']);
+    assert.deepEqual(group.placedChunkIds, ['sanguo-yanyi:0001:p0003:c01', 'sanguo-yanyi:0001:p0004:c01', 'sanguo-yanyi:0001:p0005:c01']);
     // 不参与池重排：置顶段分数低于后续候选但仍占 rank 1-3（保证区按 pin 通道，不按重排分）
     assert.ok(
       d.candidates[3].finalScore > d.candidates[0].finalScore,
@@ -255,7 +252,7 @@ test('⑦ 未命中事件路（§5.2）：eventHit 空组（degraded/normVersion
     const b = await idxB.search('壬癸', 5, { diagnostics: true });
     const idxA = loadFixture(dir);
     const a = await idxA.search('壬癸', 5, { diagnostics: true });
-    assert.deepEqual(a.entries.map((e) => e.id), b.entries.map((e) => e.id));
+    assert.deepEqual(a.entries.map((e) => e.chunk_id), b.entries.map((e) => e.chunk_id));
     const hit = a.diagnostics?.eventHit;
     assert.ok(hit);
     assert.equal(hit.degraded, false, '表正常路由，未命中事件');
@@ -278,10 +275,10 @@ test('⑧ candidates.sources 可选增 event（§5.3）：候选同时属命中�
     const hitGroup = d.eventHit.groups.find((g) => g.eventId === 'E00506');
     assert.ok(hitGroup, '长 alias 组（丙丁新篇）命中');
     assert.equal(d.eventHit.groupCount, 2, '丙丁新篇 与 丙丁 两组命中');
-    const eventCandidate = d.candidates.find((c) => c.chunkId === 'sanguo-yanyi:0001:c0001');
-    assert.ok(eventCandidate, '0001:c0001 在合并池内（词法命中 + 组 chunk）');
+    const eventCandidate = d.candidates.find((c) => c.chunkId === 'sanguo-yanyi:0001:p0001:c01');
+    assert.ok(eventCandidate, '0001:p0001:c01 在合并池内（词法命中 + 组 chunk）');
     assert.ok(eventCandidate.sources.includes('event'), '候选属命中事件组 → sources 增 event');
-    const plainCandidate = d.candidates.find((c) => c.chunkId === 'sanguo-yanyi:0001:c0004');
+    const plainCandidate = d.candidates.find((c) => c.chunkId === 'sanguo-yanyi:0001:p0004:c01');
     assert.ok(plainCandidate && !plainCandidate.sources.includes('event'), '非事件组成员候选不带 event 来源');
   } finally {
     rmSync(dir, { recursive: true, force: true });
@@ -307,8 +304,8 @@ test('⑩ 典故并池（§5.6，同 L1/L2 口径）：三路空 + 典故命中 
     const index = loadFixture(dir);
     const result = await index.search('鸡肋', 5, { diagnostics: true });
     assert.deepEqual(
-      result.entries.map((e) => e.id),
-      ['sanguo-yanyi:0001:c0006'],
+      result.entries.map((e) => e.chunk_id),
+      ['sanguo-yanyi:0001:p0006:c01'],
       '三路空时由典故组并池构成出参（事件内序）',
     );
     const d = result.diagnostics;
@@ -316,7 +313,7 @@ test('⑩ 典故并池（§5.6，同 L1/L2 口径）：三路空 + 典故命中 
     assert.equal(d.env.degradedBm25Only, true, '夹具无向量 → 纯 BM25');
     assert.equal(d.funnel.mergedCandidates, 0, '漏斗只描述三路召回：典故并池不进 mergedCandidates（§4）');
     assert.equal(d.funnel.topN, 1);
-    assert.deepEqual(d.candidates.map((c) => c.chunkId), ['sanguo-yanyi:0001:c0006'], 'candidates 按重排后池序');
+    assert.deepEqual(d.candidates.map((c) => c.chunkId), ['sanguo-yanyi:0001:p0006:c01'], 'candidates 按重排后池序');
     assert.ok(d.candidates[0].sources.includes('allusion'), '并池候选带 allusion 来源');
     assert.ok(!d.candidates[0].sources.includes('event'), '未命中事件路不带 event 来源');
     assert.ok(d.timing.merge !== null && d.timing.merge >= 0, '典故并池耗时并入 merge 段');
@@ -329,7 +326,7 @@ test('⑩ 典故并池（§5.6，同 L1/L2 口径）：三路空 + 典故命中 
     assert.equal(hit.groups[0].matchedAlias, '鸡肋');
     assert.equal(hit.groups[0].groupSize, 1);
     assert.equal(hit.groups[0].placedCount, 1);
-    assert.deepEqual(hit.groups[0].placedChunkIds, ['sanguo-yanyi:0001:c0006']);
+    assert.deepEqual(hit.groups[0].placedChunkIds, ['sanguo-yanyi:0001:p0006:c01']);
     // 事件路镜像不命中：eventHit 空组、degraded 仍可读
     const eh = d.eventHit;
     assert.equal(eh.degraded, false);
@@ -348,7 +345,7 @@ test('⑪ 典故表缺失降级（§5.6）：allusionHit.degraded=true 可读；
     const b = await idxB.search('温酒斩华雄是怎么斩的', 5, { diagnostics: true });
     const idxA = loadFixture(dir);
     const a = await idxA.search('温酒斩华雄是怎么斩的', 5, { diagnostics: true });
-    assert.deepEqual(a.entries.map((e) => e.id), b.entries.map((e) => e.id), '事件路出参不受典故降级影响');
+    assert.deepEqual(a.entries.map((e) => e.chunk_id), b.entries.map((e) => e.chunk_id), '事件路出参不受典故降级影响');
     const hit = b.diagnostics?.allusionHit;
     assert.ok(hit, '应产出 allusionHit');
     assert.equal(hit.degraded, true, '典故表缺失 → degraded=true');

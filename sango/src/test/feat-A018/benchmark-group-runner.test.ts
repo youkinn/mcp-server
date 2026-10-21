@@ -16,7 +16,7 @@ import type { SangoIndex } from '../../search/sango-index.ts';
 
 interface StubCase {
   /** 检索出参条目（仅取 id 排名；未出现的 chunkId 视为未进 50 路池）。 */
-  entries: { id: string }[];
+  entries: { chunk_id: string }[];
   eventHit: number;
   allusionHit: number;
 }
@@ -66,10 +66,10 @@ const row = (id: string, category: string, question: string, chunkIds: string[],
 });
 
 /** entries：按 0 基位置放置指定 id（rank = 位置 + 1）；未指定处用无关 id 填充。 */
-function entries(placed: { id: string; rank: number }[], total: number): { id: string }[] {
-  const list: { id: string }[] = [];
-  for (let i = 0; i < total; i++) list.push({ id: `x${String(i).padStart(3, '0')}` });
-  for (const p of placed) list[p.rank - 1] = { id: p.id };
+function entries(placed: { chunk_id: string; rank: number }[], total: number): { chunk_id: string }[] {
+  const list: { chunk_id: string }[] = [];
+  for (let i = 0; i < total; i++) list.push({ chunk_id: `x${String(i).padStart(3, '0')}` });
+  for (const p of placed) list[p.rank - 1] = { chunk_id: p.chunk_id };
   return list;
 }
 
@@ -81,9 +81,9 @@ test('① 判分语义：hit5 / hit10 / hit50 / miss + 桥命中归因 + byCateg
     row('典故#AL0001', '典故', 'Q4', ['a:c15']),
   ];
   const cases: Record<string, StubCase> = {
-    Q1: { entries: entries([{ id: 'a:c2', rank: 1 }], 4), eventHit: 1, allusionHit: 0 },
-    Q2: { entries: entries([{ id: 'a:c3', rank: 8 }], 10), eventHit: 0, allusionHit: 0 },
-    Q3: { entries: entries([{ id: 'a:c6', rank: 12 }], 12), eventHit: 0, allusionHit: 1 },
+    Q1: { entries: entries([{ chunk_id: 'a:c2', rank: 1 }], 4), eventHit: 1, allusionHit: 0 },
+    Q2: { entries: entries([{ chunk_id: 'a:c3', rank: 8 }], 10), eventHit: 0, allusionHit: 0 },
+    Q3: { entries: entries([{ chunk_id: 'a:c6', rank: 12 }], 12), eventHit: 0, allusionHit: 1 },
     Q4: { entries: [], eventHit: 0, allusionHit: 0 },
   };
   const { dir, set, index } = fixture(rows, cases);
@@ -161,8 +161,8 @@ test('② cover@5 累计口径 + 并池后掉窗（dropped）归因', async () =
     row('L2#E0202', 'L2', 'C3', ['a:c7']),
   ];
   const cases: Record<string, StubCase> = {
-    C1: { entries: entries([{ id: 'a:c1', rank: 1 }, { id: 'a:c2', rank: 2 }, { id: 'a:c3', rank: 3 }], 3), eventHit: 1, allusionHit: 0 },
-    C2: { entries: entries([{ id: 'a:c4', rank: 1 }, { id: 'a:c5', rank: 2 }, { id: 'a:c6', rank: 3 }, { id: 'a:c7', rank: 4 }], 4), eventHit: 0, allusionHit: 0 },
+    C1: { entries: entries([{ chunk_id: 'a:c1', rank: 1 }, { chunk_id: 'a:c2', rank: 2 }, { chunk_id: 'a:c3', rank: 3 }], 3), eventHit: 1, allusionHit: 0 },
+    C2: { entries: entries([{ chunk_id: 'a:c4', rank: 1 }, { chunk_id: 'a:c5', rank: 2 }, { chunk_id: 'a:c6', rank: 3 }, { chunk_id: 'a:c7', rank: 4 }], 4), eventHit: 0, allusionHit: 0 },
     C3: { entries: [], eventHit: 1, allusionHit: 0 },
   };
   const { dir, set, index } = fixture(rows, cases);
@@ -192,7 +192,7 @@ test('② cover@5 累计口径 + 并池后掉窗（dropped）归因', async () =
 
 test('③ 快照落盘与读回：JSON 顶层 { summary, results }、summary.md、runId 前缀区分评测集', async () => {
   const rows = [row('L1#E0101', 'L1', 'C1', ['a:c1'])];
-  const cases: Record<string, StubCase> = { C1: { entries: [{ id: 'a:c1' }], eventHit: 0, allusionHit: 0 } };
+  const cases: Record<string, StubCase> = { C1: { entries: [{ chunk_id: 'a:c1' }], eventHit: 0, allusionHit: 0 } };
   const { dir, set, index } = fixture(rows, cases);
   try {
     const runId = 'feat-A018-2026-10-10-163200';
@@ -223,8 +223,8 @@ test('④ 环比上一份该集快照：档位降级 = 退化、升级 = 改善�
     row('典故#AL0001', '典故', 'C3', ['a:c3']),
   ];
   const firstCases: Record<string, StubCase> = {
-    C1: { entries: [{ id: 'a:c1' }], eventHit: 0, allusionHit: 0 },
-    C2: { entries: [{ id: 'a:c2' }], eventHit: 0, allusionHit: 0 },
+    C1: { entries: [{ chunk_id: 'a:c1' }], eventHit: 0, allusionHit: 0 },
+    C2: { entries: [{ chunk_id: 'a:c2' }], eventHit: 0, allusionHit: 0 },
     C3: { entries: [], eventHit: 0, allusionHit: 0 },
   };
   const { dir, set } = fixture(rows, firstCases);
@@ -233,8 +233,8 @@ test('④ 环比上一份该集快照：档位降级 = 退化、升级 = 改善�
     // 二跑：C1 退化（hit5→miss）、C2 同档位 rank 变化（1→3，不计）、C3 改善（miss→hit5）。
     const secondCases: Record<string, StubCase> = {
       C1: { entries: [], eventHit: 0, allusionHit: 0 },
-      C2: { entries: entries([{ id: 'a:c2', rank: 3 }], 3), eventHit: 0, allusionHit: 0 },
-      C3: { entries: [{ id: 'a:c3' }], eventHit: 0, allusionHit: 0 },
+      C2: { entries: entries([{ chunk_id: 'a:c2', rank: 3 }], 3), eventHit: 0, allusionHit: 0 },
+      C3: { entries: [{ chunk_id: 'a:c3' }], eventHit: 0, allusionHit: 0 },
     };
     const run2 = await runGroupBenchmark(stubIndex(secondCases), set, 'feat-A018-2026-10-10-163301', {});
     const c = run2.summary.compare;

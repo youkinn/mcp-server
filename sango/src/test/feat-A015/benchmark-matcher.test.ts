@@ -16,7 +16,8 @@ import type { SearchEntry } from '../../types.ts';
 
 /** 构造最小 SearchEntry（正文不含回目锚短语，隔离出回目标题比较路径）。 */
 function mkEntry(id: string, chapter: number, title: string, text: string): SearchEntry {
-  return { id, chapter, title, text, type: 'narration', segFrom: 1, segTo: 1 };
+  const parent_id = id.replace(/:c\d+$/, '');
+  return { chunk_id: id, parent_id, seq_in_parent: Number(id.slice(-2)), type: 'prose', role: 'body', text, char_count: text.length, chapter, title };
 }
 
 test('① bug-00052 回目锚含中文逗号：matchEvidence 经 norm 仍命中对应回目（限定回号）', () => {
@@ -24,8 +25,8 @@ test('① bug-00052 回目锚含中文逗号：matchEvidence 经 norm 仍命中�
   assert.equal(titleAnchors[0].chapter, 84, '回目锚限定回号提取正确');
   assert.equal(titleAnchors[0].title, '陆逊营烧七百里，孔明巧布八阵图', '提取保留原文含中文逗号，归一化发生在比较口径');
   const entries = [
-    mkEntry('sanguo-yanyi:0001:c0001', 1, '第一回 无关回目', '此处为无关正文。'),
-    mkEntry('sanguo-yanyi:0084:c0001', 84, '第八十四回 陆逊营烧七百里，孔明巧布八阵图', '此处为无关正文。'),
+    mkEntry('sanguo-yanyi:0001:p0001:c01', 1, '第一回 无关回目', '此处为无关正文。'),
+    mkEntry('sanguo-yanyi:0084:p0001:c01', 84, '第八十四回 陆逊营烧七百里，孔明巧布八阵图', '此处为无关正文。'),
   ];
   const m = matchEvidence(entries, textAnchors, titleAnchors);
   assert.equal(m.rank, 2, '命中第 84 回条目（限定回号）');
@@ -43,7 +44,7 @@ test('② bug-00052 回目锚含中文逗号：findNoAnchorItems 与 matchEviden
         source: 'sanguo-yanyi',
         chapter: 84,
         title: '第八十四回 陆逊营烧七百里，孔明巧布八阵图',
-        chunks: [{ id: 'sanguo-yanyi:0084:c0001', text: '此处为无关正文。', type: 'narration', segFrom: 1, segTo: 1 }],
+        chunks: [{ chunk_id: 'sanguo-yanyi:0084:p0001:c01', parent_id: 'sanguo-yanyi:0084:p0001', seq_in_parent: 1, type: 'prose', role: 'body', text: '此处为无关正文。', char_count: 8 }],
       }),
       'utf8',
     );
@@ -69,8 +70,8 @@ test('② bug-00052 回目锚含中文逗号：findNoAnchorItems 与 matchEviden
 });
 test('③ bug-00059 正文锚先在无关回候选命中被限回跳过，最终命中证据回内候选（rank 正确）', () => {
   const entries = [
-    mkEntry('sanguo-yanyi:0029:c0001', 29, '第二十九回 无关回目', '毒已入骨，不可救也。'),
-    mkEntry('sanguo-yanyi:0075:c0001', 75, '第七十五回 真证据回', '毒已入骨。'),
+    mkEntry('sanguo-yanyi:0029:p0001:c01', 29, '第二十九回 无关回目', '毒已入骨，不可救也。'),
+    mkEntry('sanguo-yanyi:0075:p0001:c01', 75, '第七十五回 真证据回', '毒已入骨。'),
   ];
   const m = matchEvidence(entries, ['毒已入骨'], [], [75]);
   assert.equal(m.rank, 2, '跳过第 29 回无关回，命中第 75 回证据回候选');
@@ -79,8 +80,8 @@ test('③ bug-00059 正文锚先在无关回候选命中被限回跳过，最终
 
 test('④ bug-00059 证据回内无含锚候选 → rank 0（不跨回命中无关回）', () => {
   const entries = [
-    mkEntry('sanguo-yanyi:0029:c0001', 29, '第二十九回 无关回目', '毒已入骨。'),
-    mkEntry('sanguo-yanyi:0075:c0001', 75, '第七十五回 证据回', '此处未含该锚。'),
+    mkEntry('sanguo-yanyi:0029:p0001:c01', 29, '第二十九回 无关回目', '毒已入骨。'),
+    mkEntry('sanguo-yanyi:0075:p0001:c01', 75, '第七十五回 证据回', '此处未含该锚。'),
   ];
   const m = matchEvidence(entries, ['毒已入骨'], [], [75]);
   assert.equal(m.rank, 0, '证据回内无含锚候选，且不回落到无关回');
@@ -89,8 +90,8 @@ test('④ bug-00059 证据回内无含锚候选 → rank 0（不跨回命中无�
 
 test('⑤ bug-00059 chapterRefs 为空 → 不限回，维持原行为（可跨回命中）', () => {
   const entries = [
-    mkEntry('sanguo-yanyi:0029:c0001', 29, '第二十九回 无关回目', '毒已入骨，不可救也。'),
-    mkEntry('sanguo-yanyi:0075:c0001', 75, '第七十五回 真证据回', '毒已入骨。'),
+    mkEntry('sanguo-yanyi:0029:p0001:c01', 29, '第二十九回 无关回目', '毒已入骨，不可救也。'),
+    mkEntry('sanguo-yanyi:0075:p0001:c01', 75, '第七十五回 真证据回', '毒已入骨。'),
   ];
   const m = matchEvidence(entries, ['毒已入骨'], [], []);
   assert.equal(m.rank, 1, 'chapterRefs 为空时按 rank 序首个含锚候选即命中');
@@ -100,8 +101,8 @@ test('⑤ bug-00059 chapterRefs 为空 → 不限回，维持原行为（可跨�
 test('⑥ bug-00059 传 chapterRefs 后回目锚（步骤②）仍正常命中（不回归）', () => {
   const { titleAnchors, textAnchors, chapterRefs } = extractAnchors('第84回目：“陆逊营烧七百里，孔明巧布八阵图”');
   const entries = [
-    mkEntry('sanguo-yanyi:0001:c0001', 1, '第一回 无关回目', '此处为无关正文。'),
-    mkEntry('sanguo-yanyi:0084:c0001', 84, '第八十四回 陆逊营烧七百里，孔明巧布八阵图', '此处为无关正文。'),
+    mkEntry('sanguo-yanyi:0001:p0001:c01', 1, '第一回 无关回目', '此处为无关正文。'),
+    mkEntry('sanguo-yanyi:0084:p0001:c01', 84, '第八十四回 陆逊营烧七百里，孔明巧布八阵图', '此处为无关正文。'),
   ];
   const m = matchEvidence(entries, textAnchors, titleAnchors, chapterRefs);
   assert.equal(m.rank, 2, '回目锚（步骤②）在传 chapterRefs 后仍命中限定回号条目');

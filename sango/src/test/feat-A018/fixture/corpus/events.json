@@ -13,7 +13,7 @@
     "桃园结义"
    ],
    "chunkIds": [
-    "sanguo-yanyi:0001:c0006"
+    "sanguo-yanyi:0001:p0006:c01"
    ],
    "type": "L1",
    "exampleQuestion": "桃园结义是哪一回"
@@ -26,8 +26,8 @@
     "斩华雄"
    ],
    "chunkIds": [
-    "sanguo-yanyi:0002:c0001",
-    "sanguo-yanyi:0001:c0006"
+    "sanguo-yanyi:0002:p0001:c01",
+    "sanguo-yanyi:0001:p0006:c01"
    ],
    "type": "L1",
    "exampleQuestion": "温酒斩华雄是怎么回事"
@@ -39,7 +39,7 @@
     "三英战吕布"
    ],
    "chunkIds": [
-    "sanguo-yanyi:0001:c0007"
+    "sanguo-yanyi:0001:p0007:c01"
    ],
    "type": "L1",
    "exampleQuestion": "三英战吕布是哪一回"
@@ -51,8 +51,8 @@
     "虎牢关三英战吕布"
    ],
    "chunkIds": [
-    "sanguo-yanyi:0002:c0001",
-    "sanguo-yanyi:0002:c0002"
+    "sanguo-yanyi:0002:p0001:c01",
+    "sanguo-yanyi:0002:p0001:c02"
    ],
    "type": "L1",
    "exampleQuestion": "虎牢关三英战吕布怎么打的"
@@ -65,8 +65,8 @@
     "谜"
    ],
    "chunkIds": [
-    "sanguo-yanyi:0002:c0001",
-    "sanguo-yanyi:0002:c0002"
+    "sanguo-yanyi:0002:p0001:c01",
+    "sanguo-yanyi:0002:p0001:c02"
    ],
    "type": "L2",
    "exampleQuestion": "谜团事件是什么"
@@ -78,8 +78,8 @@
     "丙丁"
    ],
    "chunkIds": [
-    "sanguo-yanyi:0002:c0001",
-    "sanguo-yanyi:0002:c0002"
+    "sanguo-yanyi:0002:p0001:c01",
+    "sanguo-yanyi:0002:p0001:c02"
    ],
    "type": "L1",
    "exampleQuestion": "丙丁大事是啥"
@@ -91,7 +91,7 @@
     "丙丁新篇"
    ],
    "chunkIds": [
-    "sanguo-yanyi:0001:c0001"
+    "sanguo-yanyi:0001:p0001:c01"
    ],
    "type": "L2",
    "exampleQuestion": "丙丁新篇在哪"
@@ -104,9 +104,9 @@
     "刘备死亡"
    ],
    "chunkIds": [
-    "sanguo-yanyi:0001:c0003",
-    "sanguo-yanyi:0001:c0004",
-    "sanguo-yanyi:0001:c0005"
+    "sanguo-yanyi:0001:p0003:c01",
+    "sanguo-yanyi:0001:p0004:c01",
+    "sanguo-yanyi:0001:p0005:c01"
    ],
    "type": "L3",
    "exampleQuestion": "刘备是怎么死的"

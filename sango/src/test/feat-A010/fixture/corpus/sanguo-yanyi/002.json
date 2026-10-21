@@ -4,18 +4,22 @@
   "title": "张翼德怒鞭督邮 何国舅谋诛宦竖",
   "chunks": [
     {
-      "id": "sanguo-yanyi:0002:c0001",
+      "chunk_id": "sanguo-yanyi:0002:p0001:c01",
+      "parent_id": "sanguo-yanyi:0002:p0001",
+      "seq_in_parent": 1,
+      "type": "prose",
+      "role": "body",
       "text": "且说董卓字仲颖，陇西临洮人也。",
-      "type": "narration",
-      "segFrom": 1,
-      "segTo": 1
+      "char_count": 15
     },
     {
-      "id": "sanguo-yanyi:0002:c0002",
+      "chunk_id": "sanguo-yanyi:0002:p0003:c01",
+      "parent_id": "sanguo-yanyi:0002:p0003",
+      "seq_in_parent": 1,
+      "type": "prose",
+      "role": "body",
       "text": "卓性残忍不仁，遂以严刑胁众。",
-      "type": "narration",
-      "segFrom": 3,
-      "segTo": 3
+      "char_count": 14
     }
   ]
 }

@@ -15,6 +15,7 @@ import {
   eventsDegraded,
   eventsNormVersion,
   eventsRowCount,
+  innerOrderKey,
   loadEventsTable,
   matchEvents,
 } from '../../search/event-table.ts';
@@ -94,7 +95,7 @@ function assertAllusionGroup(
 
 /** 有效 chunkId 判定（夹具 001/002 共 9 个；9999 号段视为缺失）。 */
 function fixtureChunkExists(id: string): boolean {
-  return /^sanguo-yanyi:(0001|0002):c\d{4}$/.test(id);
+  return /^sanguo-yanyi:(0001|0002):p\d{4}:c\d{2}$/.test(id);
 }
 
 
@@ -140,9 +141,9 @@ test('② 加载失败降级（接口 §2.2）：文件缺失 / JSON 损坏 / �
       content: {
         meta: { normVersion: 'a1b2c3d4', corpusChunkCount: 9 },
         rows: [
-          { eventId: '', eventName: '无名', aliases: ['a'], chunkIds: ['sanguo-yanyi:0001:c0001'], type: 'L1' },
-          { eventId: 'E1', eventName: '', aliases: ['b'], chunkIds: ['sanguo-yanyi:0001:c0001'], type: 'L1' },
-          { eventId: 'E2', eventName: '坏类型', aliases: ['c'], chunkIds: ['sanguo-yanyi:0001:c0001'], type: 'L9' },
+          { eventId: '', eventName: '无名', aliases: ['a'], chunkIds: ['sanguo-yanyi:0001:p0001:c01'], type: 'L1' },
+          { eventId: 'E1', eventName: '', aliases: ['b'], chunkIds: ['sanguo-yanyi:0001:p0001:c01'], type: 'L1' },
+          { eventId: 'E2', eventName: '坏类型', aliases: ['c'], chunkIds: ['sanguo-yanyi:0001:p0001:c01'], type: 'L9' },
         ],
       },
       expectLine: /有效行数 0/,
@@ -188,9 +189,9 @@ test('③ V3 alias 违规单条剔除：行内重复 / 跨行重复 / 与实体�
     const content = {
       meta: { normVersion: 'a1b2c3d4', corpusChunkCount: 9 },
       rows: [
-        { eventId: 'E1', eventName: '甲', aliases: ['重复词', '重复词', '孟德'], chunkIds: ['sanguo-yanyi:0001:c0001'], type: 'L1' },
-        { eventId: 'E2', eventName: '乙', aliases: ['重复词'], chunkIds: ['sanguo-yanyi:0001:c0002'], type: 'L1' },
-        { eventId: 'E3', eventName: '丙', aliases: ['合法词'], chunkIds: ['sanguo-yanyi:0001:c0003'], type: 'L1' },
+        { eventId: 'E1', eventName: '甲', aliases: ['重复词', '重复词', '孟德'], chunkIds: ['sanguo-yanyi:0001:p0001:c01'], type: 'L1' },
+        { eventId: 'E2', eventName: '乙', aliases: ['重复词'], chunkIds: ['sanguo-yanyi:0001:p0002:c01'], type: 'L1' },
+        { eventId: 'E3', eventName: '丙', aliases: ['合法词'], chunkIds: ['sanguo-yanyi:0001:p0003:c01'], type: 'L1' },
       ],
     };
     writeEvents(dir, content);
@@ -219,8 +220,8 @@ test('④ 漂移检测（接口 §2.3）：缺失 >5% 整表降级 / ≤5% 剔�
   const over = {
     meta: { normVersion: 'a1b2c3d4', corpusChunkCount: 9 },
     rows: [
-      { eventId: 'E1', eventName: '甲', aliases: ['甲词'], chunkIds: ['sanguo-yanyi:0001:c0001'], type: 'L1' },
-      { eventId: 'E2', eventName: '乙', aliases: ['乙词'], chunkIds: ['sanguo-yanyi:9999:c9999'], type: 'L1' },
+      { eventId: 'E1', eventName: '甲', aliases: ['甲词'], chunkIds: ['sanguo-yanyi:0001:p0001:c01'], type: 'L1' },
+      { eventId: 'E2', eventName: '乙', aliases: ['乙词'], chunkIds: ['sanguo-yanyi:9999:p9999:c99'], type: 'L1' },
     ],
   };
   const dir1 = tempDir('a018-t4a-');
@@ -241,12 +242,12 @@ test('④ 漂移检测（接口 §2.3）：缺失 >5% 整表降级 / ≤5% 剔�
   }
 
   // 4.2 0 < 缺失 ≤ 5% → 剔缺失 chunkId + 告警；组空等效无事件路由
-  const refs = Array.from({ length: 20 }, (_, i) => `sanguo-yanyi:0001:c${String((i % 7) + 1).padStart(4, '0')}`);
+  const refs = Array.from({ length: 20 }, (_, i) => `sanguo-yanyi:0001:p${String((i % 7) + 1).padStart(4, '0')}:c01`);
   const mild = {
     meta: { normVersion: 'a1b2c3d4', corpusChunkCount: 9 },
     rows: [
       { eventId: 'E1', eventName: '甲', aliases: ['甲词'], chunkIds: refs, type: 'L2' },
-      { eventId: 'E2', eventName: '乙', aliases: ['乙词'], chunkIds: ['sanguo-yanyi:9999:c0001'], type: 'L2' },
+      { eventId: 'E2', eventName: '乙', aliases: ['乙词'], chunkIds: ['sanguo-yanyi:9999:p0001:c01'], type: 'L2' },
     ],
   };
   const dir2 = tempDir('a018-t4b-');
@@ -304,7 +305,7 @@ test('⑤ 事件名桥匹配（接口 §3.2）：子串命中 / 最长 alias 选
       eventName: '温酒斩华雄',
       matchedAlias: '温酒斩华雄',
       type: 'L1',
-      chunkIds: ['sanguo-yanyi:0001:c0006', 'sanguo-yanyi:0002:c0001'],
+      chunkIds: ['sanguo-yanyi:0001:p0006:c01', 'sanguo-yanyi:0002:p0001:c01'],
     });
     // 短 alias 也可独立命中（长 alias 不命中时）
     assert.equal(matchEvents('斩华雄')[0].matchedAlias, '斩华雄');
@@ -350,8 +351,8 @@ test('⑦ 定点四问（真实表 + 真实语料）：eventHit.groups 非空、
     { query: '三英战吕布', eventId: 'E00502' },
     { query: '草船借箭', eventId: 'E04601' },
     // 空城计（E09502）原为 story 标签加权进窗示例，story.json 删除后其证据段在纯 BM25 + 事件桥下
-    // 跌出窗（placed=0），改用火烧乌巢（E03001）作定点（同靠事件桥并池进窗、不依赖标签加权）。
-    { query: '火烧乌巢', eventId: 'E03001' },
+    // 跌出窗（placed=0），改用夜袭乌巢（E03002）作定点（同靠事件桥并池进窗、不依赖标签加权）。
+    { query: '夜袭乌巢', eventId: 'E03002' },
   ];
   // 期望 chunkIds / 回区间以落表数据为准（唯一权威）
   const table = JSON.parse(readFileSync(path.join(REAL_DATA_DIR, 'corpus', 'events.json'), 'utf8')) as {
@@ -362,10 +363,6 @@ test('⑦ 定点四问（真实表 + 真实语料）：eventHit.groups 非空、
   index.load();
   // 零向量：事件路不依赖向量，定点四问仅验证桥与装配；屏蔽 ONNX 懒加载
   index.vec = new Float32Array(0);
-  const innerOrderKey = (id: string): [number, number] => {
-    const m = /^[^:]+:(\d{4}):c(\d{4})$/.exec(id);
-    return m ? [Number(m[1]), Number(m[2])] : [Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER];
-  };
   for (const c of cases) {
     const result = await index.search(c.query, 10, { diagnostics: true });
     const eventHit = result.diagnostics?.eventHit;
@@ -386,7 +383,7 @@ test('⑦ 定点四问（真实表 + 真实语料）：eventHit.groups 非空、
       assert.equal(ch, expectedCh, `${c.query} placed ${id} 回区间吻合（第 ${expectedCh} 回）`);
     }
     // L1/L2 口径（§5.2）：placedChunkIds 按重排后出参序（= 出参中该组 chunk 的子序列）
-    const entryIds = result.entries.map((e) => e.id);
+    const entryIds = result.entries.map((e) => e.chunk_id);
     assert.deepEqual(
       group.placedChunkIds,
       entryIds.filter((id) => expectedSet.has(id)),
@@ -401,10 +398,6 @@ test('⑧ 真实 L3 锚点置顶（§3.3②）：落表「锚点 ±N」小位点
   const table = JSON.parse(readFileSync(path.join(REAL_DATA_DIR, 'corpus', 'events.json'), 'utf8')) as {
     meta: { normVersion: string };
     rows: Array<{ eventId: string; eventName: string; aliases: string[]; chunkIds: string[]; type: string }>;
-  };
-  const innerOrderKey = (id: string): [number, number] => {
-    const m = /^[^:]+:(\d{4}):c(\d{4})$/.exec(id);
-    return m ? [Number(m[1]), Number(m[2])] : [Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER];
   };
   const l3row = table.rows.find((r) => r.type === 'L3' && r.aliases.length > 0);
   assert.ok(l3row, '真实表含 L3 行');
@@ -421,12 +414,13 @@ test('⑧ 真实 L3 锚点置顶（§3.3②）：落表「锚点 ±N」小位点
     '落表小位点组整组进窗（运行期不二次扩展、不丢段）',
   );
   for (let i = 1; i < group.placedChunkIds.length; i++) {
-    const [a1, a2] = innerOrderKey(group.placedChunkIds[i - 1]);
-    const [b1, b2] = innerOrderKey(group.placedChunkIds[i]);
-    assert.ok(a1 < b1 || (a1 === b1 && a2 < b2), 'L3 placedChunkIds 按事件内序升序');
+    const [a1, a2, a3] = innerOrderKey(group.placedChunkIds[i - 1]);
+    const [b1, b2, b3] = innerOrderKey(group.placedChunkIds[i]);
+    const asc = a1 < b1 || (a1 === b1 && (a2 < b2 || (a2 === b2 && a3 < b3)));
+    assert.ok(asc, 'L3 placedChunkIds 按事件内序升序（回号 → 段号 → 同段块序）');
   }
   // 保证区：置顶小位点组占据出参最前 rank（不参与池重排，按 pin 通道）
-  const head = result.entries.slice(0, group.placedChunkIds.length).map((e) => e.id);
+  const head = result.entries.slice(0, group.placedChunkIds.length).map((e) => e.chunk_id);
   assert.deepEqual([...head].sort(), [...group.placedChunkIds].sort(), 'L3 小位点组进保证区（rank 1..k）');
 });
 
@@ -435,14 +429,14 @@ test('⑨ 真实事件问法「赤壁之战发生在哪里」：增强查询重�
   index.load();
   index.vec = new Float32Array(0);
   const question = '赤壁之战发生在哪里';
-  const answer = 'sanguo-yanyi:0049:c0018'; // A015 题库该题证据段（黄盖「望赤壁进发」，第 49 回）
+  const answer = 'sanguo-yanyi:0049:p0015:c01'; // A015 题库该题证据段（黄盖「望赤壁进发」，第 49 回）
   const on = await index.search(question, 50, { diagnostics: true });
-  const rankOn = on.entries.map((e) => e.id).indexOf(answer);
+  const rankOn = on.entries.map((e) => e.chunk_id).indexOf(answer);
   assert.ok(rankOn >= 0, 'bridge on：答案段在出参内');
   // 事件表降级 → bridge off 基线（同索引 / 同向量状态，仅桥开关不同）
   loadEventsTable(path.join(tmpdir(), 'a018-no-events'), () => false, index.n);
   const off = await index.search(question, 50, { diagnostics: true });
-  const rankOff = off.entries.map((e) => e.id).indexOf(answer);
+  const rankOff = off.entries.map((e) => e.chunk_id).indexOf(answer);
   assert.ok(rankOff >= 0, 'bridge off：答案段亦在出参内');
   assert.ok(rankOn < rankOff, `增强查询重排使答案段前移（on rank ${rankOn + 1} < off rank ${rankOff + 1}）`);
 });
@@ -471,10 +465,10 @@ test('⑩ 典故表加载（镜像 ①）：加载日志行 + V3 单字禁入剔
     assert.equal(allusionsDegraded(), false);
     assert.equal(allusionsNormVersion(), 'a2b3c4d5');
     assert.equal(allusionsRowCount(), 5);
-    // 表内序重排：AL0003 表内书写 [0002:c0002, 0002:c0001] → 内序 [0002:c0001, 0002:c0002]
+    // 表内序重排：AL0003 表内书写 [0002:p0001:c02, 0002:p0001:c01] → 内序 [0002:p0001:c01, 0002:p0001:c02]
     const g = matchAllusions('割发代首')[0];
     assert.ok(g, '割发代首 命中');
-    assert.deepEqual(g.chunkIds, ['sanguo-yanyi:0002:c0001', 'sanguo-yanyi:0002:c0002'], '组内 chunkIds 按事件内序');
+    assert.deepEqual(g.chunkIds, ['sanguo-yanyi:0002:p0001:c01', 'sanguo-yanyi:0002:p0001:c02'], '组内 chunkIds 按事件内序');
     // 文件缺失 → 无典故路由降级
     assert.equal(loadAllusionsTable(path.join(dir, 'nonexistent'), fixtureChunkExists, 9), false);
     assert.equal(allusionsDegraded(), true);
@@ -490,8 +484,8 @@ test('⑪ 典故漂移降级（镜像 ④）：>5% 整表降级且事件路不�
   const over = {
     meta: { normVersion: 'a2b3c4d5', corpusChunkCount: 9 },
     rows: [
-      { eventId: 'AL1', eventName: '甲典故', aliases: ['甲词'], chunkIds: ['sanguo-yanyi:0001:c0001'], type: '典故' },
-      { eventId: 'AL2', eventName: '乙典故', aliases: ['乙词'], chunkIds: ['sanguo-yanyi:9999:c9999'], type: '典故' },
+      { eventId: 'AL1', eventName: '甲典故', aliases: ['甲词'], chunkIds: ['sanguo-yanyi:0001:p0001:c01'], type: '典故' },
+      { eventId: 'AL2', eventName: '乙典故', aliases: ['乙词'], chunkIds: ['sanguo-yanyi:9999:p9999:c99'], type: '典故' },
     ],
   };
   const dir1 = tempDir('a018-t11a-');
@@ -522,12 +516,12 @@ test('⑪ 典故漂移降级（镜像 ④）：>5% 整表降级且事件路不�
   }
 
   // 4.2 0 < 缺失 ≤ 5% → 剔缺失 chunkId + 告警；组空等效无典故路由
-  const refs = Array.from({ length: 20 }, (_, i) => `sanguo-yanyi:0001:c${String((i % 5) + 1).padStart(4, '0')}`);
+  const refs = Array.from({ length: 20 }, (_, i) => `sanguo-yanyi:0001:p${String((i % 5) + 1).padStart(4, '0')}:c01`);
   const mild = {
     meta: { normVersion: 'a2b3c4d5', corpusChunkCount: 9 },
     rows: [
       { eventId: 'AL1', eventName: '甲典故', aliases: ['甲词'], chunkIds: refs, type: '典故' },
-      { eventId: 'AL2', eventName: '乙典故', aliases: ['乙词'], chunkIds: ['sanguo-yanyi:9999:c0001'], type: '典故' },
+      { eventId: 'AL2', eventName: '乙典故', aliases: ['乙词'], chunkIds: ['sanguo-yanyi:9999:p0001:c01'], type: '典故' },
     ],
   };
   const dir2 = tempDir('a018-t11b-');
@@ -562,14 +556,14 @@ test('⑫ 典故名桥匹配（镜像 ⑤）：子串命中 / 最长 alias 选�
     cpSync(FIXTURE_DIR, dir, { recursive: true });
     loadAllusionsTable(dir, fixtureChunkExists, 9);
 
-    // 子串命中 + 表内序（AL0003 表内 [0002:c0002, 0002:c0001] → 内序 [0002:c0001, 0002:c0002]）
+    // 子串命中 + 表内序（AL0003 表内 [0002:p0001:c02, 0002:p0001:c01] → 内序 [0002:p0001:c01, 0002:p0001:c02]）
     const g1 = matchAllusions('割发代首是哪一回');
     assert.equal(g1.length, 1);
     assertAllusionGroup(g1[0], {
       allusionId: 'AL0003',
       allusionName: '割发代首',
       matchedAlias: '割发代首',
-      chunkIds: ['sanguo-yanyi:0002:c0001', 'sanguo-yanyi:0002:c0002'],
+      chunkIds: ['sanguo-yanyi:0002:p0001:c01', 'sanguo-yanyi:0002:p0001:c02'],
     });
     // 多组命中：组优先级 = 命中 alias 长度降序（乐不思蜀 4 > 鸡肋 2）
     const g2 = matchAllusions('鸡肋乐不思蜀');
