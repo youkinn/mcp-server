@@ -230,7 +230,7 @@ export async function runGroupBenchmark(
     const bridgeGroups = (diagnostics?.eventHit?.groupCount ?? 0) + (diagnostics?.allusionHit?.groupCount ?? 0);
     const rankOf = new Map<string, number>();
     entries.forEach((e, i) => {
-      if (!rankOf.has(e.id)) rankOf.set(e.id, i + 1);
+      if (!rankOf.has(e.chunk_id)) rankOf.set(e.chunk_id, i + 1);
     });
     const ranks = row.chunkIds.map((c) => rankOf.get(c) ?? 0).filter((x) => x > 0);
     const hits5 = ranks.filter((x) => x <= 5).length;
@@ -256,8 +256,8 @@ export async function runGroupBenchmark(
       eventBridgeHit: (diagnostics?.eventHit?.groupCount ?? 0) > 0,
       allusionBridgeHit: (diagnostics?.allusionHit?.groupCount ?? 0) > 0,
       chunkIds: row.chunkIds,
-      top10Ids: entries.slice(0, 10).map((e) => e.id),
-      poolIds: entries.map((e) => e.id),
+      top10Ids: entries.slice(0, 10).map((e) => e.chunk_id),
+      poolIds: entries.map((e) => e.chunk_id),
     });
   }
   const elapsedMs = Math.round((performance.now() - t0) * 10) / 10;

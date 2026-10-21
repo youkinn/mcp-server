@@ -26,6 +26,7 @@ import {
 } from './event-table.ts';
 import type { MatchedAllusionGroup, MatchedEventGroup } from './event-table.ts';
 import { createCrossEncoderScorer, resolveRerankModelFile } from './reranker.ts';
+import { assertChunkKind, CHUNK_ROLE_BODY } from '../chunk-kind.ts';
 import type { RerankScorer } from './reranker.ts';
 import {
   collectExpansions,
@@ -36,8 +37,8 @@ import {
 } from '../normalize/entity-table.ts';
 import type {
   Chapter,
-  ChapterPayload,
   CorpusChunk,
+  ChapterPayload,
   DeathIntent,
   Doc,
   RetrievalCandidateDiagnostics,
@@ -86,8 +87,7 @@ function rerankWindowSize(): number {
   return Number.isFinite(raw) && raw >= 1 ? Math.floor(raw) : RERANK_WINDOW_DEFAULT;
 }
 
-// 遗言类标签关键词：标签文本含这些词即视为某人的临终嘱托/遗诏段（数据口径：0085:c0008-0011
-// 刘备托孤、0029:c0014 孙策托孤、0040:c0005 刘表托孤）。
+// 遗言类标签关键词：标签表文本含这些词即视为某人的临终嘱托/遗诏段（口径见 tags/*.json）。
 const LAST_WORDS_TAG = /(托孤|遗诏|遗令|遗言|遗嘱|遗书|遗表|临终)/;
 
 // 向量构建方案：与 build_vectors.py 写出的 scheme 字段对应
@@ -342,6 +342,8 @@ export class SangoIndex {
   }
 
   docs: Doc[] = [];
+  /** 引题块（role = lead）文档下标：照常加载 / 出块，不进检索候选（README 口径）。 */
+  private nonRetrievable = new Set<number>();
   postings = new Map<string, { doc: number; tf: number }[]>();
   df = new Map<string, number>();
   avgLen = 0;
@@ -436,30 +438,40 @@ export class SangoIndex {
 
     for (let di = 0; di < chunks.length; di++) {
       const { chapter, title, chunk } = chunks[di];
+      // 语料取值校验：表外取值直接终止启动（取值集合见 src/chunk-kind.ts）。
+      assertChunkKind(chunk.type, chunk.role, chunk.chunk_id);
       // 检索 token = 语料原文 token（检索侧不改写；接口 §2.2）；等价写法由下方「双写扩展」覆盖。
       const tokens = tokenize(chunk.text);
       const tf = new Map<string, number>();
       for (const t of tokens) tf.set(t, (tf.get(t) ?? 0) + 1);
       // 索引侧双写扩展（接口 §2.3，rewriteKeys 与 fragmentOnly 同口径）：原文命中的键逐一追加其规范形
-      // token——tf 按命中处数计（如 0076:c0014「关公」x6 → 关羽 tf +6）。原文 token 保留、只增倒排条目；
+      // token——tf 按命中处数计（如 0076:p0012:c01「关公」x11 → 关羽 tf +11）。原文 token 保留、只增倒排条目；
       // docs[].len 仍取原文 token 数（dl 不重算），双写引致的规范形 df 略升为已知可接受偏差。
       const len = tokens.length;
       for (const { to, count } of collectExpansions(chunk.text)) {
         for (const t of new Set(tokenize(to))) tf.set(t, (tf.get(t) ?? 0) + count);
       }
       this.docs.push({
-        chunkId: chunk.id,
+        chunk_id: chunk.chunk_id,
+        parent_id: chunk.parent_id,
+        seq_in_parent: chunk.seq_in_parent,
+        type: chunk.type,
+        role: chunk.role,
+        text: chunk.text,
+        char_count: chunk.char_count,
+        ...(chunk.group_id === undefined ? {} : { group_id: chunk.group_id }),
         chapter,
         title,
-        type: chunk.type,
-        segFrom: chunk.segFrom,
-        segTo: chunk.segTo,
-        text: chunk.text,
         tokens,
         tf,
         len,
       });
-      this.docIndexOf.set(chunk.id, di);
+      this.docIndexOf.set(chunk.chunk_id, di);
+      // 引题块不进检索索引：词法倒排 / df 不建（向量行仍按语料序对齐，候选侧另过滤）。
+      if (chunk.role !== CHUNK_ROLE_BODY) {
+        this.nonRetrievable.add(di);
+        continue;
+      }
       for (const [t, fq] of tf) {
         this.df.set(t, (this.df.get(t) ?? 0) + 1);
         const arr = this.postings.get(t) ?? [];
@@ -565,7 +577,7 @@ export class SangoIndex {
       }
     }
     // 遗言段人名词典（第二遍）：标签文本含遗言类关键词且出现死亡人名的 chunk 归到该人名。
-    // 必须单独一遍：第一遍结束时 deathByPerson 才收齐——0085:c0008-0010 的托孤段本身没打死亡标签。
+    // 必须单独一遍：第一遍结束时 deathByPerson 才收齐——托孤段本身没打死亡标签，须按人名词典回指。
     for (let di = 0; di < this.n; di++) {
       const text = this.tagsByDoc[di];
       if (!text) continue;
@@ -682,7 +694,7 @@ export class SangoIndex {
    * （「人物之死-XXX之死」），命中 chunk 在排序阶段置顶为高置信候选（分数仍为 [0,1] 的三路加权，
    * 不加分）；该人物死亡多 chunk 时，死因/凶手/地点/时间/确认类问法取靠前段（死因段），
    * 事后类取靠后段（追述/续事段）。临终遗言/托孤类问法优先命中该人物的托孤/遗诏段
-   * （deathSpeechByPerson，如 0085:c0009-0010 白帝城托孤），无遗言段时退回死亡段。
+   * （deathSpeechByPerson，标签含遗言类关键词），无遗言段时退回死亡段。
    * 死亡年龄类问法（死的时候多少岁/享年/卒年/去世时多大…）取靠前段，且死亡段与遗言/遗诏段一并置顶
    * （年龄事实段常落在遗言/遗诏段）。
    * 登场类问法（出场/登场/出世/第一次出场…，见 search/intent.ts）按人名匹配登场标签人名词典
@@ -841,7 +853,7 @@ export class SangoIndex {
       if (cosine) vectorTop = this.topKByCosine(cosine, 50);
     } else if (cosine) {
       let best = -Infinity;
-      for (let d = 0; d < this.n; d++) if (cosine[d] > best) best = cosine[d];
+      for (let d = 0; d < this.n; d++) if (!this.nonRetrievable.has(d) && cosine[d] > best) best = cosine[d];
       if (best >= MIN_COSINE) vectorTop = this.topKByCosine(cosine, Math.max(limit, 20));
     }
     return { bm25, bm25Norm, lexicalHits, tagHits, cosine, vectorTop };
@@ -1098,7 +1110,7 @@ export class SangoIndex {
     const docs: number[] = [];
     for (const chunkId of chunkIds) {
       const d = this.docIndexOf.get(chunkId);
-      if (d !== undefined) docs.push(d);
+      if (d !== undefined && !this.nonRetrievable.has(d)) docs.push(d);
     }
     return docs;
   }
@@ -1292,7 +1304,7 @@ export class SangoIndex {
             .filter((d) => rankOf.has(d))
             .sort((a, b) => (rankOf.get(a) as number) - (rankOf.get(b) as number));
         }
-        const placedChunkIds = placedDocs.map((d) => this.docs[d].chunkId);
+        const placedChunkIds = placedDocs.map((d) => this.docs[d].chunk_id);
         return {
           eventId: g.eventId,
           eventName: g.eventName,
@@ -1351,7 +1363,7 @@ export class SangoIndex {
         const placedDocs = this.chunkIdsToDocs(g.chunkIds)
           .filter((d) => rankOf.has(d))
           .sort((a, b) => (rankOf.get(a) as number) - (rankOf.get(b) as number));
-        const placedChunkIds = placedDocs.map((d) => this.docs[d].chunkId);
+        const placedChunkIds = placedDocs.map((d) => this.docs[d].chunk_id);
         return {
           allusionId: g.allusionId,
           allusionName: g.allusionName,
@@ -1412,10 +1424,10 @@ export class SangoIndex {
     const combinedDocs = new Set(ctx.combined.map((h) => h.doc));
     const deathPinnedChunkIds = [...ctx.deathHits]
       .filter((d) => combinedDocs.has(d))
-      .map((d) => this.docs[d].chunkId);
+      .map((d) => this.docs[d].chunk_id);
     const birthPinnedChunkIds = [...ctx.birthHits]
       .filter((d) => combinedDocs.has(d))
-      .map((d) => this.docs[d].chunkId);
+      .map((d) => this.docs[d].chunk_id);
     return {
       truncated: false,
       truncatedCount: 0,
@@ -1501,7 +1513,7 @@ export class SangoIndex {
     }
     return {
       rank,
-      chunkId: doc.chunkId,
+      chunkId: doc.chunk_id,
       chapter: doc.chapter,
       title: doc.title,
       bm25: ctx.lexicalHits.has(d) ? round3(ctx.bm25[d]) : null,
@@ -1517,19 +1529,25 @@ export class SangoIndex {
     };
   }
   /**
-   * 索引文档 → 出参条目：只保留契约字段（`id` / `text` / `chapter` / `title` / `type` /
-   * `segFrom` / `segTo`），丢弃索引内部结构（tokens / tf / len）；
+   * 索引文档 → 出参条目：语料 `chunks[]` 字段逐条展开 + 回级 `chapter` / `title`，
+   * 丢弃索引内部结构（tokens / tf / len）；
    * `chapter` / `title` 随条目逐条展开（召回可跨回，编排侧只能逐条渲染出处，且跨进程读不到语料目录）。
    */
   private toEntry(d: Doc): SearchEntry {
+    return { ...this.chunkOut(d), chapter: d.chapter, title: d.title };
+  }
+
+  /** 语料字段出参：检索条目与整回原文共用同一字段集。 */
+  private chunkOut(d: Doc): CorpusChunk {
     return {
-      id: d.chunkId,
-      text: d.text,
-      chapter: d.chapter,
-      title: d.title,
+      chunk_id: d.chunk_id,
+      parent_id: d.parent_id,
+      seq_in_parent: d.seq_in_parent,
       type: d.type,
-      segFrom: d.segFrom,
-      segTo: d.segTo,
+      role: d.role,
+      text: d.text,
+      char_count: d.char_count,
+      ...(d.group_id === undefined ? {} : { group_id: d.group_id }),
     };
   }
 
@@ -1556,7 +1574,8 @@ export class SangoIndex {
   }
 
   private topKByCosine(cosine: Float64Array, k: number): number[] {
-    const idx = Array.from({ length: this.n }, (_, i) => i);
+    const idx: number[] = [];
+    for (let i = 0; i < this.n; i++) if (!this.nonRetrievable.has(i)) idx.push(i);
     idx.sort((a, b) => cosine[b] - cosine[a]);
     return idx.slice(0, k);
   }
@@ -1577,13 +1596,7 @@ export class SangoIndex {
       title,
       prev: this.adjacentChapter(chapter - 1),
       next: this.adjacentChapter(chapter + 1),
-      chunks: chapterDocs.map((d) => ({
-        chunkId: d.chunkId,
-        text: d.text,
-        type: d.type,
-        segFrom: d.segFrom,
-        segTo: d.segTo,
-      })),
+      chunks: chapterDocs.map((d) => this.chunkOut(d)),
     };
   }
 

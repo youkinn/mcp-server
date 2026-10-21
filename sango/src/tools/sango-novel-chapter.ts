@@ -21,7 +21,7 @@ export function registerSangoNovelChapter(
     'sango_novel_chapter',
     {
       description:
-        '按回返回《三国演义》原著整回原文（后台服务直调专用，模型不可调用）：入参 chapter（回号 1~120），返回 { chapter, title, prev, next, chunks[] }，chunks[] 条目字段为 chunkId / text / type / segFrom / segTo，prev/next 为相邻回 {chapter, title} 或 null。',
+        '按回返回《三国演义》原著整回原文（后台服务直调专用，模型不可调用）：入参 chapter（回号 1~120），返回 { chapter, title, prev, next, chunks[] }，chunks[] 条目字段为 chunk_id / parent_id / seq_in_parent / type / role / text / char_count，prev/next 为相邻回 {chapter, title} 或 null。',
       inputSchema: z.object({
         chapter: z.number().int().min(1).max(120).describe('回号，1~120'),
       }),

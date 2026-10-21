@@ -1,3 +1,5 @@
+import type { CorpusChunkRole, CorpusChunkType } from './chunk-kind.ts';
+
 /**
  * sango 公共类型：语料 JSON 结构（schema v2）与检索索引内部结构。
  * 只放被多处引用的类型；单文件内部使用的临时类型就地定义，避免过度设计。
@@ -8,17 +10,26 @@
  *
  * 字段名与 `docs/sango-corpus-spec.md`、语料 JSON 逐字一致；出参条目的字段集见 `SearchEntry`。
  */
+/** 语料取值类型：唯一来源见 `src/chunk-kind.ts`（枚举值 + 类型 + 校验同处维护）。 */
+export type { CorpusChunkRole, CorpusChunkType };
+
 export interface CorpusChunk {
-  /** chunk 唯一 ID，规则 `{source}:{回号4位补零}:c{回内序号4位补零}`（回号供服务端回溯渲染出处）。 */
-  id: string;
+  /** chunk 唯一 ID：`{source}:{回号4位补零}:p{段号4位补零}:c{同段内块序2位补零}`。 */
+  chunk_id: string;
+  /** 父段 ID：`{source}:{回号4位补零}:p{段号4位补零}`（段 = 原文一行，块不跨段）。 */
+  parent_id: string;
+  /** 同段内块序（1 起）。 */
+  seq_in_parent: number;
+  /** chunk 类型：正文 / 诗词。 */
+  type: CorpusChunkType;
+  /** chunk 角色：主体 / 引题。 */
+  role: CorpusChunkRole;
   /** chunk 纯原文；不含出处 / 回目 / 段号 / 类型 / 分数。 */
   text: string;
-  /** chunk 类型：叙述 / 诗赞 / 评注。 */
-  type: 'narration' | 'verse' | 'comment';
-  /** 起始段号（对应构建期 `segments[].index`，从 1 起）。 */
-  segFrom: number;
-  /** 结束段号；跨段 chunk 时 segFrom != segTo。 */
-  segTo: number;
+  /** 原文字数。 */
+  char_count: number;
+  /** 上下文组 ID；孤立段不带该键。 */
+  group_id?: string;
 }
 
 /** 章回：对应 data/corpus/<source>/NNN.json 的结构（回级元数据 + chunk 数组）。 */
@@ -51,11 +62,10 @@ export interface SearchEntry extends CorpusChunk {
 /**
  * 索引文档：加载后的 chunk 级检索单元。
  *
- * 出参字段继承自 `SearchEntry`，保证与契约同源；`chunkId` 为语料侧 `id` 的索引内命名。
+ * 字段与出参 `SearchEntry` 同源（语料 `chunks[]` 字段 + 回级 `chapter` / `title`）；
  * `tokens` / `tf` / `len` 为索引内部结构，不进条目。
  */
-export interface Doc extends Omit<SearchEntry, 'id'> {
-  chunkId: string;
+export interface Doc extends SearchEntry {
   tokens: string[];
   tf: Map<string, number>;
   len: number;
@@ -321,20 +331,9 @@ export interface SearchResult {
 
 /**
  * `sango_novel_chapter` 出参（feat-A010）：整回原文 + 相邻回目。
- * chunk 字段按契约名 `chunkId` 输出（语料 schema 字段名为 `id`，出参转换，见接口文档 §3.1）。
+ * `chunks[]` 条目即语料 `chunks[]` 字段逐条展开（与检索出参同源；含引题块）。
  */
-export interface ChapterChunk {
-  /** chunk 唯一 ID（= 语料 `id`，`{source}:{回号4位补零}:c{回内序号4位补零}`）。 */
-  chunkId: string;
-  /** chunk 纯原文；不含出处 / 回目 / 段号 / 类型 / 分数。 */
-  text: string;
-  /** chunk 类型：叙述 / 诗赞 / 评注。 */
-  type: 'narration' | 'verse' | 'comment';
-  /** 起始段号（1 起）。 */
-  segFrom: number;
-  /** 结束段号；跨段 chunk 时 segFrom != segTo。 */
-  segTo: number;
-}
+export type ChapterChunk = CorpusChunk;
 
 /** `sango_novel_chapter` 出参整体：整回 + 相邻回目标题（供前端按钮显示，避免多拉一次全文）。 */
 export interface ChapterPayload {

@@ -234,8 +234,8 @@ export async function runBenchmark(index: SangoIndex, benchmarkFile: string, res
       rank = m.rank;
       if (m.rank >= 1 && m.rank <= 5) status = 'top5';
       else if (m.rank >= 6 && m.rank <= 10) status = 'tail';
-      hit = m.hit ? { id: m.hit.id, chapter: m.hit.chapter, title: m.hit.title, text: m.hit.text.slice(0, 80) } : null;
-      candidates = res.entries.map((e) => ({ id: e.id, chapter: e.chapter, title: e.title }));
+      hit = m.hit ? { id: m.hit.chunk_id, chapter: m.hit.chapter, title: m.hit.title, text: m.hit.text.slice(0, 80) } : null;
+      candidates = res.entries.map((e) => ({ id: e.chunk_id, chapter: e.chapter, title: e.title }));
       // bug-00063：回级维度——期望回目 chapterRefs 在本题候选池（top50）中最早出现的名次（1 起）；未出现 / 为空 = 0。
       if (it.chapterRefs.length > 0) {
         const idx = res.entries.findIndex((e) => it.chapterRefs.includes(e.chapter));

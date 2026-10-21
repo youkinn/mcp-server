@@ -126,19 +126,19 @@ export interface TableModule {
   match: (normalized: string) => Array<{ row: TableRow; matchedAlias: string }>;
 }
 
-/** chunkId → 表内序排序键：(chapter, 回内 c 序号)。主键格式 {source}:{回号4位零补}:c{回内序号4位零补}（接口 §1.3）。 */
-function innerOrderKey(chunkId: string): [number, number] {
-  const m = /^[^:]+:(\d{4}):c(\d{4})$/.exec(chunkId);
+/** chunkId → 表内序排序键：(回号, 段号, 同段块序)。ID 格式 {source}:{回号4位}:p{段号4位}:c{块序2位}（接口 §1.3）。 */
+export function innerOrderKey(chunkId: string): [number, number, number] {
+  const m = /^[^:]+:(\d{4}):p(\d{4}):c(\d{2})$/.exec(chunkId);
   // 格式非法（语料重建残留等）防御性垫底，保留引用不丢（漂移检测已按 docIndexOf 验存在性）。
-  if (!m) return [Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER];
-  return [Number(m[1]), Number(m[2])];
+  if (!m) return [Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER];
+  return [Number(m[1]), Number(m[2]), Number(m[3])];
 }
 
 function sortChunkIdsInner(chunkIds: string[]): string[] {
   return [...chunkIds].sort((a, b) => {
-    const [ca, sa] = innerOrderKey(a);
-    const [cb, sb] = innerOrderKey(b);
-    return ca - cb || sa - sb || (a < b ? -1 : a > b ? 1 : 0);
+    const [ca, pa, sa] = innerOrderKey(a);
+    const [cb, pb, sb] = innerOrderKey(b);
+    return ca - cb || pa - pb || sa - sb || (a < b ? -1 : a > b ? 1 : 0);
   });
 }
 
