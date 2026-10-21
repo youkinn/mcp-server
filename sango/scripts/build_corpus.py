@@ -17,8 +17,8 @@ dev-docs/docs/sango-corpus-split-scheme.md（切分 v2）切段、装块：
 1. data/corpus/sanguo-yanyi/{001..120}.json —— 运行期读这份。
    文件 { source, chapter, title, chunks[] }；块字段
    { chunk_id, parent_id, seq_in_parent, type, text, char_count, role }，
-   成组的块另带 group_id（孤立段不带该键）；role ∈ 主体|引题（§4 引题行，不出检索索引），
-   type ∈ 正文|诗词；parent_id = {source}:{回号4位}:p{段号4位}，
+   成组的块另带 group_id（孤立段不带该键）；role ∈ body|lead（§4 引题行，不出检索索引），
+   type ∈ prose|verse；parent_id = {source}:{回号4位}:p{段号4位}，
    chunk_id = {parent_id}:c{seq_in_parent 2位}。
 2. <系统临时目录>/sango-segments-dump/{001..120}.json + INDEX.json —— 段清单（段号、
    类型、role、组、字数、首尾片段），默认不落盘；SANGO_EMIT_SEGMENTS=1 时输出，供人工核对 /
@@ -55,12 +55,12 @@ QUOTE_OPEN = '“‘'   # 计入引号深度的起始引号
 QUOTE_CLOSE = '”’'  # 计入引号深度的收尾引号
 QUOTE_ALL = '“‘”’'
 
-TYPE_PROSE = '正文'
-TYPE_VERSE = '诗词'
+TYPE_PROSE = 'prose'      # 语料取值用英文标识（人读注释见 README / 规范）
+TYPE_VERSE = 'verse'      # 诗词段
 
 # §4 索引角色：引题行 = 行尾「：」+ 行内无句末标点 + ≤ LEAD_MAX_CHARS 字（照常出块、不出检索索引）
-ROLE_MAIN = '主体'
-ROLE_LEAD = '引题'
+ROLE_MAIN = 'body'       # 主体块：进检索索引
+ROLE_LEAD = 'lead'       # 引题块：照常出块、不进检索索引（§4）
 LEAD_MAX_CHARS = 12
 
 CN_DIGITS = {
@@ -468,7 +468,7 @@ def self_check(chapters, chunks_by_chapter, seg_block_count, group_of):
                 else:
                     tiny_tail.append((ch['chapter'], last['chunk_id'], len(last['text'])))
 
-    # I8 类型只能是 正文／诗词，不出现 comment
+    # I8 类型只能是 prose／verse，不出现 comment
     for c in all_chunks:
         if c['type'] not in (TYPE_PROSE, TYPE_VERSE):
             fails.append('I8 非法类型 %s' % c['chunk_id'])
@@ -528,7 +528,7 @@ def self_check(chapters, chunks_by_chapter, seg_block_count, group_of):
           % ('PASS' if not any(f.startswith('I6') for f in fails) else 'FAIL'))
     print('  I7 尾块 < %d 已回并或登记例外：%s'
           % (TINY, 'PASS' if not any(f.startswith('I7') for f in fails) else 'FAIL'))
-    print('  I8 类型仅 正文／诗词：%s'
+    print('  I8 类型仅 prose／verse：%s'
           % ('PASS' if not any(f.startswith('I8') for f in fails) else 'FAIL'))
     print('  I9 段号 = 行号／段数 = %d：%s'
           % (EXPECT_SEGMENTS, 'PASS' if not any(f.startswith('I9') for f in fails) else 'FAIL'))

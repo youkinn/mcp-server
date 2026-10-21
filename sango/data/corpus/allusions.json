@@ -1,9 +1,9 @@
 {
   "meta": {
     "schemaVersion": 1,
-    "normVersion": "87b22fcc",
-    "generatedAt": "2026-10-12T10:06:14.544Z",
-    "corpusChunkCount": 2344,
+    "normVersion": "3d568457",
+    "generatedAt": "2026-10-16T08:46:26.385Z",
+    "corpusChunkCount": 2290,
     "source": "tags/story.json 典故名句迁移（batch-01）"
   },
   "rows": [
@@ -14,7 +14,7 @@
         "既生瑜，何生亮"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0057:c0002"
+        "sanguo-yanyi:0057:p0003:c01"
       ],
       "type": "典故",
       "exampleQuestion": "「既生瑜，何生亮」出自哪一回、讲的什么事"
@@ -27,7 +27,7 @@
         "勿以恶小而为之"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0085:c0013"
+        "sanguo-yanyi:0085:p0012:c01"
       ],
       "type": "典故",
       "exampleQuestion": "「勿以恶小而为之」出自哪一回、讲的什么事"
@@ -39,7 +39,7 @@
         "玉可碎不可改其白"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0076:c0017"
+        "sanguo-yanyi:0076:p0016:c01"
       ],
       "type": "典故",
       "exampleQuestion": "「玉可碎不可改其白」出自哪一回、讲的什么事"
@@ -51,10 +51,10 @@
         "一身都是胆"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0071:c0018",
-        "sanguo-yanyi:0071:c0019",
-        "sanguo-yanyi:0071:c0020",
-        "sanguo-yanyi:0071:c0021"
+        "sanguo-yanyi:0071:p0014:c01",
+        "sanguo-yanyi:0071:p0015:c01",
+        "sanguo-yanyi:0071:p0016:c01",
+        "sanguo-yanyi:0071:p0019:c01"
       ],
       "type": "典故",
       "exampleQuestion": "「一身都是胆」出自哪一回、讲的什么事"
@@ -66,7 +66,7 @@
         "伏龙凤雏"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0035:c0005"
+        "sanguo-yanyi:0035:p0003:c02"
       ],
       "type": "典故",
       "exampleQuestion": "「伏龙凤雏」出自哪一回、讲的什么事"
@@ -78,8 +78,7 @@
         "车载斗量"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0082:c0004",
-        "sanguo-yanyi:0082:c0005"
+        "sanguo-yanyi:0082:p0003:c01"
       ],
       "type": "典故",
       "exampleQuestion": "「车载斗量」出自哪一回、讲的什么事"
@@ -91,7 +90,7 @@
         "虎女焉嫁犬子"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0073:c0008"
+        "sanguo-yanyi:0073:p0012:c01"
       ],
       "type": "典故",
       "exampleQuestion": "「虎女焉嫁犬子」出自哪一回、讲的什么事"
@@ -103,7 +102,7 @@
         "攻心为上"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0087:c0012"
+        "sanguo-yanyi:0087:p0010:c01"
       ],
       "type": "典故",
       "exampleQuestion": "「攻心为上」出自哪一回、讲的什么事"
@@ -115,7 +114,7 @@
         "八门金锁阵"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0036:c0002"
+        "sanguo-yanyi:0036:p0002:c01"
       ],
       "type": "典故",
       "exampleQuestion": "「八门金锁阵」出自哪一回、讲的什么事"
@@ -127,7 +126,7 @@
         "子午谷奇谋"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0092:c0001"
+        "sanguo-yanyi:0092:p0001:c01"
       ],
       "type": "典故",
       "exampleQuestion": "「子午谷奇谋」出自哪一回、讲的什么事"
@@ -139,9 +138,8 @@
         "的卢妨主"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0034:c0004",
-        "sanguo-yanyi:0034:c0005",
-        "sanguo-yanyi:0035:c0010"
+        "sanguo-yanyi:0034:p0003:c01",
+        "sanguo-yanyi:0035:p0009:c01"
       ],
       "type": "典故",
       "exampleQuestion": "「的卢妨主」出自哪一回、讲的什么事"
@@ -153,8 +151,8 @@
         "绝妙好辞"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0071:c0004",
-        "sanguo-yanyi:0071:c0005"
+        "sanguo-yanyi:0071:p0003:c01",
+        "sanguo-yanyi:0071:p0003:c02"
       ],
       "type": "典故",
       "exampleQuestion": "「绝妙好辞」出自哪一回、讲的什么事"
@@ -166,7 +164,7 @@
         "拜井得泉"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0109:c0007"
+        "sanguo-yanyi:0109:p0009:c01"
       ],
       "type": "典故",
       "exampleQuestion": "「拜井得泉」出自哪一回、讲的什么事"
@@ -178,7 +176,7 @@
         "割席分坐"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0066:c0016"
+        "sanguo-yanyi:0066:p0015:c01"
       ],
       "type": "典故",
       "exampleQuestion": "「割席分坐」出自哪一回、讲的什么事"
@@ -190,8 +188,7 @@
         "青囊书"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0078:c0007",
-        "sanguo-yanyi:0078:c0008"
+        "sanguo-yanyi:0078:p0006:c01"
       ],
       "type": "典故",
       "exampleQuestion": "「青囊书」出自哪一回、讲的什么事"
@@ -203,7 +200,7 @@
         "梦中杀人"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0072:c0013"
+        "sanguo-yanyi:0072:p0008:c01"
       ],
       "type": "典故",
       "exampleQuestion": "「梦中杀人」出自哪一回、讲的什么事"
@@ -215,7 +212,7 @@
         "一合酥"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0072:c0013"
+        "sanguo-yanyi:0072:p0008:c01"
       ],
       "type": "典故",
       "exampleQuestion": "「一合酥」出自哪一回、讲的什么事"
@@ -227,7 +224,7 @@
         "堕泪碑"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0120:c0011"
+        "sanguo-yanyi:0120:p0011:c01"
       ],
       "type": "典故",
       "exampleQuestion": "「堕泪碑」出自哪一回、讲的什么事"
@@ -239,11 +236,10 @@
         "假途灭虢"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0056:c0012",
-        "sanguo-yanyi:0056:c0013",
-        "sanguo-yanyi:0056:c0014",
-        "sanguo-yanyi:0056:c0016",
-        "sanguo-yanyi:0056:c0017"
+        "sanguo-yanyi:0056:p0010:c01",
+        "sanguo-yanyi:0056:p0010:c02",
+        "sanguo-yanyi:0056:p0012:c01",
+        "sanguo-yanyi:0056:p0012:c02"
       ],
       "type": "典故",
       "exampleQuestion": "「假途灭虢」出自哪一回、讲的什么事"
@@ -255,7 +251,7 @@
         "割发代首"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0017:c0015"
+        "sanguo-yanyi:0017:p0010:c01"
       ],
       "type": "典故",
       "exampleQuestion": "「割发代首」出自哪一回、讲的什么事"
@@ -267,7 +263,7 @@
         "鸡肋"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0072:c0011"
+        "sanguo-yanyi:0072:p0007:c01"
       ],
       "type": "典故",
       "exampleQuestion": "「鸡肋」出自哪一回、讲的什么事"
@@ -279,8 +275,7 @@
         "乐不思蜀"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0119:c0010",
-        "sanguo-yanyi:0119:c0011"
+        "sanguo-yanyi:0119:p0014:c01"
       ],
       "type": "典故",
       "exampleQuestion": "「乐不思蜀」出自哪一回、讲的什么事"
@@ -292,8 +287,8 @@
         "夜战马超"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0065:c0007",
-        "sanguo-yanyi:0065:c0008"
+        "sanguo-yanyi:0065:p0004:c01",
+        "sanguo-yanyi:0065:p0004:c02"
       ],
       "type": "典故",
       "exampleQuestion": "「夜战马超」出自哪一回、讲的什么事"
@@ -305,7 +300,7 @@
         "哭祖庙"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0118:c0004"
+        "sanguo-yanyi:0118:p0004:c01"
       ],
       "type": "典故",
       "exampleQuestion": "「哭祖庙」出自哪一回、讲的什么事"
@@ -317,7 +312,7 @@
         "借荆州"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0054:c0003"
+        "sanguo-yanyi:0054:p0002:c01"
       ],
       "type": "典故",
       "exampleQuestion": "「借荆州」出自哪一回、讲的什么事"
@@ -329,7 +324,7 @@
         "初出茅庐第一功"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0039:c0017"
+        "sanguo-yanyi:0039:p0014:c01"
       ],
       "type": "典故",
       "exampleQuestion": "「初出茅庐第一功」出自哪一回、讲的什么事"
@@ -341,7 +336,7 @@
         "孙策托孤"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0029:c0014"
+        "sanguo-yanyi:0029:p0012:c01"
       ],
       "type": "典故",
       "exampleQuestion": "「孙策托孤」出自哪一回、讲的什么事"
@@ -353,7 +348,7 @@
         "曹操哭郭嘉"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0050:c0013"
+        "sanguo-yanyi:0050:p0013:c01"
       ],
       "type": "典故",
       "exampleQuestion": "「曹操哭郭嘉」出自哪一回、讲的什么事"
@@ -365,7 +360,7 @@
         "于吉祈雨"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0029:c0008"
+        "sanguo-yanyi:0029:p0009:c01"
       ],
       "type": "典故",
       "exampleQuestion": "「于吉祈雨」出自哪一回、讲的什么事"
@@ -377,13 +372,8 @@
         "管辂神卜"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0069:c0002",
-        "sanguo-yanyi:0069:c0003",
-        "sanguo-yanyi:0069:c0004",
-        "sanguo-yanyi:0069:c0005",
-        "sanguo-yanyi:0069:c0006",
-        "sanguo-yanyi:0069:c0007",
-        "sanguo-yanyi:0069:c0008"
+        "sanguo-yanyi:0069:p0003:c02",
+        "sanguo-yanyi:0069:p0004:c01"
       ],
       "type": "典故",
       "exampleQuestion": "「管辂神卜」出自哪一回、讲的什么事"
@@ -395,11 +385,10 @@
         "铜雀台"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0056:c0003",
-        "sanguo-yanyi:0056:c0004",
-        "sanguo-yanyi:0056:c0005",
-        "sanguo-yanyi:0056:c0006",
-        "sanguo-yanyi:0056:c0007"
+        "sanguo-yanyi:0056:p0004:c01",
+        "sanguo-yanyi:0056:p0004:c02",
+        "sanguo-yanyi:0056:p0004:c03",
+        "sanguo-yanyi:0056:p0005:c01"
       ],
       "type": "典故",
       "exampleQuestion": "「铜雀台」出自哪一回、讲的什么事"
@@ -411,7 +400,7 @@
         "拔矢啖睛"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0018:c0014"
+        "sanguo-yanyi:0018:p0012:c01"
       ],
       "type": "典故",
       "exampleQuestion": "「拔矢啖睛」出自哪一回、讲的什么事"
@@ -423,9 +412,8 @@
         "土山约三事"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0025:c0004",
-        "sanguo-yanyi:0025:c0005",
-        "sanguo-yanyi:0025:c0006"
+        "sanguo-yanyi:0025:p0003:c01",
+        "sanguo-yanyi:0025:p0004:c01"
       ],
       "type": "典故",
       "exampleQuestion": "「土山约三事」出自哪一回、讲的什么事"
@@ -437,8 +425,7 @@
         "斩颜良"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0025:c0018",
-        "sanguo-yanyi:0025:c0019"
+        "sanguo-yanyi:0025:p0014:c01"
       ],
       "type": "典故",
       "exampleQuestion": "「斩颜良」出自哪一回、讲的什么事"
@@ -450,7 +437,7 @@
         "斩蔡阳"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0028:c0012"
+        "sanguo-yanyi:0028:p0007:c01"
       ],
       "type": "典故",
       "exampleQuestion": "「斩蔡阳」出自哪一回、讲的什么事"
@@ -462,11 +449,10 @@
         "苦肉计"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0046:c0013",
-        "sanguo-yanyi:0046:c0014",
-        "sanguo-yanyi:0046:c0015",
-        "sanguo-yanyi:0046:c0016",
-        "sanguo-yanyi:0046:c0017"
+        "sanguo-yanyi:0046:p0016:c01",
+        "sanguo-yanyi:0046:p0017:c01",
+        "sanguo-yanyi:0046:p0018:c01",
+        "sanguo-yanyi:0046:p0019:c01"
       ],
       "type": "典故",
       "exampleQuestion": "「苦肉计」出自哪一回、讲的什么事"
@@ -478,13 +464,12 @@
         "借东风"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0049:c0002",
-        "sanguo-yanyi:0049:c0003",
-        "sanguo-yanyi:0049:c0005",
-        "sanguo-yanyi:0049:c0006",
-        "sanguo-yanyi:0049:c0007",
-        "sanguo-yanyi:0049:c0009",
-        "sanguo-yanyi:0049:c0010"
+        "sanguo-yanyi:0049:p0002:c01",
+        "sanguo-yanyi:0049:p0004:c01",
+        "sanguo-yanyi:0049:p0005:c01",
+        "sanguo-yanyi:0049:p0006:c01",
+        "sanguo-yanyi:0049:p0007:c01",
+        "sanguo-yanyi:0049:p0009:c01"
       ],
       "type": "典故",
       "exampleQuestion": "「借东风」出自哪一回、讲的什么事"
@@ -496,12 +481,10 @@
         "华容道"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0049:c0015",
-        "sanguo-yanyi:0049:c0016",
-        "sanguo-yanyi:0050:c0007",
-        "sanguo-yanyi:0050:c0008",
-        "sanguo-yanyi:0050:c0010",
-        "sanguo-yanyi:0050:c0011"
+        "sanguo-yanyi:0049:p0013:c01",
+        "sanguo-yanyi:0050:p0008:c01",
+        "sanguo-yanyi:0050:p0009:c01",
+        "sanguo-yanyi:0050:p0011:c01"
       ],
       "type": "典故",
       "exampleQuestion": "「华容道」出自哪一回、讲的什么事"
@@ -513,9 +496,8 @@
         "义释黄忠"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0053:c0005",
-        "sanguo-yanyi:0053:c0006",
-        "sanguo-yanyi:0053:c0007"
+        "sanguo-yanyi:0053:p0003:c01",
+        "sanguo-yanyi:0053:p0004:c01"
       ],
       "type": "典故",
       "exampleQuestion": "「义释黄忠」出自哪一回、讲的什么事"
@@ -527,11 +509,10 @@
         "截江夺阿斗"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0061:c0006",
-        "sanguo-yanyi:0061:c0007",
-        "sanguo-yanyi:0061:c0008",
-        "sanguo-yanyi:0061:c0009",
-        "sanguo-yanyi:0061:c0010"
+        "sanguo-yanyi:0061:p0004:c01",
+        "sanguo-yanyi:0061:p0005:c01",
+        "sanguo-yanyi:0061:p0005:c02",
+        "sanguo-yanyi:0061:p0006:c01"
       ],
       "type": "典故",
       "exampleQuestion": "「截江夺阿斗」出自哪一回、讲的什么事"
@@ -543,8 +524,8 @@
         "义释严颜"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0063:c0020",
-        "sanguo-yanyi:0063:c0021"
+        "sanguo-yanyi:0063:p0021:c01",
+        "sanguo-yanyi:0063:p0022:c01"
       ],
       "type": "典故",
       "exampleQuestion": "「义释严颜」出自哪一回、讲的什么事"
@@ -556,8 +537,8 @@
         "威震逍遥津"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0067:c0020",
-        "sanguo-yanyi:0067:c0021"
+        "sanguo-yanyi:0067:p0015:c01",
+        "sanguo-yanyi:0067:p0017:c01"
       ],
       "type": "典故",
       "exampleQuestion": "「威震逍遥津」出自哪一回、讲的什么事"
@@ -569,7 +550,7 @@
         "庞德抬榇"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0074:c0003"
+        "sanguo-yanyi:0074:p0003:c01"
       ],
       "type": "典故",
       "exampleQuestion": "「庞德抬榇」出自哪一回、讲的什么事"
@@ -581,9 +562,9 @@
         "关公显圣"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0077:c0007",
-        "sanguo-yanyi:0077:c0008",
-        "sanguo-yanyi:0077:c0010"
+        "sanguo-yanyi:0077:p0009:c01",
+        "sanguo-yanyi:0077:p0010:c01",
+        "sanguo-yanyi:0077:p0014:c01"
       ],
       "type": "典故",
       "exampleQuestion": "「关公显圣」出自哪一回、讲的什么事"
@@ -595,9 +576,8 @@
         "出师表"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0091:c0012",
-        "sanguo-yanyi:0091:c0013",
-        "sanguo-yanyi:0091:c0014"
+        "sanguo-yanyi:0091:p0014:c01",
+        "sanguo-yanyi:0091:p0015:c01"
       ],
       "type": "典故",
       "exampleQuestion": "「出师表」出自哪一回、讲的什么事"
@@ -609,8 +589,7 @@
         "上方谷"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0103:c0011",
-        "sanguo-yanyi:0103:c0012"
+        "sanguo-yanyi:0103:p0010:c01"
       ],
       "type": "典故",
       "exampleQuestion": "「上方谷」出自哪一回、讲的什么事"
@@ -622,8 +601,8 @@
         "武侯显圣"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0116:c0012",
-        "sanguo-yanyi:0116:c0013"
+        "sanguo-yanyi:0116:p0009:c01",
+        "sanguo-yanyi:0116:p0009:c02"
       ],
       "type": "典故",
       "exampleQuestion": "「武侯显圣」出自哪一回、讲的什么事"
@@ -635,8 +614,7 @@
         "偷度阴平"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0117:c0006",
-        "sanguo-yanyi:0117:c0007"
+        "sanguo-yanyi:0117:p0004:c01"
       ],
       "type": "典故",
       "exampleQuestion": "「偷度阴平」出自哪一回、讲的什么事"
