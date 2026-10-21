@@ -1,8 +1,8 @@
 {
   "meta": {
     "schemaVersion": 1,
-    "normVersion": "3d568457",
-    "generatedAt": "2026-10-16T08:46:26.385Z",
+    "normVersion": "2be3345a",
+    "generatedAt": "2026-10-21T09:38:16.849Z",
     "corpusChunkCount": 2290,
     "source": "tags/story.json 典故名句迁移（batch-01）"
   },
@@ -66,7 +66,7 @@
         "伏龙凤雏"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0035:p0003:c02"
+        "sanguo-yanyi:0035:p0003:c03"
       ],
       "type": "典故",
       "exampleQuestion": "「伏龙凤雏」出自哪一回、讲的什么事"
@@ -164,7 +164,7 @@
         "拜井得泉"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0109:p0009:c01"
+        "sanguo-yanyi:0109:p0007:c01"
       ],
       "type": "典故",
       "exampleQuestion": "「拜井得泉」出自哪一回、讲的什么事"
@@ -324,7 +324,7 @@
         "初出茅庐第一功"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0039:p0014:c01"
+        "sanguo-yanyi:0039:p0012:c01"
       ],
       "type": "典故",
       "exampleQuestion": "「初出茅庐第一功」出自哪一回、讲的什么事"
