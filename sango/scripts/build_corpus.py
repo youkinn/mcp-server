@@ -87,8 +87,8 @@ CLAUSE_SPLIT_ALL_RE = re.compile('[，。；！？：、]')
 WL_OVER_CAP = ((69, 3),)
 WL_UNBALANCED_QUOTE = ((44, 8), (114, 4), (114, 5))
 
-# §1／§4 读数（与 split-scheme 文档同步维护）：全书段数 2129、引题块 19
-EXPECT_SEGMENTS = 2129
+# §1／§4 读数（与 split-scheme 文档同步维护）：全书段数 2128、引题块 19
+EXPECT_SEGMENTS = 2128
 EXPECT_LEAD_BLOCKS = 19
 
 

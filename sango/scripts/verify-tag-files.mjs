@@ -29,7 +29,7 @@ const ENTITY_TABLE_FILE = path.join(path.resolve(HERE, '..', 'data'), 'entity-ta
 const BIRTH_RE = /^人物之生-(.+)登场$/;
 const DEATH_RE = /^人物之死-(.+)之死$/;
 const DUEL_RE = /^武将单挑-([^-]+)-([^-]+)$/;
-const EVENT_COUNT_EXPECT = { birth: 141, death: 338, total: 479, entries: 353 };
+const EVENT_COUNT_EXPECT = { birth: 141, death: 334, total: 475, entries: 344 };
 const DUEL_ENTRIES_EXPECT = 35;
 
 let failures = 0;

@@ -1,9 +1,9 @@
 {
   "meta": {
     "schemaVersion": 1,
-    "normVersion": "2be3345a",
-    "generatedAt": "2026-10-21T09:38:16.849Z",
-    "corpusChunkCount": 2290,
+    "normVersion": "2254f348",
+    "generatedAt": "2026-10-22T02:52:29.417Z",
+    "corpusChunkCount": 2289,
     "source": "tags/story.json 典故名句迁移（batch-01）"
   },
   "rows": [
@@ -564,7 +564,8 @@
       "chunkIds": [
         "sanguo-yanyi:0077:p0009:c01",
         "sanguo-yanyi:0077:p0010:c01",
-        "sanguo-yanyi:0077:p0014:c01"
+        "sanguo-yanyi:0077:p0013:c01",
+        "sanguo-yanyi:0077:p0015:c01"
       ],
       "type": "典故",
       "exampleQuestion": "「关公显圣」出自哪一回、讲的什么事"
@@ -576,6 +577,7 @@
         "出师表"
       ],
       "chunkIds": [
+        "sanguo-yanyi:0091:p0013:c01",
         "sanguo-yanyi:0091:p0014:c01",
         "sanguo-yanyi:0091:p0015:c01"
       ],

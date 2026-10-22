@@ -1,9 +1,9 @@
 {
   "meta": {
     "schemaVersion": 1,
-    "normVersion": "2b94ebd7",
-    "generatedAt": "2026-10-16T08:46:31.102Z",
-    "corpusChunkCount": 2290
+    "normVersion": "c93c5344",
+    "generatedAt": "2026-10-22T02:54:33.069Z",
+    "corpusChunkCount": 2289
   },
   "rows": [
     {
@@ -722,9 +722,9 @@
         "何太后去世"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0004:p0008:c01",
-        "sanguo-yanyi:0004:p0009:c01",
-        "sanguo-yanyi:0004:p0010:c01"
+        "sanguo-yanyi:0004:p0012:c01",
+        "sanguo-yanyi:0004:p0013:c01",
+        "sanguo-yanyi:0004:p0014:c01"
       ],
       "type": "L3",
       "exampleQuestion": "何太后是怎么死的",
@@ -5224,8 +5224,7 @@
       "chunkIds": [
         "sanguo-yanyi:0031:p0001:c01",
         "sanguo-yanyi:0031:p0002:c01",
-        "sanguo-yanyi:0031:p0003:c01",
-        "sanguo-yanyi:0031:p0004:c01"
+        "sanguo-yanyi:0031:p0003:c01"
       ],
       "type": "L3",
       "exampleQuestion": "田丰是怎么死的",
@@ -7450,11 +7449,9 @@
         "周瑜去世"
       ],
       "chunkIds": [
+        "sanguo-yanyi:0057:p0002:c01",
         "sanguo-yanyi:0057:p0003:c01",
-        "sanguo-yanyi:0057:p0004:c01",
-        "sanguo-yanyi:0057:p0006:c01",
-        "sanguo-yanyi:0057:p0007:c01",
-        "sanguo-yanyi:0057:p0008:c01"
+        "sanguo-yanyi:0057:p0004:c01"
       ],
       "type": "L3",
       "exampleQuestion": "周瑜是怎么死的",
@@ -8464,9 +8461,9 @@
         "姜叙母去世"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0064:p0014:c01",
-        "sanguo-yanyi:0064:p0015:c01",
-        "sanguo-yanyi:0064:p0016:c01"
+        "sanguo-yanyi:0064:p0017:c01",
+        "sanguo-yanyi:0064:p0017:c02",
+        "sanguo-yanyi:0064:p0018:c01"
       ],
       "type": "L3",
       "exampleQuestion": "姜叙母是怎么死的",
@@ -8596,9 +8593,9 @@
         "伏皇后去世"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0066:p0014:c01",
-        "sanguo-yanyi:0066:p0015:c01",
-        "sanguo-yanyi:0066:p0016:c01"
+        "sanguo-yanyi:0066:p0018:c01",
+        "sanguo-yanyi:0066:p0019:c01",
+        "sanguo-yanyi:0066:p0020:c01"
       ],
       "type": "L3",
       "exampleQuestion": "伏皇后是怎么死的",
@@ -9075,9 +9072,9 @@
         "吉邈去世"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0069:p0008:c01",
         "sanguo-yanyi:0069:p0009:c01",
-        "sanguo-yanyi:0069:p0010:c01"
+        "sanguo-yanyi:0069:p0010:c01",
+        "sanguo-yanyi:0069:p0011:c01"
       ],
       "type": "L3",
       "exampleQuestion": "吉邈是怎么死的",
@@ -9094,9 +9091,9 @@
         "吉穆去世"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0069:p0007:c01",
-        "sanguo-yanyi:0069:p0008:c01",
-        "sanguo-yanyi:0069:p0009:c01"
+        "sanguo-yanyi:0069:p0009:c01",
+        "sanguo-yanyi:0069:p0010:c01",
+        "sanguo-yanyi:0069:p0011:c01"
       ],
       "type": "L3",
       "exampleQuestion": "吉穆是怎么死的",
@@ -9358,10 +9355,9 @@
         "杨修去世"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0072:p0007:c01",
-        "sanguo-yanyi:0072:p0008:c01",
         "sanguo-yanyi:0072:p0008:c02",
-        "sanguo-yanyi:0072:p0008:c03"
+        "sanguo-yanyi:0072:p0008:c03",
+        "sanguo-yanyi:0072:p0009:c01"
       ],
       "type": "L3",
       "exampleQuestion": "杨修是怎么死的",
@@ -9726,9 +9722,8 @@
         "sanguo-yanyi:0077:p0014:c01",
         "sanguo-yanyi:0077:p0015:c01",
         "sanguo-yanyi:0077:p0016:c01",
-        "sanguo-yanyi:0077:p0017:c01",
-        "sanguo-yanyi:0077:p0019:c01",
-        "sanguo-yanyi:0077:p0020:c01"
+        "sanguo-yanyi:0077:p0018:c01",
+        "sanguo-yanyi:0077:p0019:c01"
       ],
       "type": "L2",
       "exampleQuestion": "关羽死后显圣是怎么回事",
@@ -9783,9 +9778,9 @@
         "关平去世"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0077:p0002:c01",
         "sanguo-yanyi:0077:p0003:c01",
-        "sanguo-yanyi:0077:p0004:c01"
+        "sanguo-yanyi:0077:p0004:c01",
+        "sanguo-yanyi:0077:p0005:c01"
       ],
       "type": "L3",
       "exampleQuestion": "关平是怎么死的",
@@ -9840,9 +9835,9 @@
         "吕蒙去世"
       ],
       "chunkIds": [
+        "sanguo-yanyi:0077:p0012:c01",
         "sanguo-yanyi:0077:p0013:c01",
-        "sanguo-yanyi:0077:p0014:c01",
-        "sanguo-yanyi:0077:p0015:c01"
+        "sanguo-yanyi:0077:p0014:c01"
       ],
       "type": "L3",
       "exampleQuestion": "吕蒙是怎么死的",
@@ -12737,9 +12732,9 @@
         "李丰去世"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0109:p0011:c01",
-        "sanguo-yanyi:0109:p0011:c02",
-        "sanguo-yanyi:0109:p0011:c03"
+        "sanguo-yanyi:0109:p0012:c01",
+        "sanguo-yanyi:0109:p0013:c01",
+        "sanguo-yanyi:0109:p0014:c01"
       ],
       "type": "L3",
       "exampleQuestion": "李丰是怎么死的",
@@ -12775,9 +12770,9 @@
         "夏侯玄去世"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0109:p0011:c02",
-        "sanguo-yanyi:0109:p0011:c03",
-        "sanguo-yanyi:0109:p0012:c01"
+        "sanguo-yanyi:0109:p0012:c01",
+        "sanguo-yanyi:0109:p0013:c01",
+        "sanguo-yanyi:0109:p0014:c01"
       ],
       "type": "L3",
       "exampleQuestion": "夏侯玄是怎么死的",
@@ -13076,9 +13071,9 @@
         "诸葛诞去世"
       ],
       "chunkIds": [
-        "sanguo-yanyi:0112:p0005:c01",
         "sanguo-yanyi:0112:p0006:c01",
-        "sanguo-yanyi:0112:p0007:c01"
+        "sanguo-yanyi:0112:p0007:c01",
+        "sanguo-yanyi:0112:p0008:c01"
       ],
       "type": "L3",
       "exampleQuestion": "诸葛诞是怎么死的",
@@ -13413,8 +13408,7 @@
       "chunkIds": [
         "sanguo-yanyi:0116:p0006:c01",
         "sanguo-yanyi:0116:p0007:c01",
-        "sanguo-yanyi:0116:p0008:c01",
-        "sanguo-yanyi:0116:p0009:c01"
+        "sanguo-yanyi:0116:p0008:c01"
       ],
       "type": "L3",
       "exampleQuestion": "傅佥是怎么死的",
