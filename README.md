@@ -1,139 +1,50 @@
-# Weather MCP Server
+# mcp-server
 
-一个基于 Node.js 和 Model Context Protocol（MCP）的天气服务，通过 stdio 与 MCP 客户端通信。
-
-## 快速开始
-
-```bash
-npm install
-npm start
-```
-
-`npm start` 会启动 MCP 服务，不接收业务参数，也不会打开 HTTP 端口。实际使用时，推荐由 Cline 等 MCP 客户端负责启动和管理服务进程。
-
-## 功能
-
-- `get-alerts`：查询美国指定州的天气预警。
-- `get-forecast`：根据经纬度查询天气预报。
-
-## 环境要求
-
-- Node.js 18 或更高版本（需要内置 `fetch`）。
-- 能够访问 [National Weather Service API](https://api.weather.gov/) 的网络环境。
-- 一个支持 MCP 的客户端，例如 Cline。
-
-## 安装
-
-在项目根目录执行：
-
-```bash
-npm install
-```
-
-## 启动
-
-### 使用 npm 启动
-
-```bash
-npm start
-```
-
-该命令等价于：
-
-```bash
-node src/weather/index.js
-```
-
-服务使用 stdio 通信，不会启动 HTTP 服务，也不需要传入业务参数。通常应由 MCP 客户端启动和管理该进程，不要向运行中的进程输出普通文本。
-
-### 在 Cline 中配置
-
-项目提供了 [cline_mcp_settings.json](cline_mcp_settings.json) 配置示例：
-
-```json
-{
-  "mcpServers": {
-    "weather": {
-      "command": "node",
-      "args": [
-        "--inspect=9229",
-        "<项目绝对路径>\\src\\weather\\index.js"
-      ],
-      "cwd": "<项目绝对路径>",
-      "timeout": 600,
-      "disabled": false
-    }
-  }
-}
-```
-
-请将示例中的 `<项目绝对路径>` 替换为实际项目路径。Windows 路径在 JSON 中需要使用双反斜杠。
-
-配置完成后，重启或重新加载 Cline，使 MCP 服务配置生效。配置中的 `--inspect=9229` 用于断点调试；如果不需要调试，可以删除该参数。
-
-## VS Code 断点调试
-
-项目的 [.vscode/launch.json](.vscode/launch.json) 已配置 `Attach to Cline Weather MCP Server`，用于附加到监听 `9229` 端口的 Node.js 进程。该配置只负责附加调试，不负责启动 MCP 服务。
-
-调试步骤：
-
-1. 先通过 Cline 配置启动 MCP 服务，或在终端执行：
-
-  ```bash
-  node --inspect=9229 src/weather/index.js
-  ```
-
-2. 在 VS Code 左侧打开“运行和调试”。
-3. 在配置下拉列表中选择 `Attach to Cline Weather MCP Server`。
-4. 点击开始调试按钮，然后在源码中设置断点。
-
-`9229` 仅用于 Node.js 调试，不是天气服务的 HTTP 端口。如果端口已被占用，请同时修改启动命令中的端口和 `.vscode/launch.json` 中的 `port`。
-
-## 工具参数
-
-### `get-alerts`
-
-请求示例：
-
-```json
-{
-  "state": "NY"
-}
-```
-
-`state` 必填，必须是长度为 2 的美国州代码，例如 `CA` 或 `NY`。服务会自动转换为大写。
-
-### `get-forecast`
-
-请求示例：
-
-```json
-{
-  "latitude": 40.7128,
-  "longitude": -74.0060
-}
-```
-
-- `latitude` 必填，范围为 `-90` 到 `90`。
-- `longitude` 必填，范围为 `-180` 到 `180`。
-
-当前使用的 NWS API 主要支持美国境内的位置，其他国家或地区可能无法查询。
-
-## 注意事项与排查
-
-- 天气数据依赖 `https://api.weather.gov`，网络不可用、接口限流或位置不受支持时可能查询失败。
-- 服务日志写入 stderr，MCP 协议通信使用 stdout。业务代码不要向 stdout 输出额外内容，否则可能破坏 MCP 通信。
-- 修改源码后，需要重启 Cline 中的 MCP 服务进程才能加载新代码。
-- 这是 stdio MCP 服务，不是 Web 服务；不要通过浏览器访问，也不需要配置 HTTP 端口。
-- 如果 `npm start` 无法执行，请先确认已在项目根目录运行 `npm install`，并检查 Node.js 版本。
-- `node_modules` 已被 `.gitignore` 忽略，不要提交到 Git。
+天枢项目群的 MCP 服务端集合（别名：器坊）。单仓库包含多个独立 MCP 子项目，均通过 stdio 提供工具，由 `mcp-orchestrator` 启动和调用。
 
 ## 目录结构
 
 ```text
-src/weather/index.js       MCP 服务入口
-cline_mcp_settings.json    Cline 配置示例
-.vscode/launch.json        VS Code 断点调试配置
-package.json               依赖和 npm 脚本
-REDEME.md                  项目说明
+mcp-server/
+├── sango/            三国演义检索 MCP（TypeScript）
+│   ├── src/          源码与测试
+│   ├── data/         语料与索引数据
+│   ├── scripts/      语料 / 向量等构建脚本
+│   └── dist/         构建产物
+├── fengyunsanguo/    风云三国题库 MCP（TypeScript）
+│   ├── src/          源码与测试
+│   ├── data/         题库数据
+│   └── dist/         构建产物
+├── weather/          天气 MCP（存量 JS，已下线）
+├── package.json      根工作区与公共脚本
+└── node_modules/     共享依赖（不提交）
 ```
+
+## 子项目
+
+| 目录 | 工具 | 说明 |
+|---|---|---|
+| `sango/` | `sango_novel_search`、`sango_novel_chapter` | 三国演义检索与整回原文；另有内部工具 `sango_query_embed`，模型不可见 |
+| `fengyunsanguo/` | `fengyunsanguo_query`、`fengyunsanguo_quiz_command`、`fengyunsanguo_quiz_route` | 风云三国题库问答、随机出题与判题 |
+| `weather/` | `get-alerts`、`get-forecast` | 天气服务，已下线，目录保留但不再注册 |
+
+## 构建与运行
+
+```bash
+npm install
+npm run build:all            # 构建 sango 与 fengyunsanguo
+npm run start:sango
+npm run start:fengyunsanguo
+npm run start:weather        # 仅用于调试历史天气服务
+```
+
+各子项目也可单独执行 `npm --prefix <目录> run build / start / test`。
+
+## 约定
+
+- 每个 MCP 独立目录、独立构建与部署；新增 MCP 不改动其他子项目。
+- 新增 MCP 使用 TypeScript；存量 `weather/` 为 JS。基于 `@modelcontextprotocol/sdk`，工具入参用 Zod 校验。
+- 日志写 stderr；stdout 只用于 MCP 协议。
+- 数据随子项目存放，线上只读；构建期产物由脚本生成。
+
+接口契约见 `D:\workplace\dev-docs\mcp-orchestrator\api\`，表与专题设计见 `D:\workplace\dev-docs\docs\`，团队约定见 `D:\workplace\dev-docs\AGENTS.md`。
