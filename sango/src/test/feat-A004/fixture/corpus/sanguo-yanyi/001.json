@@ -4,13 +4,13 @@
   "title": "宴桃园豪杰三结义 斩黄巾英雄首立功",
   "chunks": [
     {
-      "id": "sanguo-yanyi:0001:c0001",
+      "chunk_id": "sanguo-yanyi:0001:p0004:c01",
+      "parent_id": "sanguo-yanyi:0001:p0004",
+      "seq_in_parent": 1,
+      "type": "prose",
+      "role": "body",
       "text": "曹操字孟德，小字阿瞒。曹操少有才名，曹操任侠放荡。阿瞒者，操之小字也。",
-      "type": "narration",
-      "segFrom": 4,
-      "segTo": 4,
-      "quoteBalanced": true,
-      "quotes": []
+      "char_count": 35
     }
   ]
 }

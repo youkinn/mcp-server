@@ -1,0 +1,1695 @@
+{
+  "meta": {
+    "schemaVersion": 1,
+    "source": "sanguo-yanyi",
+    "note": "上下文组定义（人工维护，单一真源）。段号对应同目录 `segments.md`（段清单：段号 = 底本行号 + 该段原文）：一行一组。groupId 为裸 ID（语料内写全 {source}:{groupId}）；chapter/segStart/segEnd 为段区间，段号 = 底本行号。只存不可派生量（组字数、组内块数等不落表）。新增组加一行；拆并组改/删行；作废 ID 建议在 meta 下留注记，防重用。"
+  },
+  "rows": [
+    {
+      "groupId": "1b4197a4",
+      "chapter": 1,
+      "segStart": 1,
+      "segEnd": 2
+    },
+    {
+      "groupId": "568623b8",
+      "chapter": 1,
+      "segStart": 11,
+      "segEnd": 12
+    },
+    {
+      "groupId": "e91a1eea",
+      "chapter": 1,
+      "segStart": 9,
+      "segEnd": 10
+    },
+    {
+      "groupId": "2def0bd2",
+      "chapter": 3,
+      "segStart": 14,
+      "segEnd": 15
+    },
+    {
+      "groupId": "85ed6d8b",
+      "chapter": 3,
+      "segStart": 5,
+      "segEnd": 6
+    },
+    {
+      "groupId": "bf3fae86",
+      "chapter": 3,
+      "segStart": 2,
+      "segEnd": 3
+    },
+    {
+      "groupId": "28643219",
+      "chapter": 4,
+      "segStart": 2,
+      "segEnd": 3
+    },
+    {
+      "groupId": "3763e5e9",
+      "chapter": 4,
+      "segStart": 17,
+      "segEnd": 18
+    },
+    {
+      "groupId": "69285ee8",
+      "chapter": 4,
+      "segStart": 7,
+      "segEnd": 8
+    },
+    {
+      "groupId": "817a1b4e",
+      "chapter": 4,
+      "segStart": 4,
+      "segEnd": 5
+    },
+    {
+      "groupId": "8b391219",
+      "chapter": 4,
+      "segStart": 14,
+      "segEnd": 15
+    },
+    {
+      "groupId": "f5a9bf8a",
+      "chapter": 4,
+      "segStart": 9,
+      "segEnd": 12
+    },
+    {
+      "groupId": "3627d86d",
+      "chapter": 5,
+      "segStart": 8,
+      "segEnd": 9
+    },
+    {
+      "groupId": "452501f1",
+      "chapter": 5,
+      "segStart": 4,
+      "segEnd": 5
+    },
+    {
+      "groupId": "cb67fbb5",
+      "chapter": 5,
+      "segStart": 22,
+      "segEnd": 23
+    },
+    {
+      "groupId": "e7e215a4",
+      "chapter": 5,
+      "segStart": 16,
+      "segEnd": 17
+    },
+    {
+      "groupId": "ab2e1b50",
+      "chapter": 7,
+      "segStart": 8,
+      "segEnd": 9
+    },
+    {
+      "groupId": "5d99f6b8",
+      "chapter": 8,
+      "segStart": 10,
+      "segEnd": 11
+    },
+    {
+      "groupId": "7a6819d3",
+      "chapter": 8,
+      "segStart": 6,
+      "segEnd": 9
+    },
+    {
+      "groupId": "41deaeb6",
+      "chapter": 9,
+      "segStart": 14,
+      "segEnd": 15
+    },
+    {
+      "groupId": "af953303",
+      "chapter": 9,
+      "segStart": 20,
+      "segEnd": 21
+    },
+    {
+      "groupId": "b05ebb4b",
+      "chapter": 9,
+      "segStart": 3,
+      "segEnd": 4
+    },
+    {
+      "groupId": "ea4fcc18",
+      "chapter": 9,
+      "segStart": 10,
+      "segEnd": 11
+    },
+    {
+      "groupId": "e0fd7ed2",
+      "chapter": 10,
+      "segStart": 9,
+      "segEnd": 10
+    },
+    {
+      "groupId": "e9453c03",
+      "chapter": 11,
+      "segStart": 10,
+      "segEnd": 11
+    },
+    {
+      "groupId": "79ede6b4",
+      "chapter": 13,
+      "segStart": 6,
+      "segEnd": 7
+    },
+    {
+      "groupId": "b62af983",
+      "chapter": 14,
+      "segStart": 1,
+      "segEnd": 2
+    },
+    {
+      "groupId": "154ee72b",
+      "chapter": 16,
+      "segStart": 1,
+      "segEnd": 2
+    },
+    {
+      "groupId": "643309bf",
+      "chapter": 16,
+      "segStart": 5,
+      "segEnd": 6
+    },
+    {
+      "groupId": "c7ba9637",
+      "chapter": 17,
+      "segStart": 10,
+      "segEnd": 11
+    },
+    {
+      "groupId": "dfdbe227",
+      "chapter": 18,
+      "segStart": 7,
+      "segEnd": 8
+    },
+    {
+      "groupId": "9488eaae",
+      "chapter": 19,
+      "segStart": 15,
+      "segEnd": 16
+    },
+    {
+      "groupId": "bd6e7973",
+      "chapter": 19,
+      "segStart": 12,
+      "segEnd": 13
+    },
+    {
+      "groupId": "c3f0d330",
+      "chapter": 19,
+      "segStart": 17,
+      "segEnd": 20
+    },
+    {
+      "groupId": "b2fca6d6",
+      "chapter": 20,
+      "segStart": 2,
+      "segEnd": 3
+    },
+    {
+      "groupId": "ba4b18df",
+      "chapter": 20,
+      "segStart": 9,
+      "segEnd": 10
+    },
+    {
+      "groupId": "374d34d9",
+      "chapter": 21,
+      "segStart": 9,
+      "segEnd": 10
+    },
+    {
+      "groupId": "6fa6191f",
+      "chapter": 21,
+      "segStart": 4,
+      "segEnd": 5
+    },
+    {
+      "groupId": "ce4acc82",
+      "chapter": 21,
+      "segStart": 12,
+      "segEnd": 13
+    },
+    {
+      "groupId": "292b1ea4",
+      "chapter": 22,
+      "segStart": 3,
+      "segEnd": 4
+    },
+    {
+      "groupId": "1e30760c",
+      "chapter": 23,
+      "segStart": 10,
+      "segEnd": 11
+    },
+    {
+      "groupId": "979c9ca8",
+      "chapter": 23,
+      "segStart": 19,
+      "segEnd": 20
+    },
+    {
+      "groupId": "fd274e48",
+      "chapter": 23,
+      "segStart": 2,
+      "segEnd": 3
+    },
+    {
+      "groupId": "5fa84f05",
+      "chapter": 24,
+      "segStart": 1,
+      "segEnd": 4
+    },
+    {
+      "groupId": "7bf92e48",
+      "chapter": 24,
+      "segStart": 5,
+      "segEnd": 6
+    },
+    {
+      "groupId": "a26c574c",
+      "chapter": 24,
+      "segStart": 11,
+      "segEnd": 12
+    },
+    {
+      "groupId": "829cf352",
+      "chapter": 25,
+      "segStart": 8,
+      "segEnd": 9
+    },
+    {
+      "groupId": "7f4707e3",
+      "chapter": 26,
+      "segStart": 9,
+      "segEnd": 10
+    },
+    {
+      "groupId": "80f44db7",
+      "chapter": 26,
+      "segStart": 7,
+      "segEnd": 8
+    },
+    {
+      "groupId": "9f56cb01",
+      "chapter": 26,
+      "segStart": 11,
+      "segEnd": 12
+    },
+    {
+      "groupId": "2cbb4304",
+      "chapter": 27,
+      "segStart": 10,
+      "segEnd": 11
+    },
+    {
+      "groupId": "2631f6c2",
+      "chapter": 28,
+      "segStart": 14,
+      "segEnd": 15
+    },
+    {
+      "groupId": "35af4df8",
+      "chapter": 29,
+      "segStart": 4,
+      "segEnd": 5
+    },
+    {
+      "groupId": "725a9f0c",
+      "chapter": 29,
+      "segStart": 1,
+      "segEnd": 2
+    },
+    {
+      "groupId": "c4e700ac",
+      "chapter": 29,
+      "segStart": 12,
+      "segEnd": 13
+    },
+    {
+      "groupId": "2e44ab89",
+      "chapter": 30,
+      "segStart": 19,
+      "segEnd": 20
+    },
+    {
+      "groupId": "5d8827b4",
+      "chapter": 30,
+      "segStart": 4,
+      "segEnd": 5
+    },
+    {
+      "groupId": "7abd6309",
+      "chapter": 30,
+      "segStart": 12,
+      "segEnd": 13
+    },
+    {
+      "groupId": "d77c88b3",
+      "chapter": 30,
+      "segStart": 8,
+      "segEnd": 9
+    },
+    {
+      "groupId": "ef735d59",
+      "chapter": 31,
+      "segStart": 2,
+      "segEnd": 3
+    },
+    {
+      "groupId": "b19cc20a",
+      "chapter": 32,
+      "segStart": 12,
+      "segEnd": 13
+    },
+    {
+      "groupId": "ed2e0ff8",
+      "chapter": 32,
+      "segStart": 1,
+      "segEnd": 2
+    },
+    {
+      "groupId": "47bccdf6",
+      "chapter": 33,
+      "segStart": 18,
+      "segEnd": 19
+    },
+    {
+      "groupId": "79d97629",
+      "chapter": 33,
+      "segStart": 7,
+      "segEnd": 8
+    },
+    {
+      "groupId": "9e08c0b3",
+      "chapter": 33,
+      "segStart": 20,
+      "segEnd": 21
+    },
+    {
+      "groupId": "a6fcd3d7",
+      "chapter": 33,
+      "segStart": 5,
+      "segEnd": 6
+    },
+    {
+      "groupId": "9b9858b3",
+      "chapter": 34,
+      "segStart": 14,
+      "segEnd": 15
+    },
+    {
+      "groupId": "a08bb8c4",
+      "chapter": 34,
+      "segStart": 6,
+      "segEnd": 7
+    },
+    {
+      "groupId": "c3fc389d",
+      "chapter": 34,
+      "segStart": 9,
+      "segEnd": 10
+    },
+    {
+      "groupId": "8ffe03a7",
+      "chapter": 35,
+      "segStart": 7,
+      "segEnd": 8
+    },
+    {
+      "groupId": "8e13d66d",
+      "chapter": 36,
+      "segStart": 11,
+      "segEnd": 12
+    },
+    {
+      "groupId": "f6ebb738",
+      "chapter": 36,
+      "segStart": 7,
+      "segEnd": 8
+    },
+    {
+      "groupId": "0a90ff98",
+      "chapter": 37,
+      "segStart": 19,
+      "segEnd": 20
+    },
+    {
+      "groupId": "1df08712",
+      "chapter": 37,
+      "segStart": 14,
+      "segEnd": 15
+    },
+    {
+      "groupId": "1e990bb5",
+      "chapter": 37,
+      "segStart": 1,
+      "segEnd": 2
+    },
+    {
+      "groupId": "22f7e1d6",
+      "chapter": 37,
+      "segStart": 8,
+      "segEnd": 9
+    },
+    {
+      "groupId": "8a6c0745",
+      "chapter": 37,
+      "segStart": 17,
+      "segEnd": 18
+    },
+    {
+      "groupId": "b594d2ba",
+      "chapter": 37,
+      "segStart": 23,
+      "segEnd": 24
+    },
+    {
+      "groupId": "eacdfc40",
+      "chapter": 37,
+      "segStart": 21,
+      "segEnd": 22
+    },
+    {
+      "groupId": "edb83b3c",
+      "chapter": 37,
+      "segStart": 6,
+      "segEnd": 7
+    },
+    {
+      "groupId": "f7c1de61",
+      "chapter": 37,
+      "segStart": 12,
+      "segEnd": 13
+    },
+    {
+      "groupId": "052f1662",
+      "chapter": 38,
+      "segStart": 2,
+      "segEnd": 3
+    },
+    {
+      "groupId": "0bcfd0ee",
+      "chapter": 38,
+      "segStart": 4,
+      "segEnd": 5
+    },
+    {
+      "groupId": "cc06c5a1",
+      "chapter": 38,
+      "segStart": 6,
+      "segEnd": 9
+    },
+    {
+      "groupId": "e541309c",
+      "chapter": 38,
+      "segStart": 14,
+      "segEnd": 15
+    },
+    {
+      "groupId": "7c42c18d",
+      "chapter": 39,
+      "segStart": 11,
+      "segEnd": 12
+    },
+    {
+      "groupId": "76e33dc8",
+      "chapter": 40,
+      "segStart": 15,
+      "segEnd": 16
+    },
+    {
+      "groupId": "b1f03670",
+      "chapter": 40,
+      "segStart": 3,
+      "segEnd": 4
+    },
+    {
+      "groupId": "c0884ba6",
+      "chapter": 40,
+      "segStart": 6,
+      "segEnd": 7
+    },
+    {
+      "groupId": "10018910",
+      "chapter": 41,
+      "segStart": 18,
+      "segEnd": 19
+    },
+    {
+      "groupId": "8b7b54e8",
+      "chapter": 41,
+      "segStart": 5,
+      "segEnd": 6
+    },
+    {
+      "groupId": "d364a5b9",
+      "chapter": 41,
+      "segStart": 16,
+      "segEnd": 17
+    },
+    {
+      "groupId": "d371344a",
+      "chapter": 41,
+      "segStart": 21,
+      "segEnd": 22
+    },
+    {
+      "groupId": "1717df15",
+      "chapter": 42,
+      "segStart": 2,
+      "segEnd": 3
+    },
+    {
+      "groupId": "f60fda81",
+      "chapter": 42,
+      "segStart": 4,
+      "segEnd": 5
+    },
+    {
+      "groupId": "dc33292f",
+      "chapter": 43,
+      "segStart": 1,
+      "segEnd": 2
+    },
+    {
+      "groupId": "21ba5b4d",
+      "chapter": 44,
+      "segStart": 7,
+      "segEnd": 8
+    },
+    {
+      "groupId": "4e095608",
+      "chapter": 45,
+      "segStart": 13,
+      "segEnd": 14
+    },
+    {
+      "groupId": "620edd5b",
+      "chapter": 45,
+      "segStart": 18,
+      "segEnd": 19
+    },
+    {
+      "groupId": "bd4017c7",
+      "chapter": 45,
+      "segStart": 15,
+      "segEnd": 16
+    },
+    {
+      "groupId": "386b15c5",
+      "chapter": 46,
+      "segStart": 11,
+      "segEnd": 12
+    },
+    {
+      "groupId": "fccfc8e9",
+      "chapter": 46,
+      "segStart": 4,
+      "segEnd": 7
+    },
+    {
+      "groupId": "381e4970",
+      "chapter": 47,
+      "segStart": 11,
+      "segEnd": 12
+    },
+    {
+      "groupId": "67840a20",
+      "chapter": 47,
+      "segStart": 2,
+      "segEnd": 3
+    },
+    {
+      "groupId": "0de4374d",
+      "chapter": 48,
+      "segStart": 6,
+      "segEnd": 7
+    },
+    {
+      "groupId": "8f44a8d0",
+      "chapter": 48,
+      "segStart": 4,
+      "segEnd": 5
+    },
+    {
+      "groupId": "fbdada66",
+      "chapter": 48,
+      "segStart": 2,
+      "segEnd": 3
+    },
+    {
+      "groupId": "51acbde0",
+      "chapter": 49,
+      "segStart": 7,
+      "segEnd": 8
+    },
+    {
+      "groupId": "e3cad828",
+      "chapter": 49,
+      "segStart": 2,
+      "segEnd": 3
+    },
+    {
+      "groupId": "1306be72",
+      "chapter": 50,
+      "segStart": 2,
+      "segEnd": 5
+    },
+    {
+      "groupId": "49c14266",
+      "chapter": 50,
+      "segStart": 11,
+      "segEnd": 12
+    },
+    {
+      "groupId": "12c56595",
+      "chapter": 53,
+      "segStart": 6,
+      "segEnd": 7
+    },
+    {
+      "groupId": "deaaaff1",
+      "chapter": 53,
+      "segStart": 12,
+      "segEnd": 13
+    },
+    {
+      "groupId": "30376837",
+      "chapter": 54,
+      "segStart": 10,
+      "segEnd": 11
+    },
+    {
+      "groupId": "86183c48",
+      "chapter": 54,
+      "segStart": 14,
+      "segEnd": 15
+    },
+    {
+      "groupId": "c1e9cec3",
+      "chapter": 54,
+      "segStart": 12,
+      "segEnd": 13
+    },
+    {
+      "groupId": "a2e088b0",
+      "chapter": 55,
+      "segStart": 2,
+      "segEnd": 3
+    },
+    {
+      "groupId": "f6c429a0",
+      "chapter": 55,
+      "segStart": 9,
+      "segEnd": 10
+    },
+    {
+      "groupId": "831f4e73",
+      "chapter": 56,
+      "segStart": 10,
+      "segEnd": 11
+    },
+    {
+      "groupId": "8c0f25f8",
+      "chapter": 56,
+      "segStart": 5,
+      "segEnd": 6
+    },
+    {
+      "groupId": "15e1f543",
+      "chapter": 57,
+      "segStart": 8,
+      "segEnd": 12
+    },
+    {
+      "groupId": "59d32548",
+      "chapter": 57,
+      "segStart": 24,
+      "segEnd": 25
+    },
+    {
+      "groupId": "77e03d2b",
+      "chapter": 57,
+      "segStart": 5,
+      "segEnd": 6
+    },
+    {
+      "groupId": "8aba5b2c",
+      "chapter": 57,
+      "segStart": 13,
+      "segEnd": 14
+    },
+    {
+      "groupId": "a3894b86",
+      "chapter": 57,
+      "segStart": 1,
+      "segEnd": 2
+    },
+    {
+      "groupId": "bc7feb41",
+      "chapter": 57,
+      "segStart": 18,
+      "segEnd": 19
+    },
+    {
+      "groupId": "ee719647",
+      "chapter": 57,
+      "segStart": 26,
+      "segEnd": 27
+    },
+    {
+      "groupId": "fceb451a",
+      "chapter": 57,
+      "segStart": 3,
+      "segEnd": 4
+    },
+    {
+      "groupId": "81ca6bc5",
+      "chapter": 58,
+      "segStart": 3,
+      "segEnd": 4
+    },
+    {
+      "groupId": "827be487",
+      "chapter": 58,
+      "segStart": 8,
+      "segEnd": 9
+    },
+    {
+      "groupId": "4899bdda",
+      "chapter": 60,
+      "segStart": 18,
+      "segEnd": 19
+    },
+    {
+      "groupId": "5455ce17",
+      "chapter": 60,
+      "segStart": 13,
+      "segEnd": 14
+    },
+    {
+      "groupId": "5b2b123a",
+      "chapter": 60,
+      "segStart": 20,
+      "segEnd": 21
+    },
+    {
+      "groupId": "8277d9d1",
+      "chapter": 60,
+      "segStart": 3,
+      "segEnd": 4
+    },
+    {
+      "groupId": "0d64553c",
+      "chapter": 61,
+      "segStart": 18,
+      "segEnd": 19
+    },
+    {
+      "groupId": "2307d37e",
+      "chapter": 61,
+      "segStart": 7,
+      "segEnd": 10
+    },
+    {
+      "groupId": "c265c603",
+      "chapter": 61,
+      "segStart": 14,
+      "segEnd": 15
+    },
+    {
+      "groupId": "23584615",
+      "chapter": 62,
+      "segStart": 5,
+      "segEnd": 6
+    },
+    {
+      "groupId": "5928c965",
+      "chapter": 62,
+      "segStart": 13,
+      "segEnd": 14
+    },
+    {
+      "groupId": "7f22cb73",
+      "chapter": 62,
+      "segStart": 7,
+      "segEnd": 8
+    },
+    {
+      "groupId": "35669055",
+      "chapter": 63,
+      "segStart": 7,
+      "segEnd": 10
+    },
+    {
+      "groupId": "4916e89b",
+      "chapter": 63,
+      "segStart": 2,
+      "segEnd": 3
+    },
+    {
+      "groupId": "c88b6603",
+      "chapter": 63,
+      "segStart": 22,
+      "segEnd": 25
+    },
+    {
+      "groupId": "366cf98e",
+      "chapter": 64,
+      "segStart": 7,
+      "segEnd": 8
+    },
+    {
+      "groupId": "caf59fe3",
+      "chapter": 64,
+      "segStart": 11,
+      "segEnd": 12
+    },
+    {
+      "groupId": "0c3495ad",
+      "chapter": 65,
+      "segStart": 14,
+      "segEnd": 15
+    },
+    {
+      "groupId": "17cfd118",
+      "chapter": 66,
+      "segStart": 15,
+      "segEnd": 18
+    },
+    {
+      "groupId": "4e8f74a0",
+      "chapter": 66,
+      "segStart": 19,
+      "segEnd": 20
+    },
+    {
+      "groupId": "a883bea6",
+      "chapter": 66,
+      "segStart": 10,
+      "segEnd": 11
+    },
+    {
+      "groupId": "e73112ad",
+      "chapter": 66,
+      "segStart": 7,
+      "segEnd": 8
+    },
+    {
+      "groupId": "6a304d67",
+      "chapter": 67,
+      "segStart": 7,
+      "segEnd": 8
+    },
+    {
+      "groupId": "6ec65807",
+      "chapter": 67,
+      "segStart": 15,
+      "segEnd": 16
+    },
+    {
+      "groupId": "2f235c0c",
+      "chapter": 68,
+      "segStart": 12,
+      "segEnd": 13
+    },
+    {
+      "groupId": "d28045a4",
+      "chapter": 68,
+      "segStart": 2,
+      "segEnd": 3
+    },
+    {
+      "groupId": "1b5c08ad",
+      "chapter": 69,
+      "segStart": 10,
+      "segEnd": 11
+    },
+    {
+      "groupId": "92e76b80",
+      "chapter": 69,
+      "segStart": 1,
+      "segEnd": 2
+    },
+    {
+      "groupId": "fe3cca2b",
+      "chapter": 69,
+      "segStart": 4,
+      "segEnd": 5
+    },
+    {
+      "groupId": "63db03c1",
+      "chapter": 71,
+      "segStart": 4,
+      "segEnd": 5
+    },
+    {
+      "groupId": "73582781",
+      "chapter": 71,
+      "segStart": 9,
+      "segEnd": 10
+    },
+    {
+      "groupId": "9fc022cb",
+      "chapter": 71,
+      "segStart": 16,
+      "segEnd": 17
+    },
+    {
+      "groupId": "3ebaf95f",
+      "chapter": 72,
+      "segStart": 8,
+      "segEnd": 9
+    },
+    {
+      "groupId": "60126c84",
+      "chapter": 73,
+      "segStart": 4,
+      "segEnd": 5
+    },
+    {
+      "groupId": "b93a5c3e",
+      "chapter": 74,
+      "segStart": 10,
+      "segEnd": 11
+    },
+    {
+      "groupId": "cf85ed49",
+      "chapter": 75,
+      "segStart": 4,
+      "segEnd": 5
+    },
+    {
+      "groupId": "1538a02d",
+      "chapter": 77,
+      "segStart": 4,
+      "segEnd": 7
+    },
+    {
+      "groupId": "c6036431",
+      "chapter": 77,
+      "segStart": 10,
+      "segEnd": 11
+    },
+    {
+      "groupId": "058b3f09",
+      "chapter": 78,
+      "segStart": 6,
+      "segEnd": 7
+    },
+    {
+      "groupId": "3090f3c7",
+      "chapter": 78,
+      "segStart": 8,
+      "segEnd": 9
+    },
+    {
+      "groupId": "63826b13",
+      "chapter": 78,
+      "segStart": 15,
+      "segEnd": 16
+    },
+    {
+      "groupId": "bf058dc8",
+      "chapter": 78,
+      "segStart": 11,
+      "segEnd": 12
+    },
+    {
+      "groupId": "387ef6b5",
+      "chapter": 79,
+      "segStart": 9,
+      "segEnd": 10
+    },
+    {
+      "groupId": "3ed5225e",
+      "chapter": 79,
+      "segStart": 14,
+      "segEnd": 15
+    },
+    {
+      "groupId": "bd8bb058",
+      "chapter": 79,
+      "segStart": 7,
+      "segEnd": 8
+    },
+    {
+      "groupId": "d55d0431",
+      "chapter": 79,
+      "segStart": 2,
+      "segEnd": 3
+    },
+    {
+      "groupId": "0d116663",
+      "chapter": 80,
+      "segStart": 21,
+      "segEnd": 22
+    },
+    {
+      "groupId": "19431aec",
+      "chapter": 80,
+      "segStart": 13,
+      "segEnd": 14
+    },
+    {
+      "groupId": "683b4d43",
+      "chapter": 80,
+      "segStart": 15,
+      "segEnd": 16
+    },
+    {
+      "groupId": "6aa83449",
+      "chapter": 80,
+      "segStart": 6,
+      "segEnd": 7
+    },
+    {
+      "groupId": "f90549a7",
+      "chapter": 80,
+      "segStart": 9,
+      "segEnd": 10
+    },
+    {
+      "groupId": "fc14fecb",
+      "chapter": 80,
+      "segStart": 4,
+      "segEnd": 5
+    },
+    {
+      "groupId": "2326bd53",
+      "chapter": 81,
+      "segStart": 4,
+      "segEnd": 5
+    },
+    {
+      "groupId": "76b8f278",
+      "chapter": 81,
+      "segStart": 8,
+      "segEnd": 9
+    },
+    {
+      "groupId": "0771cb2f",
+      "chapter": 83,
+      "segStart": 3,
+      "segEnd": 4
+    },
+    {
+      "groupId": "2421f9a6",
+      "chapter": 83,
+      "segStart": 7,
+      "segEnd": 8
+    },
+    {
+      "groupId": "2225a243",
+      "chapter": 84,
+      "segStart": 16,
+      "segEnd": 17
+    },
+    {
+      "groupId": "618c617a",
+      "chapter": 84,
+      "segStart": 2,
+      "segEnd": 3
+    },
+    {
+      "groupId": "717e5966",
+      "chapter": 84,
+      "segStart": 25,
+      "segEnd": 26
+    },
+    {
+      "groupId": "9964c02d",
+      "chapter": 84,
+      "segStart": 20,
+      "segEnd": 21
+    },
+    {
+      "groupId": "a456b076",
+      "chapter": 84,
+      "segStart": 14,
+      "segEnd": 15
+    },
+    {
+      "groupId": "cc74da03",
+      "chapter": 84,
+      "segStart": 18,
+      "segEnd": 19
+    },
+    {
+      "groupId": "f86e50aa",
+      "chapter": 84,
+      "segStart": 22,
+      "segEnd": 23
+    },
+    {
+      "groupId": "63586016",
+      "chapter": 85,
+      "segStart": 11,
+      "segEnd": 12
+    },
+    {
+      "groupId": "c284de6e",
+      "chapter": 85,
+      "segStart": 2,
+      "segEnd": 3
+    },
+    {
+      "groupId": "c71a743c",
+      "chapter": 85,
+      "segStart": 9,
+      "segEnd": 10
+    },
+    {
+      "groupId": "733405ed",
+      "chapter": 88,
+      "segStart": 16,
+      "segEnd": 17
+    },
+    {
+      "groupId": "2c690c1b",
+      "chapter": 89,
+      "segStart": 8,
+      "segEnd": 11
+    },
+    {
+      "groupId": "86674952",
+      "chapter": 89,
+      "segStart": 19,
+      "segEnd": 20
+    },
+    {
+      "groupId": "b566e9ab",
+      "chapter": 89,
+      "segStart": 17,
+      "segEnd": 18
+    },
+    {
+      "groupId": "24a8dfb4",
+      "chapter": 90,
+      "segStart": 19,
+      "segEnd": 20
+    },
+    {
+      "groupId": "a6e73ebf",
+      "chapter": 91,
+      "segStart": 9,
+      "segEnd": 10
+    },
+    {
+      "groupId": "be89ad65",
+      "chapter": 91,
+      "segStart": 1,
+      "segEnd": 3
+    },
+    {
+      "groupId": "fceba057",
+      "chapter": 91,
+      "segStart": 13,
+      "segEnd": 14
+    },
+    {
+      "groupId": "69731a1d",
+      "chapter": 92,
+      "segStart": 2,
+      "segEnd": 3
+    },
+    {
+      "groupId": "d54e135d",
+      "chapter": 93,
+      "segStart": 13,
+      "segEnd": 14
+    },
+    {
+      "groupId": "0e9295b5",
+      "chapter": 94,
+      "segStart": 10,
+      "segEnd": 11
+    },
+    {
+      "groupId": "87163b99",
+      "chapter": 94,
+      "segStart": 12,
+      "segEnd": 13
+    },
+    {
+      "groupId": "eac796d9",
+      "chapter": 95,
+      "segStart": 11,
+      "segEnd": 12
+    },
+    {
+      "groupId": "08d14781",
+      "chapter": 96,
+      "segStart": 5,
+      "segEnd": 6
+    },
+    {
+      "groupId": "4426609d",
+      "chapter": 96,
+      "segStart": 3,
+      "segEnd": 4
+    },
+    {
+      "groupId": "04da8e78",
+      "chapter": 97,
+      "segStart": 13,
+      "segEnd": 14
+    },
+    {
+      "groupId": "65fc3a3c",
+      "chapter": 97,
+      "segStart": 2,
+      "segEnd": 3
+    },
+    {
+      "groupId": "c0b6a770",
+      "chapter": 97,
+      "segStart": 4,
+      "segEnd": 6
+    },
+    {
+      "groupId": "45b949e3",
+      "chapter": 98,
+      "segStart": 8,
+      "segEnd": 9
+    },
+    {
+      "groupId": "1790b71b",
+      "chapter": 99,
+      "segStart": 12,
+      "segEnd": 13
+    },
+    {
+      "groupId": "81350af0",
+      "chapter": 99,
+      "segStart": 18,
+      "segEnd": 19
+    },
+    {
+      "groupId": "db7e5978",
+      "chapter": 99,
+      "segStart": 5,
+      "segEnd": 6
+    },
+    {
+      "groupId": "d83314bb",
+      "chapter": 100,
+      "segStart": 7,
+      "segEnd": 8
+    },
+    {
+      "groupId": "0cde3115",
+      "chapter": 101,
+      "segStart": 14,
+      "segEnd": 15
+    },
+    {
+      "groupId": "4dd47cb7",
+      "chapter": 101,
+      "segStart": 9,
+      "segEnd": 10
+    },
+    {
+      "groupId": "47e19116",
+      "chapter": 102,
+      "segStart": 1,
+      "segEnd": 2
+    },
+    {
+      "groupId": "5d5bff61",
+      "chapter": 102,
+      "segStart": 9,
+      "segEnd": 10
+    },
+    {
+      "groupId": "7beb2da6",
+      "chapter": 102,
+      "segStart": 17,
+      "segEnd": 18
+    },
+    {
+      "groupId": "7ccc86dc",
+      "chapter": 102,
+      "segStart": 21,
+      "segEnd": 22
+    },
+    {
+      "groupId": "b45a82ec",
+      "chapter": 102,
+      "segStart": 4,
+      "segEnd": 5
+    },
+    {
+      "groupId": "d0f807f6",
+      "chapter": 102,
+      "segStart": 19,
+      "segEnd": 20
+    },
+    {
+      "groupId": "0f202575",
+      "chapter": 103,
+      "segStart": 14,
+      "segEnd": 15
+    },
+    {
+      "groupId": "a2f882cf",
+      "chapter": 103,
+      "segStart": 17,
+      "segEnd": 18
+    },
+    {
+      "groupId": "fb43870d",
+      "chapter": 103,
+      "segStart": 11,
+      "segEnd": 12
+    },
+    {
+      "groupId": "665b600d",
+      "chapter": 104,
+      "segStart": 3,
+      "segEnd": 4
+    },
+    {
+      "groupId": "bdea94fa",
+      "chapter": 104,
+      "segStart": 17,
+      "segEnd": 18
+    },
+    {
+      "groupId": "d655c985",
+      "chapter": 104,
+      "segStart": 6,
+      "segEnd": 9
+    },
+    {
+      "groupId": "fd093e18",
+      "chapter": 104,
+      "segStart": 10,
+      "segEnd": 11
+    },
+    {
+      "groupId": "064e6186",
+      "chapter": 105,
+      "segStart": 24,
+      "segEnd": 25
+    },
+    {
+      "groupId": "2d22e95f",
+      "chapter": 105,
+      "segStart": 2,
+      "segEnd": 3
+    },
+    {
+      "groupId": "4c3ecd2c",
+      "chapter": 105,
+      "segStart": 4,
+      "segEnd": 5
+    },
+    {
+      "groupId": "636bf8e4",
+      "chapter": 105,
+      "segStart": 9,
+      "segEnd": 10
+    },
+    {
+      "groupId": "9ff1e7f3",
+      "chapter": 105,
+      "segStart": 12,
+      "segEnd": 15
+    },
+    {
+      "groupId": "e1f25b4a",
+      "chapter": 105,
+      "segStart": 21,
+      "segEnd": 22
+    },
+    {
+      "groupId": "30f61c24",
+      "chapter": 107,
+      "segStart": 9,
+      "segEnd": 10
+    },
+    {
+      "groupId": "603cfbf0",
+      "chapter": 107,
+      "segStart": 13,
+      "segEnd": 14
+    },
+    {
+      "groupId": "6472a684",
+      "chapter": 107,
+      "segStart": 3,
+      "segEnd": 4
+    },
+    {
+      "groupId": "94943566",
+      "chapter": 107,
+      "segStart": 11,
+      "segEnd": 12
+    },
+    {
+      "groupId": "dfe7a31e",
+      "chapter": 108,
+      "segStart": 3,
+      "segEnd": 4
+    },
+    {
+      "groupId": "44e0aab5",
+      "chapter": 109,
+      "segStart": 11,
+      "segEnd": 12
+    },
+    {
+      "groupId": "b5135ee4",
+      "chapter": 109,
+      "segStart": 16,
+      "segEnd": 17
+    },
+    {
+      "groupId": "ea3b35f1",
+      "chapter": 109,
+      "segStart": 14,
+      "segEnd": 15
+    },
+    {
+      "groupId": "ff049e5e",
+      "chapter": 109,
+      "segStart": 5,
+      "segEnd": 6
+    },
+    {
+      "groupId": "daa9a7c4",
+      "chapter": 110,
+      "segStart": 6,
+      "segEnd": 7
+    },
+    {
+      "groupId": "71d24527",
+      "chapter": 112,
+      "segStart": 12,
+      "segEnd": 13
+    },
+    {
+      "groupId": "93806d90",
+      "chapter": 112,
+      "segStart": 9,
+      "segEnd": 10
+    },
+    {
+      "groupId": "d373ddfd",
+      "chapter": 112,
+      "segStart": 7,
+      "segEnd": 8
+    },
+    {
+      "groupId": "aca4197e",
+      "chapter": 113,
+      "segStart": 3,
+      "segEnd": 4
+    },
+    {
+      "groupId": "9d98ec01",
+      "chapter": 114,
+      "segStart": 9,
+      "segEnd": 10
+    },
+    {
+      "groupId": "aa9e981b",
+      "chapter": 114,
+      "segStart": 4,
+      "segEnd": 5
+    },
+    {
+      "groupId": "e550ed8e",
+      "chapter": 114,
+      "segStart": 11,
+      "segEnd": 12
+    },
+    {
+      "groupId": "96c9ba4b",
+      "chapter": 115,
+      "segStart": 3,
+      "segEnd": 4
+    },
+    {
+      "groupId": "4b850781",
+      "chapter": 116,
+      "segStart": 9,
+      "segEnd": 10
+    },
+    {
+      "groupId": "bf6b8630",
+      "chapter": 116,
+      "segStart": 7,
+      "segEnd": 8
+    },
+    {
+      "groupId": "15dea546",
+      "chapter": 117,
+      "segStart": 7,
+      "segEnd": 8
+    },
+    {
+      "groupId": "8c67d750",
+      "chapter": 117,
+      "segStart": 4,
+      "segEnd": 5
+    },
+    {
+      "groupId": "a6e6d5a3",
+      "chapter": 117,
+      "segStart": 18,
+      "segEnd": 19
+    },
+    {
+      "groupId": "fa9bc135",
+      "chapter": 117,
+      "segStart": 14,
+      "segEnd": 15
+    },
+    {
+      "groupId": "2755396e",
+      "chapter": 118,
+      "segStart": 9,
+      "segEnd": 10
+    },
+    {
+      "groupId": "3f420c57",
+      "chapter": 118,
+      "segStart": 18,
+      "segEnd": 19
+    },
+    {
+      "groupId": "5fe899ac",
+      "chapter": 118,
+      "segStart": 14,
+      "segEnd": 15
+    },
+    {
+      "groupId": "77b1890d",
+      "chapter": 118,
+      "segStart": 12,
+      "segEnd": 13
+    },
+    {
+      "groupId": "b9821f0b",
+      "chapter": 118,
+      "segStart": 7,
+      "segEnd": 8
+    },
+    {
+      "groupId": "d4743f38",
+      "chapter": 118,
+      "segStart": 16,
+      "segEnd": 17
+    },
+    {
+      "groupId": "e363e213",
+      "chapter": 118,
+      "segStart": 4,
+      "segEnd": 5
+    },
+    {
+      "groupId": "22655900",
+      "chapter": 119,
+      "segStart": 20,
+      "segEnd": 21
+    },
+    {
+      "groupId": "4f86e000",
+      "chapter": 119,
+      "segStart": 14,
+      "segEnd": 15
+    },
+    {
+      "groupId": "b30a4c1b",
+      "chapter": 119,
+      "segStart": 22,
+      "segEnd": 23
+    },
+    {
+      "groupId": "e9617f0c",
+      "chapter": 119,
+      "segStart": 5,
+      "segEnd": 10
+    },
+    {
+      "groupId": "21a5b3df",
+      "chapter": 120,
+      "segStart": 14,
+      "segEnd": 15
+    },
+    {
+      "groupId": "519debbc",
+      "chapter": 120,
+      "segStart": 22,
+      "segEnd": 23
+    },
+    {
+      "groupId": "67e2fab5",
+      "chapter": 120,
+      "segStart": 25,
+      "segEnd": 26
+    },
+    {
+      "groupId": "808f3ba3",
+      "chapter": 120,
+      "segStart": 11,
+      "segEnd": 12
+    },
+    {
+      "groupId": "875746d8",
+      "chapter": 120,
+      "segStart": 16,
+      "segEnd": 17
+    },
+    {
+      "groupId": "90079708",
+      "chapter": 120,
+      "segStart": 29,
+      "segEnd": 30
+    },
+    {
+      "groupId": "c225a70a",
+      "chapter": 120,
+      "segStart": 2,
+      "segEnd": 3
+    },
+    {
+      "groupId": "da68acde",
+      "chapter": 120,
+      "segStart": 9,
+      "segEnd": 10
+    }
+  ]
+}

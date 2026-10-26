@@ -15,32 +15,48 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { embedQuery } from '../embed/bge-m3-encoder.ts';
 import {
-  fragmentKeyToCanon as entityFragmentKeyToCanon,
+  allusionsDegraded,
+  allusionsNormVersion,
+  eventsDegraded,
+  eventsNormVersion,
+  loadAllusionsTable,
+  loadEventsTable,
+  matchAllusions,
+  matchEvents,
+} from './event-table.ts';
+import type { MatchedAllusionGroup, MatchedEventGroup } from './event-table.ts';
+import { createCrossEncoderScorer, resolveRerankModelFile } from './reranker.ts';
+import { assertChunkKind, CHUNK_ROLE_BODY } from '../chunk-kind.ts';
+import type { RerankScorer } from './reranker.ts';
+import {
+  collectExpansions,
   loadEntityTable,
   normalize as entityNormalize,
-  normalizeDetail as entityNormalizeDetail,
   rewriteKeyCount as entityRewriteKeyCount,
   normVersion as entityNormVersion,
 } from '../normalize/entity-table.ts';
 import type {
   Chapter,
-  ChapterPayload,
   CorpusChunk,
+  ChapterPayload,
   DeathIntent,
   Doc,
   RetrievalCandidateDiagnostics,
+  RetrievalAllusionHitDiagnostics,
+  RetrievalEventHitDiagnostics,
   RetrievalDiagnostics,
   RetrievalDiagnosticsTiming,
+  RetrievalRerankDiagnostics,
   RetrievalQueryRewrite,
   SearchEntry,
   SearchHit,
   SearchResult,
 } from '../types.ts';
 import { tokenize } from '../utils/text.ts';
-import { matchDeathIntent } from './intent.ts';
+import { matchBirthIntent, matchDeathIntent } from './intent.ts';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DEFAULT_DATA_DIR = path.resolve(__dirname, '..', '..', 'data');
+export const DEFAULT_DATA_DIR = path.resolve(__dirname, '..', '..', 'data');
 
 /** 无命中固定话术：检索无结果时返回，供模型走兜底回答。 */
 export const NO_HIT_TEXT = '未召回任何原文段落';
@@ -59,8 +75,19 @@ const TAG_WEIGHT = 0.1;
 const VEC_WEIGHT = 0.6;
 const MIN_COSINE = 0.3; // Step 4 待按真向量分布重定（现值为哈希向量时代的死路值，见 §4.6）
 
-// 遗言类标签关键词：标签文本含这些词即视为某人的临终嘱托/遗诏段（数据口径：0085:c0008-0011
-// 刘备托孤、0029:c0014 孙策托孤、0040:c0005 刘表托孤）。
+/** FEAT-A018 §3.3③：L1/L2 并池后合并候选池硬上限兜底（超限按重排分裁；正常场景触不到）。 */
+const EVENT_MERGE_POOL_CAP = 120;
+
+/** FEAT-A030：规则重排后进入 cross-encoder 的候选窗口默认值（池 50 路 → 重排 → 返回 limit ≤ 10）。 */
+const RERANK_WINDOW_DEFAULT = 50;
+
+/** 重排窗口档位：SANGO_RERANKER_WINDOW 覆盖（评测期 20 / 50 对照），非法值回落默认。 */
+function rerankWindowSize(): number {
+  const raw = Number(process.env.SANGO_RERANKER_WINDOW);
+  return Number.isFinite(raw) && raw >= 1 ? Math.floor(raw) : RERANK_WINDOW_DEFAULT;
+}
+
+// 遗言类标签关键词：标签表文本含这些词即视为某人的临终嘱托/遗诏段（口径见 tags/*.json）。
 const LAST_WORDS_TAG = /(托孤|遗诏|遗令|遗言|遗嘱|遗书|遗表|临终)/;
 
 // 向量构建方案：与 build_vectors.py 写出的 scheme 字段对应
@@ -90,6 +117,16 @@ export function roundGap(value: number): number {
   return Math.round(value * 1e6) / 1e6;
 }
 
+/**
+ * FEAT-A018 §3.3③：合并候选池硬上限兜底截断——超限按重排分降序裁到 cap（正常场景触不到：
+ * 三路 ≤50 + 最大组 59）。导出仅供 feat-A018 池上限单测直测；检索入口经 SangoIndex.search 调用。
+ */
+export function capMergedPool(pool: SearchHit[], cap: number = EVENT_MERGE_POOL_CAP): void {
+  if (pool.length <= cap) return;
+  pool.sort((a, b) => b.score - a.score);
+  pool.length = cap;
+}
+
 /** 候选分数表条数上限（契约 §1.3：candidates ≤ 20 条）。 */
 const MAX_DIAGNOSTIC_CANDIDATES = 20;
 /** 诊断 JSON 序列化后 UTF-8 字节数预算（硬约束 3：64 KB，远低于 stdio 10 MB 上限）。 */
@@ -99,27 +136,50 @@ const DIAGNOSTICS_BUDGET_BYTES = 64 * 1024;
 interface DiagnosticsBuildContext {
   raw: string;
   normalized: string;
-  /** query 侧实际改写命中明细（entityNormalizeDetail().hits，接口 §5 query.rewrites）。 */
+  /** 检索侧不再改写：恒 []（字段保留，兼容历史消费方；接口 §5）。 */
   rewrites: RetrievalQueryRewrite[];
+  /** 索引侧双写扩展命中（原文命中键 → 规范形；接口 §5 query.expansionHits，只报告不改写）。 */
+  expansionHits: RetrievalQueryRewrite[];
   tokens: string[];
   bm25: Float64Array;
   bm25Norm: Float64Array;
+  /**
+   * FEAT-A018 §3.3④：事件命中请求下并池重排后的 bm25Norm 覆盖（doc → 增强查询归一值）。
+   * 供 candidates 诊断复算恒等式（finalScore 可由接口字段复算，bug-00013）；非事件请求恒 null。
+   */
+  bm25NormOverride: Map<number, number> | null;
   lexicalHits: Set<number>;
   tagHits: Set<number>;
   deathIntent: DeathIntent | null;
   deathHits: Set<number>;
+  /** 登场意图（bug-00046 结构路）：true = 本次请求判定为登场类问法。 */
+  birthIntent: boolean;
+  /** 登场意图强命中保索引（birthByPerson 人名词典命中 docs）。 */
+  birthHits: Set<number>;
   combined: SearchHit[];
   hits: SearchHit[];
+  /** FEAT-A018 §4：三路合并候选数（不含事件并池 / 置顶），funnel.mergedCandidates 口径（漏斗只描述三路召回）。 */
+  threeWayCandidates: number;
   cosine: Float64Array | null;
   vectorTop: number[];
   /** feat-A013：分阶段耗时（search 内实测毫秒）。 */
   timing: RetrievalDiagnosticsTiming;
+  /** FEAT-A018：事件名桥命中诊断（未命中时 degraded / normVersion 仍可读、groups 空）。 */
+  eventHit: RetrievalEventHitDiagnostics;
+  /** FEAT-A018：命中事件组全部有效 chunk 的文档下标集合（candidates[].sources 'event' 判定）。 */
+  eventDocSet: Set<number>;
+  /** FEAT-A018：典故名桥命中诊断（镜像 eventHit；未命中时 degraded / normVersion 仍可读、groups 空）。 */
+  allusionHit: RetrievalAllusionHitDiagnostics;
+  /** FEAT-A018：命中典故组全部有效 chunk 的文档下标集合（candidates[].sources 'allusion' 判定）。 */
+  allusionDocSet: Set<number>;
+  /** FEAT-A030：检索重排诊断（rerankWindow 产出；空结果早退路径用默认值）。 */
+  rerank: RetrievalRerankDiagnostics;
 }
 
 /**
  * 64 KB 预算截断（硬约束 3）：按优先级从后往前丢——① candidates 尾部（保头部名次）② nextRank
- * ③ deathIntent.chunkIds（保留 detected / pinned）；query / env / funnel / timing 恒保留
- * （timing 是低位固定 4 字段，截断不丢——检索耗时展示依赖它）。
+ * ③ deathIntent.chunkIds / birthIntent.chunkIds（保留 detected / pinned）；query / env / funnel / timing 恒保留
+ * （timing 是低位固定 5 字段，截断不丢——检索耗时展示依赖它）。
  * 截断后 truncated=true、truncatedCount=被丢弃的候选条数；正常载荷远低于预算，不触发。
  */
 export function enforceDiagnosticsBudget(diagnostics: RetrievalDiagnostics): RetrievalDiagnostics {
@@ -140,7 +200,7 @@ export function enforceDiagnosticsBudget(diagnostics: RetrievalDiagnostics): Ret
       return candidate;
     }
   }
-  // candidates 全丢仍超限 → 丢 nextRank；仍超限 → 丢 deathIntent.chunkIds
+  // candidates 全丢仍超限 → 丢 nextRank；仍超限 → 丢 deathIntent.chunkIds / birthIntent.chunkIds
   let slim: RetrievalDiagnostics = { ...truncatedBase, candidates: [], truncatedCount: total };
   if (!fits(slim)) {
     slim = { ...slim, nextRank: null };
@@ -148,30 +208,146 @@ export function enforceDiagnosticsBudget(diagnostics: RetrievalDiagnostics): Ret
   if (!fits(slim)) {
     slim = { ...slim, deathIntent: { ...slim.deathIntent, chunkIds: [] } };
   }
+  if (!fits(slim)) {
+    slim = { ...slim, birthIntent: { ...slim.birthIntent, chunkIds: [] } };
+  }
   return slim;
 }
+/**
+ * FEAT-A030：SangoIndex 可选注入项。rerankScorer 显式指定重排打分器（null / 省略 = 不重排）。
+ * 库层默认不启用（保持确定性、不依赖 ~266MB 权重）；由装配层 / 评测显式接入 createDataRerankScorer()。
+ */
+export interface SangoIndexOptions {
+  rerankScorer?: RerankScorer | null;
+}
+
+/**
+ * FEAT-A030：按 dataDir/models/bge-reranker-base 解析生产重排打分器（装配层显式接入用）。
+ * 权重缺失返回 null（自动跳过、退回规则序）；SANGO_RERANKER=off 关闭、SANGO_RERANKER_DIR 换目录。
+ */
+export function createDataRerankScorer(dataDir: string = DEFAULT_DATA_DIR): RerankScorer | null {
+  if (process.env.SANGO_RERANKER === 'off') return null;
+  const modelDir = process.env.SANGO_RERANKER_DIR ?? path.join(dataDir, 'models', 'bge-reranker-base');
+  return resolveRerankModelFile(modelDir) ? createCrossEncoderScorer(modelDir) : null;
+}
+
+/**
+ * FEAT-A030 装配开关：SANGO_RERANKER=on 才尝试接入生产重排打分器（权重缺失返回 null、走既有降级，不抛错）；
+ * 未设 / off / 其他值一律不接入（默认行为与现状逐字节一致，不触发权重解析）。装配层（src/index.ts）经此接入。
+ */
+export function resolveRerankScorer(dataDir: string = DEFAULT_DATA_DIR): RerankScorer | null {
+  return resolveRerankMode() === 'on' ? createDataRerankScorer(dataDir) : null;
+}
+
+/**
+ * FEAT-A015 test-2241：重排开关归一化（原始取值仅 'on' 视为开启；未设 / 其它值一律 'off'）。
+ * 装配开关与评测快照 summary.rerank.mode 共用此判定，避免两处各写一套 env 语义。
+ */
+export function resolveRerankMode(env: NodeJS.ProcessEnv = process.env): 'on' | 'off' {
+  return env.SANGO_RERANKER === 'on' ? 'on' : 'off';
+}
+
+/** search() 各层的类型化契约：层之间只经入参 / 出参传递，不共享可变状态。 */
+
+/** 召回层产出：三路命中集与打分中间量，供池装配与诊断消费。 */
+interface RecallResult {
+  bm25: Float64Array;
+  /** 命中集归一化 BM25（未命中词法恒 0，统一加权公式入口）。 */
+  bm25Norm: Float64Array;
+  lexicalHits: Set<number>;
+  tagHits: Set<number>;
+  /** 真向量余弦（scheme=hash / 向量缺失为 null，退纯 BM25）。 */
+  cosine: Float64Array | null;
+  /** 向量路 topK（有词法 / 标签命中取 50、纯向量兜底取 max(limit,20)），复用为 funnel.vectorTop50 中间量。 */
+  vectorTop: number[];
+}
+
+/** 意图层产出：死亡 / 登场强命中（保证区来源）与段序策略。 */
+interface IntentResult {
+  deathIntent: DeathIntent | null;
+  deathHits: Set<number>;
+  birthIntent: boolean;
+  birthHits: Set<number>;
+  /** 保证区段序策略（死亡意图派生；登场与 L3 无段序语义走默认靠前段），见 sortGuaranteedZone。 */
+  segPick: 'earlier' | 'later' | 'none';
+}
+
+/** 桥层产出：事件 / 典故名桥命中组。 */
+interface BridgeResult {
+  eventGroups: MatchedEventGroup[];
+  allusionGroups: MatchedAllusionGroup[];
+  l1l2Groups: MatchedEventGroup[];
+  l3Groups: MatchedEventGroup[];
+  /** 增强查询取组优先级：事件 L1/L2 组恒在典故组之前（契约 §5.6），新增桥路插在正确位置。 */
+  poolDrivers: Array<{ canonicalName: string; matchedAlias: string }>;
+}
+
+/** 池装配层产出：合并候选池、L3 锚点与增强重排覆盖。 */
+interface PoolResult {
+  combined: SearchHit[];
+  /** funnel.mergedCandidates 口径：三路合并候选数（不含事件并池 / 置顶）。 */
+  threeWayCandidates: number;
+  /** 池内文档下标（并池去重与增强查询重排取组用）。 */
+  inPool: Set<number>;
+  /** 增强查询重排后的 bm25Norm 覆盖（诊断复算恒等式用）；未并池重排恒 null。 */
+  enhancedBm25Norm: Map<number, number> | null;
+  l3Segments: Map<string, number[]>;
+  l3AnchorDocs: Set<number>;
+}
+
+/** 出参装配入参：search() 各层产出汇总（唯一允许全局视野的装配点，仅取窗 + 诊断消费）。 */
+interface SearchEmitInput {
+  query: string;
+  normalized: string;
+  expansionHits: RetrievalQueryRewrite[];
+  qTokens: string[];
+  limit: number;
+  wantDiag: boolean;
+  recall: RecallResult;
+  intent: IntentResult;
+  bridge: BridgeResult;
+  pool: PoolResult;
+  rerankDiag: RetrievalRerankDiagnostics;
+  timing: RetrievalDiagnosticsTiming;
+}
+
 export class SangoIndex {
   private readonly dataDir: string;
   private readonly corpusDir: string;
   private readonly vectorsFile: string;
   private readonly tagsDir: string;
 
+  /**
+   * FEAT-A030：cross-encoder 重排打分器（null = 不重排）。库层默认不启用（保持确定性、不依赖模型权重），
+   * 由装配层（src/index.ts / 评测脚本）经 createDataRerankScorer() 显式接入；测试可注入。
+   */
+  private readonly rerankScorer: RerankScorer | null;
+
   /** dataDir 仅用于夹具测试注入语料目录；生产用默认 data/ 目录。 */
-  constructor(dataDir: string = DEFAULT_DATA_DIR) {
+  constructor(dataDir: string = DEFAULT_DATA_DIR, options: SangoIndexOptions = {}) {
     this.dataDir = dataDir;
     this.corpusDir = path.join(dataDir, 'corpus', 'sanguo-yanyi');
     this.vectorsFile = path.join(dataDir, 'vectors', 'sanguo-yanyi.bin');
     this.tagsDir = path.join(dataDir, 'corpus', 'tags');
+    this.rerankScorer = options.rerankScorer ?? null;
+  }
+
+  /**
+   * FEAT-A015 test-2241：本次装配的重排接入信息（只读；评测快照落表用，避免上层另造 env 解析）。
+   * - wired：本次是否真的接入 cross-encoder 打分器（权重缺失时装配层传 null → false，退回规则序）；
+   * - window：实际生效重排窗口（与 search 内 rerankWindow 同源，取 rerankWindowSize()）。
+   */
+  rerankAssembly(): { wired: boolean; window: number } {
+    return { wired: this.rerankScorer !== null, window: rerankWindowSize() };
   }
 
   docs: Doc[] = [];
+  /** 引题块（role = lead）文档下标：照常加载 / 出块，不进检索候选（README 口径）。 */
+  private nonRetrievable = new Set<number>();
   postings = new Map<string, { doc: number; tf: number }[]>();
   df = new Map<string, number>();
   avgLen = 0;
   n = 0;
-
-  /** fragmentOnly 键 → 规范形（表设计 §6 / 接口 §2.3：索引侧双写扩展，加载时从实体表模块取快照）。 */
-  private fragmentKeyToCanon: ReadonlyMap<string, string> = new Map();
 
   vec: Float32Array = new Float32Array(0);
   vecDim = 0;
@@ -194,6 +370,12 @@ export class SangoIndex {
    * 临终遗言/托孤类问法命中用（如「刘备托孤」段先于「刘备之死」段，答案在托孤段）。
    */
   private deathSpeechByPerson = new Map<string, number[]>();
+  /**
+   * 登场标签人名词典（标签「人物之生-XXX登场」中的 XXX，归一化后）→ 该人登场 chunk 下标。
+   * 登场意图强命中按人匹配（与 deathByPerson 同款结构路，接口 §2.4 / bug-00046 定案）：
+   * 「刘备第一次出场是什么时候」走 birthByPerson 置顶，不依赖 alias 词面命中。
+   */
+  private birthByPerson = new Map<string, number[]>();
   /** chunkId → 文档下标：标签键校验与死键跳过。 */
   private docIndexOf = new Map<string, number>();
 
@@ -201,9 +383,9 @@ export class SangoIndex {
    * 语料缺失 / 读取 / JSON 解析失败时抛错终止启动；向量加载失败仅告警并降级为纯 BM25；
    * 实体表加载失败仅告警并降级为「不做归一化」（normalize 恒等），不影响启动（接口 §1.6）。
    *
-   * 一遍构建（FEAT-A016 §1.3 取消 df 选名）：规范形由表直接指定（canonical 列），对归一化文本直接建
-   * postings / df；fragmentOnly 片段侧素材在索引侧双写扩展（原文 token 保留、dl 不重算，接口 §2.3）。
-   * docs[].text 始终保留原始文本（出参与评测答案正则都依赖原文），只归一化索引侧 token。 */
+   * 一遍构建（FEAT-A016 §1.3 取消 df 选名）：规范形由表直接指定（canonical 列），对**语料原文**建
+   * postings / df；原文命中的 rewriteKeys 与 fragmentOnly 一律双写扩展（原文 token 保留、只增倒排条目、
+   * dl 不重算，接口 §2.2 / §2.3）。docs[].text 与检索 token 均取原文，等价写法只体现在倒排条目上。 */
   load(): void {
     if (!existsSync(this.corpusDir)) {
       const msg = `[sango] corpus 目录不存在：${this.corpusDir}（无语料无法检索，终止启动）`;
@@ -250,42 +432,46 @@ export class SangoIndex {
       throw new Error(msg);
     }
 
-    // 实体表加载：成功则 rewriteKeys 替换生效（铲除两遍构建的 df 选名）；失败则 normalize 退化为恒等。
+    // 实体表加载：成功则索引侧按原文双写扩展（原文 token + 命中键规范形 token，不改写语料文本）；
+    // 失败则 normalize 退化为恒等、无扩展（接口 §1.6）。
     loadEntityTable(this.dataDir);
-    this.fragmentKeyToCanon = entityFragmentKeyToCanon();
 
     for (let di = 0; di < chunks.length; di++) {
       const { chapter, title, chunk } = chunks[di];
-      const normText = entityNormalize(chunk.text);
-      const tokens = tokenize(normText);
+      // 语料取值校验：表外取值直接终止启动（取值集合见 src/chunk-kind.ts）。
+      assertChunkKind(chunk.type, chunk.role, chunk.chunk_id);
+      // 检索 token = 语料原文 token（检索侧不改写；接口 §2.2）；等价写法由下方「双写扩展」覆盖。
+      const tokens = tokenize(chunk.text);
       const tf = new Map<string, number>();
       for (const t of tokens) tf.set(t, (tf.get(t) ?? 0) + 1);
-      // fragmentOnly 双写扩展（接口 §2.3）：片段短语命中「处」逐一追加写入其规范形 token——
-      // tf 按命中处数计（如 0076:c0014「关公」x6 → 关羽 tf +6，等价于旧 alias 逐处折算的 tf 贡献）。
-      // 只增倒排条目；docs[].len 仍取原文 token 数（dl 不重算），双写引致的 df 略升为已知可接受偏差。
+      // 索引侧双写扩展（接口 §2.3，rewriteKeys 与 fragmentOnly 同口径）：原文命中的键逐一追加其规范形
+      // token——tf 按命中处数计（如 0076:p0012:c01「关公」x11 → 关羽 tf +11）。原文 token 保留、只增倒排条目；
+      // docs[].len 仍取原文 token 数（dl 不重算），双写引致的规范形 df 略升为已知可接受偏差。
       const len = tokens.length;
-      if (this.fragmentKeyToCanon.size > 0) {
-        for (const [fragment, canonical] of this.fragmentKeyToCanon) {
-          if (!normText.includes(fragment)) continue;
-          const count = normText.split(fragment).length - 1;
-          for (const t of new Set(tokenize(canonical))) tf.set(t, (tf.get(t) ?? 0) + count);
-        }
+      for (const { to, count } of collectExpansions(chunk.text)) {
+        for (const t of new Set(tokenize(to))) tf.set(t, (tf.get(t) ?? 0) + count);
       }
       this.docs.push({
-        chunkId: chunk.id,
+        chunk_id: chunk.chunk_id,
+        parent_id: chunk.parent_id,
+        seq_in_parent: chunk.seq_in_parent,
+        type: chunk.type,
+        role: chunk.role,
+        text: chunk.text,
+        char_count: chunk.char_count,
+        ...(chunk.group_id === undefined ? {} : { group_id: chunk.group_id }),
         chapter,
         title,
-        type: chunk.type,
-        segFrom: chunk.segFrom,
-        segTo: chunk.segTo,
-        quoteBalanced: chunk.quoteBalanced,
-        quotes: chunk.quotes,
-        text: chunk.text,
         tokens,
         tf,
         len,
       });
-      this.docIndexOf.set(chunk.id, di);
+      this.docIndexOf.set(chunk.chunk_id, di);
+      // 引题块不进检索索引：词法倒排 / df 不建（向量行仍按语料序对齐，候选侧另过滤）。
+      if (chunk.role !== CHUNK_ROLE_BODY) {
+        this.nonRetrievable.add(di);
+        continue;
+      }
       for (const [t, fq] of tf) {
         this.df.set(t, (this.df.get(t) ?? 0) + 1);
         const arr = this.postings.get(t) ?? [];
@@ -296,10 +482,30 @@ export class SangoIndex {
     this.avgLen = this.docs.reduce((s, d) => s + d.len, 0) / this.n;
     this.loadVectors(this.n);
     this.loadTags();
+    this.loadEvents();
+    this.loadAllusions();
   }
 
   /**
-   * 加载标签表（data/corpus/tags/{duel,event,story}.json：chunkId → 标签文本，多标签以 | 分隔），
+   * FEAT-A018：事件表加载（事件名桥 + 组内闭环装配的数据源，接口 §2.1）。
+   * 漂移检测需要 chunkId → 文档下标反查（docIndexOf 现成成员）与当前语料 chunk 数，
+   * 必须在 docs 构建完成之后执行（与标签同阶段）。事件表失败仅告警降级为「无事件路由」，
+   * 不阻断启动（核心语料失败仍终止，现状不变）。
+   */
+  private loadEvents(): void {
+    loadEventsTable(this.dataDir, (chunkId) => this.docIndexOf.has(chunkId), this.n);
+  }
+
+  /**
+   * FEAT-A018：典故表加载（典故名桥 + 组内闭环装配的数据源，接口 §5.6 / 需求验收 7）。
+   * 与事件表同机制、独立降级：典故表失败仅告警降级为「无典故路由」，事件路不受影响、不阻断启动。
+   */
+  private loadAllusions(): void {
+    loadAllusionsTable(this.dataDir, (chunkId) => this.docIndexOf.has(chunkId), this.n);
+  }
+
+  /**
+   * 加载标签表（data/corpus/tags/{duel,event}.json：chunkId → 标签文本，多标签以 | 分隔），
    * 建「标签 token → 文档」倒排供第三路召回。标签文本与 query 侧同口径归一化（entity-table 在前），
    * 保证「人物之死-关羽之死」标签与「云长怎么死的」问法互相命中。
    * 入倒排前按 stripTagType 剥离标签类型信息（feat-A014 索引剥壳），类型词不进候选面；
@@ -308,7 +514,7 @@ export class SangoIndex {
    * 标签只进 TAG 分量，不改 chunk / 向量。
    */
   private loadTags(): void {
-    for (const file of ['duel.json', 'event.json', 'story.json']) {
+    for (const file of ['duel.json', 'event.json']) {
       const tagFile = path.join(this.tagsDir, file);
       if (!existsSync(tagFile)) continue;
       let parsed: unknown;
@@ -339,7 +545,7 @@ export class SangoIndex {
         .split('|')
         .map((tag) => tag.trim())
         .filter((tag) => tag.length > 0);
-      // 死亡 / 遗言人名词典与 hitLabels 判定均基于原始标签文本（仅同口径归一化人名），剥壳不作用于这些路径。
+      // 死亡 / 登场人名词典基于原始标签文本（仅同口径归一化人名取规范形），剥壳不作用于该路径。
       const normTags = this.multiHangTags(this.tagTextsByDoc[di].map((tag) => entityNormalize(tag)));
       for (const tag of normTags) {
         if (tag.startsWith('人物之死-')) {
@@ -348,18 +554,30 @@ export class SangoIndex {
           const arr = this.deathByPerson.get(person) ?? [];
           arr.push(di);
           this.deathByPerson.set(person, arr);
+        } else if (tag.startsWith('人物之生-') && tag.endsWith('登场')) {
+          const person = tag.slice('人物之生-'.length, -2);
+          if (person.length > 0) {
+            const arr = this.birthByPerson.get(person) ?? [];
+            arr.push(di);
+            this.birthByPerson.set(person, arr);
+          }
         }
       }
-      // 索引剥壳（feat-A014）：tagPostings 只入库剥离类型信息后的文本，类型词不再进第三路候选面。
-      const strippedTags = normTags.map((tag) => this.stripTagType(tag));
-      for (const t of new Set(tokenize(strippedTags.join('|')))) {
+      // 标签侧双写（接口 §2.4，与语料同口径）：标签原文 token + 命中键（rewriteKeys ∪ fragmentOnly）的
+      // 规范形 token。原「先 normalize 再入 tagPostings」的替换口径作废；剥壳（feat-A014）仍在原文本上做，
+      // 类型词不进候选面。每 doc 一份词元集（跨标签去重，同一 token 每 doc 只入一条倒排）。
+      const docTokens = new Set<string>();
+      for (const tag of this.tagTextsByDoc[di]) {
+        for (const t of this.tagTokensOf(tag)) docTokens.add(t);
+      }
+      for (const t of docTokens) {
         const arr = this.tagPostings.get(t) ?? [];
         arr.push(di);
         this.tagPostings.set(t, arr);
       }
     }
     // 遗言段人名词典（第二遍）：标签文本含遗言类关键词且出现死亡人名的 chunk 归到该人名。
-    // 必须单独一遍：第一遍结束时 deathByPerson 才收齐——0085:c0008-0010 的托孤段本身没打死亡标签。
+    // 必须单独一遍：第一遍结束时 deathByPerson 才收齐——托孤段本身没打死亡标签，须按人名词典回指。
     for (let di = 0; di < this.n; di++) {
       const text = this.tagsByDoc[di];
       if (!text) continue;
@@ -381,7 +599,6 @@ export class SangoIndex {
    *   - 人物之生-XX登场 / 人物之死-XX之死 → XX（纯人物名）
    *   - 武将单挑-A-B → A-B（保留对阵双方）
    *   - event 其余类型前缀（战役- / 政治事件- / 谋略/计策- / 结盟/外交- / 典故事件-）剥离前缀、保留内容
-   *   - story 标签无类型前缀，原文即终型
    * 死亡 / 登场语义由结构承载（deathByPerson 人名词典 / 事件内容），类型词（人物 / 物之 / 之生 /
    * 之死 / 登场 等）不再进第三路候选面；原始标签文本仍由 tagTextsByDoc 保留供 hitLabels 回读。
    * 入参为单个标签（| 拆分后）的归一化文本。
@@ -394,6 +611,20 @@ export class SangoIndex {
       if (normTag.startsWith(prefix)) return normTag.slice(prefix.length);
     }
     return normTag;
+  }
+
+  /**
+   * 单个标签的入库词元集（接口 §2.4，与语料同口径）：剥壳后的**原文** token（检索侧不改写标签原文）
+   * ∪ 原文命中键（rewriteKeys ∪ fragmentOnly）的规范形 token（双写扩展，collectExpansions 同裁判定）。
+   * tagPostings 构建与 hitLabels 判定共用本方法，保证「倒排命中」与「回传标签文本」口径严格一致。
+   */
+  private tagTokensOf(rawTag: string): Set<string> {
+    const stripped = this.stripTagType(rawTag);
+    const tokens = new Set(tokenize(stripped));
+    for (const { to } of collectExpansions(stripped)) {
+      for (const t of tokenize(to)) tokens.add(t);
+    }
+    return tokens;
   }
 
   /**
@@ -459,13 +690,15 @@ export class SangoIndex {
    * 仅 scheme=model 的真向量参与检索：scheme=hash 的哈希向量无语义，完全不参与加权也不参与兜底，
    * 此时退化为纯 BM25；纯 BM25 且词法无命中时直接判无命中。
    *
-   * 死亡类问法（怎么死的/被谁杀/死了吗…，见 search/intent.ts）按归一化人名匹配死亡标签人名词典
+   * 死亡类问法（怎么死的/被谁杀/死了吗…，见 search/intent.ts）按人名匹配死亡标签人名词典
    * （「人物之死-XXX之死」），命中 chunk 在排序阶段置顶为高置信候选（分数仍为 [0,1] 的三路加权，
    * 不加分）；该人物死亡多 chunk 时，死因/凶手/地点/时间/确认类问法取靠前段（死因段），
    * 事后类取靠后段（追述/续事段）。临终遗言/托孤类问法优先命中该人物的托孤/遗诏段
-   * （deathSpeechByPerson，如 0085:c0009-0010 白帝城托孤），无遗言段时退回死亡段。
+   * （deathSpeechByPerson，标签含遗言类关键词），无遗言段时退回死亡段。
    * 死亡年龄类问法（死的时候多少岁/享年/卒年/去世时多大…）取靠前段，且死亡段与遗言/遗诏段一并置顶
    * （年龄事实段常落在遗言/遗诏段）。
+   * 登场类问法（出场/登场/出世/第一次出场…，见 search/intent.ts）按人名匹配登场标签人名词典
+   * （「人物之生-XXX登场」），命中 chunk 走与死亡意图同一条保证区置顶通道（不新增召回路、零 LLM）。
    *
    * 异步：scheme=model 时需运行期编码 query（BGE-M3 ONNX 推理，见 embed/bge-m3-encoder.ts）。
    */
@@ -476,16 +709,88 @@ export class SangoIndex {
   ): Promise<SearchResult> {
     const wantDiag = options?.diagnostics === true;
     if (this.n === 0) return { entries: [], diagnostics: null };
-    // §2.2 硬约束（FEAT-A016）：query 改写必须在 embed 之前 —— normalized 恒为 embed 输入。
-    // query 与语料侧 / 标签侧同口径归一化（entity-table rewriteKeys 替换；表缺失时退化为恒等）。
-    const normDetail = entityNormalizeDetail(query);
-    const normalized = normDetail.text;
+    // §2.2（FEAT-A016 09-29 定案）：检索侧不改写 query —— query 原文入 BM25 / 向量 / 标签 / 事件桥；
+    // query.normalized ≡ 原文（embed 输入同为原文，缓存侧口径不变见 tools/sango-query-embed.ts）。
+    // 等价写法由索引侧双写覆盖（§2.3），诊断经 query.expansionHits 报告（§5，只报告不改写）。
+    const normalized = query;
+    const expansions = collectExpansions(query);
+    const expansionCanons = new Set(expansions.map((e) => e.to));
+    const expansionHits = expansions.map((e) => ({ from: e.from, to: e.to }));
     const qTokens = tokenize(normalized);
-    // feat-A013：检索分阶段耗时（毫秒）。各段按「---- 阶段 ----」分界独立计时；
-    // 空结果早退路径下未执行的段保持 null（语义见 RetrievalDiagnosticsTiming）。
-    const timing: RetrievalDiagnosticsTiming = { bm25: null, vector: null, label: null, merge: null };
+    // feat-A013：检索分阶段耗时（毫秒），各功能层独立计时；空结果早退路径下未执行的层保持 null
+    // （语义见 RetrievalDiagnosticsTiming）。
+    const timing: RetrievalDiagnosticsTiming = { bm25: null, vector: null, label: null, merge: null, rerank: null };
 
-    // ---- BM25 打分 ----
+    // 召回层：三路召回（BM25 / 真向量 / 标签）+ 命中集归一化 + 向量路 topK（另产打分与诊断中间量）
+    const recall = await this.recallAll(normalized, qTokens, limit, timing);
+    // 意图层：死亡 / 登场强命中——保证区来源，不新增召回、零 LLM
+    const intent = this.intentMatches(query, expansionCanons);
+    // 桥层：事件名桥 / 典故名桥命中组（只读 normalized；非事件非典故请求 groups 空，此段零改动）
+    const bridge = this.matchBridges(normalized);
+
+    // 池装配层：三路并集 → 组并池 → 增强查询重排 → L3 锚点置顶（merge 段计时起点，排序后收口）
+    const mergeT0 = performance.now();
+    const pool = this.assemblePool(recall, bridge, normalized);
+
+    // 空结果早退：无三路候选且事件 / 典故双路均未命中（表降级 / 未命中）→ 与现状实现逐字节一致
+    // （timing.merge 保持未执行 = null；eventHit / allusionHit 仅 degraded / normVersion 可读、groups 空）。
+    if (pool.combined.length === 0) {
+      return {
+        entries: [],
+        diagnostics: wantDiag
+          ? this.safeDiagnostics(() =>
+              this.emptySearchDiagnostics(
+                query,
+                normalized,
+                expansionHits,
+                qTokens,
+                recall.cosine,
+                intent.deathIntent,
+                intent.birthIntent,
+                timing,
+                this.emptyEventHit(),
+                this.emptyAllusionHit(),
+              ),
+            )
+          : null,
+      };
+    }
+
+    // 保证区排序 + cross-encoder 重排（保证区置顶段不参与重排，策略见 sortGuaranteedZone）
+    const pinDocs = new Set<number>([...intent.deathHits, ...intent.birthHits, ...pool.l3AnchorDocs]);
+    this.sortGuaranteedZone(pool.combined, pinDocs, intent.segPick);
+    timing.merge = performance.now() - mergeT0; // merge 段 = 池装配 + 保证区排序（重排段独立计时）
+    const rerankDiag = await this.rerankWindow(pool.combined, pinDocs, normalized, timing);
+
+    // 出参装配：取窗 + 各层结果汇总进诊断 + 出参条目
+    return this.emitResult({
+      query,
+      normalized,
+      expansionHits,
+      qTokens,
+      limit,
+      wantDiag,
+      recall,
+      intent,
+      bridge,
+      pool,
+      rerankDiag,
+      timing,
+    });
+  }
+
+  /**
+   * 召回层：BM25 词法命中（含命中集归一化）→ 真向量余弦 → 标签路由，另产出向量路 topK
+   * （有词法 / 标签命中取 50、纯向量兜底取 max(limit,20)，复用为诊断 funnel.vectorTop50 中间量）。
+   * 计时写入 timing.bm25 / vector / label；scheme=hash 或向量缺失时 cosine = null（退纯 BM25）。
+   */
+  private async recallAll(
+    normalized: string,
+    qTokens: string[],
+    limit: number,
+    timing: RetrievalDiagnosticsTiming,
+  ): Promise<RecallResult> {
+    // BM25 打分 + 词法命中集（归一化归入 BM25 段计时）
     const bm25T0 = performance.now();
     const bm25 = new Float64Array(this.n);
     const lexicalHits = new Set<number>();
@@ -502,7 +807,7 @@ export class SangoIndex {
     }
     const bm25LoopMs = performance.now() - bm25T0;
 
-    // ---- 向量余弦（仅 scheme=model 真向量；scheme=hash 无语义，直接不参与）----
+    // 向量余弦（仅 scheme=model 真向量；scheme=hash 无语义，直接不参与）
     // query 侧与离线语料同空间编码：embedQuery 懒加载 BGE-M3 ONNX 单例（首次较慢）。
     // 权重缺失 / 推理失败时返回 null（并写 stderr 告警），此处退化为纯 BM25，不抛异常（A6）。
     const useVectors = this.vecScheme === VEC_SCHEME_MODEL && this.vec.length > 0;
@@ -513,7 +818,7 @@ export class SangoIndex {
     // （实际等待时间，降级状态由 env.degradedBm25Only 表达）
     timing.vector = useVectors ? performance.now() - vectorT0 : null;
 
-    // ---- 归一化 BM25（仅对命中集合）----（归一化归入 BM25 段计时）
+    // 归一化 BM25（仅对命中集合）
     const bm25NormT0 = performance.now();
     const bm25Norm = new Float64Array(this.n);
     if (lexicalHits.size > 0) {
@@ -529,7 +834,7 @@ export class SangoIndex {
     }
     timing.bm25 = bm25LoopMs + (performance.now() - bm25NormT0);
 
-    // ---- 标签路由（第三路召回）：query 与标签文本同口径分词求交，命中 chunk 进候选集 ----
+    // 标签路由（第三路）——query 与标签文本同口径分词求交，命中 chunk 进候选集
     const labelT0 = performance.now();
     const tagHits = new Set<number>();
     if (this.tagPostings.size > 0) {
@@ -542,12 +847,31 @@ export class SangoIndex {
     }
     timing.label = performance.now() - labelT0;
 
-    // ---- 死亡意图强命中（不新增召回）：死亡类问法 + 归一化 query 含死亡人名 → 该人相关 chunk 置顶 ----
+    // 向量路 topK：有词法 / 标签命中取 50 并入候选；纯向量兜底取 max(limit,20)（先经 MIN_COSINE 门槛）
+    let vectorTop: number[] = [];
+    if (lexicalHits.size > 0 || tagHits.size > 0) {
+      if (cosine) vectorTop = this.topKByCosine(cosine, 50);
+    } else if (cosine) {
+      let best = -Infinity;
+      for (let d = 0; d < this.n; d++) if (!this.nonRetrievable.has(d) && cosine[d] > best) best = cosine[d];
+      if (best >= MIN_COSINE) vectorTop = this.topKByCosine(cosine, Math.max(limit, 20));
+    }
+    return { bm25, bm25Norm, lexicalHits, tagHits, cosine, vectorTop };
+  }
+
+  /**
+   * 意图层：死亡 / 登场强命中（不新增召回、零 LLM）——意图问法 + query（原文 ∪ 双写扩展规范形）含
+   * 人名 → 置顶命中集；segPick 为保证区段序策略（由死亡意图派生的现有语义，见 sortGuaranteedZone）。
+   */
+  private intentMatches(query: string, expansionCanons: Set<string>): IntentResult {
+    // 人名匹配用原文 ∪ 扩展规范形：问句用别名（云长怎么死的）时靠扩展命中 关羽（人名不落回改写输入）。
+    const personInQuery = (person: string): boolean =>
+      query.includes(person) || expansionCanons.has(person);
     const deathIntent: DeathIntent | null = matchDeathIntent(query);
     const deathHits = new Set<number>();
     if (deathIntent && this.deathByPerson.size > 0) {
       for (const [person, docs] of this.deathByPerson) {
-        if (!normalized.includes(person)) continue;
+        if (!personInQuery(person)) continue;
         // 临终遗言类问法优先取该人物遗言段（托孤/遗诏…），无遗言段时退回死亡段，保证行为不劣化；
         // 死亡年龄类问法取「死亡段 ∪ 遗言/遗诏段」一并置顶（年龄事实段常落在遗言/遗诏段）。
         const picked =
@@ -559,111 +883,149 @@ export class SangoIndex {
         for (const d of picked) deathHits.add(d);
       }
     }
-
-    // ---- 多路候选合并 + 重排（BGE-M3*0.6 + BM25*0.3 + TAG*0.1）----
-    const mergeT0 = performance.now();
-    const combined: SearchHit[] = [];
-    // 向量路 topK（复用为诊断 funnel.vectorTop50 的中间量，不重复计算）
-    let vectorTop: number[] = [];
-    if (lexicalHits.size > 0 || tagHits.size > 0) {
-      const cands = new Set(lexicalHits);
-      if (cosine) {
-        vectorTop = this.topKByCosine(cosine, 50);
-        for (const d of vectorTop) cands.add(d);
-      }
-      for (const d of tagHits) cands.add(d);
-      for (const d of cands) {
-        const b = bm25Norm[d];
-        const v = cosine ? Math.max(0, (cosine[d] + 1) / 2) : 0;
-        const t = tagHits.has(d) ? 1 : 0;
-        combined.push({ doc: d, score: BM25_WEIGHT * b + VEC_WEIGHT * v + TAG_WEIGHT * t });
-      }
-    } else {
-      // 纯向量兜底（仅真向量可用时；scheme=hash 无语义，纯 BM25 无词法命中即判无命中）
-      if (!cosine) {
-        return {
-          entries: [],
-          diagnostics: wantDiag
-            ? this.safeDiagnostics(() =>
-                this.emptySearchDiagnostics(query, normalized, normDetail.hits, qTokens, null, deathIntent, timing),
-              )
-            : null,
-        };
-      }
-      let best = -Infinity;
-      for (let d = 0; d < this.n; d++) if (cosine[d] > best) best = cosine[d];
-      if (best < MIN_COSINE) {
-        // 向量存在但全部低于阈值 → 无命中；向量有效候选记 0（不做额外计算，mergedCandidates=0 已可读）
-        return {
-          entries: [],
-          diagnostics: wantDiag
-            ? this.safeDiagnostics(() =>
-                this.emptySearchDiagnostics(query, normalized, normDetail.hits, qTokens, cosine, deathIntent, timing),
-              )
-            : null,
-        };
-      }
-      vectorTop = this.topKByCosine(cosine, Math.max(limit, 20));
-      for (const d of vectorTop) {
-        // bug-00013：纯向量兜底也按统一加权公式计分（0.6*cosine 映射），保证 finalScore 可由接口字段复算；
-        // 此路径余弦 > MIN_COSINE(0.3) > 0 → (cosine+1)/2 恒正，无需再套 max(0,·)。
-        combined.push({ doc: d, score: VEC_WEIGHT * ((cosine[d] + 1) / 2) });
+    // 登场强命中（照死亡同款，不新增召回路、零 LLM）：任意问法（刘备第一次出场/刘备出场/刘备出世…）
+    // 按 birthByPerson 人名词典命中「人物之生-刘备登场」标签 chunk；与 deathHits 同进保证区，
+    // 不依赖 entity 表 alias 词面命中（结构路，bug-00046 定案）。
+    const birthIntent: boolean = matchBirthIntent(query);
+    const birthHits = new Set<number>();
+    if (birthIntent && this.birthByPerson.size > 0) {
+      for (const [person, docs] of this.birthByPerson) {
+        if (!personInQuery(person)) continue;
+        for (const d of docs) birthHits.add(d);
       }
     }
-
-    if (combined.length === 0) {
-      return {
-        entries: [],
-        diagnostics: wantDiag
-          ? this.safeDiagnostics(() =>
-              this.emptySearchDiagnostics(query, normalized, normDetail.hits, qTokens, cosine, deathIntent, timing),
-            )
-          : null,
-      };
-    }
-    // 死亡强命中不改分数（三路加权恒在 [0,1]），改为排序两级：死亡命中组整体置顶，组内按意图选段
-    // （死因/凶手/地点/时间/年龄/确认类取靠前段，事后类取靠后段，遗言类不打段序按加权分），
-    // 其余候选仍按加权分降序。
     const segPick: 'earlier' | 'later' | 'none' =
       deathIntent === 'death_aftermath' ? 'later' : deathIntent === 'death_last_words' ? 'none' : 'earlier';
-    combined.sort((a, b) => {
-      const ad = deathHits.has(a.doc) ? 1 : 0;
-      const bd = deathHits.has(b.doc) ? 1 : 0;
-      if (ad !== bd) return bd - ad;
-      if (ad === 1 && deathHits.size > 1 && a.doc !== b.doc && segPick !== 'none') {
-        return segPick === 'later' ? b.doc - a.doc : a.doc - b.doc;
+    return { deathIntent, deathHits, birthIntent, birthHits, segPick };
+  }
+
+  /**
+   * 桥层：事件名桥 / 典故名桥命中组（FEAT-A018 §3.1 / §3.3 / §5.6）——只读 normalized、零 LLM、
+   * 不重编码向量、不改权重（§3.4）；非事件非典故命中请求（groups 空）对后续阶段零改动。
+   */
+  private matchBridges(normalized: string): BridgeResult {
+    const eventGroups = matchEvents(normalized);
+    const allusionGroups = matchAllusions(normalized);
+    const l1l2Groups = eventGroups.filter((g) => g.type !== 'L3');
+    const l3Groups = eventGroups.filter((g) => g.type === 'L3');
+    const poolDrivers: Array<{ canonicalName: string; matchedAlias: string }> = [
+      ...l1l2Groups.map((g) => ({ canonicalName: g.eventName, matchedAlias: g.matchedAlias })),
+      ...allusionGroups.map((g) => ({ canonicalName: g.allusionName, matchedAlias: g.matchedAlias })),
+    ];
+    return { eventGroups, allusionGroups, l1l2Groups, l3Groups, poolDrivers };
+  }
+
+  /**
+   * 池装配层：三路并集（含纯向量兜底）→ 事件 L1/L2 / 典故组并池 → 增强查询池内重排 → L3 锚点置顶
+   * （保证区）。产出合并候选池与诊断中间量；取组优先级 = bridge.poolDrivers 顺序（事件恒在典故之前）。
+   */
+  private assemblePool(recall: RecallResult, bridge: BridgeResult, normalized: string): PoolResult {
+    const { bm25Norm, cosine, tagHits, lexicalHits, vectorTop } = recall;
+    // 三路合并（统一加权公式计分：BGE-M3*0.6 + BM25*0.3 + TAG*0.1）
+    const combined: SearchHit[] = [];
+    if (lexicalHits.size > 0 || tagHits.size > 0) {
+      const cands = new Set(lexicalHits);
+      for (const d of vectorTop) cands.add(d);
+      for (const d of tagHits) cands.add(d);
+      for (const d of cands) {
+        combined.push({ doc: d, score: this.unifiedScore(d, bm25Norm, cosine, tagHits) });
       }
-      return b.score - a.score;
-    });
-    const hits = combined.slice(0, Math.min(limit, combined.length));
-    timing.merge = performance.now() - mergeT0;
+    } else {
+      // 纯向量兜底（仅真向量可用时；scheme=hash 无语义 / 无向量 → 无词法命中即判无命中）。
+      // 此处不再早退：空三路池仍要进事件名桥——并池后 combined 恒含命中组 chunk（§3.3 第二路召回由此吸收）。
+      for (const d of vectorTop) {
+        // bug-00013：纯向量兜底也按统一加权公式计分（0.6*cosine 映射，bm25/tag 分量恒 0），
+        // 保证 finalScore 可由接口字段复算；此路径余弦 ≥ MIN_COSINE(0.3) > 0 → max(0,·) 恒等于原值。
+        combined.push({ doc: d, score: this.unifiedScore(d, bm25Norm, cosine, tagHits) });
+      }
+    }
+    // funnel.mergedCandidates 口径：漏斗只描述三路召回（§4）
+    const threeWayCandidates = combined.length;
+    const inPool = new Set(combined.map((h) => h.doc));
+    /** 增强查询重排后的 bm25Norm 覆盖（诊断复算恒等式用）；未并池重排（无事件 L1/L2 / 典故命中）恒 null。 */
+    let enhancedBm25Norm: Map<number, number> | null = null;
+
+    // 组并池：事件 L1/L2 与典故命中组全部有效 chunk 并入候选池——doc 下标并集去重、无来源配额；
+    // 组 chunk 用全语料预计算的 bm25Norm / cosine 按统一加权公式出初始分（零新增计算）。
+    // 典故走同一口径、无 L3，不进保证区置顶（不进 pinDocs / L3 锚点小位点组产出）。
+    this.poolGroupChunks(bridge.l1l2Groups, inPool, combined, bm25Norm, cosine, tagHits);
+    this.poolGroupChunks(bridge.allusionGroups, inPool, combined, bm25Norm, cosine, tagHits);
+
+    // 增强查询池内重排（与三路同公式）：增强查询 = normalized + 命中组规范名（事件 eventName /
+    // 典故 allusionName，多组命中取优先级最高组）+ 命中 alias；按增强查询重算全池 bm25Norm 分量，
+    // 按原公式 0.6·cos + 0.3·bm25 + 0.1·tag 全池重排——唯一变化 = bm25Norm，cosine / tag 分量不变
+    // （cosine 不重编码，红线 §7）；组无独立加分项。
+    if (bridge.poolDrivers.length > 0) {
+      enhancedBm25Norm = this.rescorePoolWithEnhancedQuery(
+        combined,
+        bridge.poolDrivers[0],
+        normalized,
+        inPool,
+        cosine,
+        tagHits,
+      );
+      // 合并池硬上限 120 兜底：超限按重排分裁（正常场景触不到：三路 ≤50 + 最大组 59）。
+      capMergedPool(combined);
+    }
+
+    // L3 锚点置顶：组 chunkIds 即落表口径的「标签位点段 ±N」小位点组（2-5 段，按事件内序，运行期
+    // 不再二次扩展），并入死亡 / 登场意图置顶通道（保证区）；不参与增强查询池内重排（在其之后补入，
+    // 新入池项分数为未增强三路公式初始分）。
+    const l3Segments = new Map<string, number[]>();
+    const l3AnchorDocs = new Set<number>();
+    for (const g of bridge.l3Groups) {
+      const segs = this.chunkIdsToDocs(g.chunkIds);
+      l3Segments.set(g.eventId, segs);
+      for (const d of segs) l3AnchorDocs.add(d);
+    }
+    this.poolGroupChunks(bridge.l3Groups, inPool, combined, bm25Norm, cosine, tagHits);
+
+    return { combined, threeWayCandidates, inPool, enhancedBm25Norm, l3Segments, l3AnchorDocs };
+  }
+
+  /** 出参装配（唯一允许全局视野的装配点）：取窗 + 各层结果汇总进诊断 + 出参条目。 */
+  private emitResult(input: SearchEmitInput): SearchResult {
+    const hits = input.pool.combined.slice(0, input.limit);
+    const eventHit = this.buildEventHit(input.bridge.eventGroups, hits, input.pool.l3Segments);
+    const eventDocSet = this.eventDocSetOf(input.bridge.eventGroups, input.pool.l3Segments);
+    const allusionHit = this.buildAllusionHit(input.bridge.allusionGroups, hits);
+    const allusionDocSet = this.allusionDocSetOf(input.bridge.allusionGroups);
     const entries = hits.map((h) => this.toEntry(this.docs[h.doc]));
     return {
       entries,
-      diagnostics: wantDiag
+      diagnostics: input.wantDiag
         ? this.safeDiagnostics(() =>
             this.buildDiagnostics({
-              raw: query,
-              normalized,
-              rewrites: normDetail.hits,
-              tokens: qTokens,
-              bm25,
-              bm25Norm,
-              lexicalHits,
-              tagHits,
-              deathIntent,
-              deathHits,
-              combined,
+              raw: input.query,
+              normalized: input.normalized,
+              rewrites: [],
+              expansionHits: input.expansionHits,
+              tokens: input.qTokens,
+              bm25: input.recall.bm25,
+              bm25Norm: input.recall.bm25Norm,
+              bm25NormOverride: input.pool.enhancedBm25Norm,
+              lexicalHits: input.recall.lexicalHits,
+              tagHits: input.recall.tagHits,
+              deathIntent: input.intent.deathIntent,
+              deathHits: input.intent.deathHits,
+              birthIntent: input.intent.birthIntent,
+              birthHits: input.intent.birthHits,
+              combined: input.pool.combined,
               hits,
-              cosine,
-              vectorTop,
-              timing,
+              threeWayCandidates: input.pool.threeWayCandidates,
+              cosine: input.recall.cosine,
+              vectorTop: input.recall.vectorTop,
+              timing: input.timing,
+              eventHit,
+              eventDocSet,
+              allusionHit,
+              allusionDocSet,
+              rerank: input.rerankDiag,
             }),
           )
         : null,
     };
   }
-
   /** feat-A009：诊断构建统一 trySafe 包裹（旁路原则——产出失败不影响检索与 content）。 */
   private safeDiagnostics(build: () => RetrievalDiagnostics): RetrievalDiagnostics | null {
     try {
@@ -678,28 +1040,370 @@ export class SangoIndex {
   private emptySearchDiagnostics(
     query: string,
     normalized: string,
-    rewrites: RetrievalQueryRewrite[],
+    expansionHits: RetrievalQueryRewrite[],
     tokens: string[],
     cosine: Float64Array | null,
     deathIntent: DeathIntent | null,
+    birthIntent: boolean,
     timing: RetrievalDiagnosticsTiming,
+    eventHit: RetrievalEventHitDiagnostics,
+    allusionHit: RetrievalAllusionHitDiagnostics,
   ): RetrievalDiagnostics {
     return this.buildDiagnostics({
       raw: query,
       normalized,
-      rewrites,
+      rewrites: [],
+      expansionHits,
       tokens,
       bm25: new Float64Array(0),
       bm25Norm: new Float64Array(0),
+      bm25NormOverride: null,
       lexicalHits: new Set(),
       tagHits: new Set(),
       deathIntent,
       deathHits: new Set(),
+      birthIntent,
+      birthHits: new Set(),
       combined: [],
       hits: [],
+      threeWayCandidates: 0,
       cosine,
       vectorTop: [],
       timing,
+      eventHit,
+      eventDocSet: new Set(),
+      allusionHit,
+      allusionDocSet: new Set(),
+      rerank: this.emptyRerankDiagnostics(),
+    });
+  }
+
+  /**
+   * FEAT-A018 §3.3：统一加权公式（纯标量版）＝ 0.6·cos + 0.3·bm25 + 0.1·tag。
+   * bm25Component 由调用方注入（全语料预计算 bm25Norm / 增强查询归一值），cos 分量为 null 时计 0、
+   * tag 分量取 0/1；三路合并、纯向量兜底、组并池初始分与增强查询重排四处置顶统一走此入口，
+   * 权重调整只改一处（历史多次定参、防口径漂移）。
+   */
+  private weightedScore(bm25Component: number, cosine: number | null, tagged: boolean): number {
+    const v = cosine === null ? 0 : Math.max(0, (cosine + 1) / 2);
+    return BM25_WEIGHT * bm25Component + VEC_WEIGHT * v + TAG_WEIGHT * (tagged ? 1 : 0);
+  }
+
+  /**
+   * FEAT-A018 §3.3：按文档下标取分体调统一加权公式——bm25 分量取全语料预计算 bm25Norm
+   * （未命中词法恒 0），零新增计算；三路合并与组并池初始分共用。
+   */
+  private unifiedScore(
+    d: number,
+    bm25Norm: Float64Array,
+    cosine: Float64Array | null,
+    tagHits: Set<number>,
+  ): number {
+    return this.weightedScore(bm25Norm[d], cosine ? cosine[d] : null, tagHits.has(d));
+  }
+
+  /**
+   * chunkId 引用 → 有效文档下标（落表时已漂移剔除；undefined = 语料缺失防御性跳过），保持组内顺序。
+   * 事件并池 / 典故并池 / L3 锚点 / eventHit·allusionHit 明细与 docSet 判定共用的同一反查。
+   */
+  private chunkIdsToDocs(chunkIds: readonly string[]): number[] {
+    const docs: number[] = [];
+    for (const chunkId of chunkIds) {
+      const d = this.docIndexOf.get(chunkId);
+      if (d !== undefined && !this.nonRetrievable.has(d)) docs.push(d);
+    }
+    return docs;
+  }
+
+  /**
+   * FEAT-A018 §3.3「组并池」公共助手：命中组全部有效 chunk 并入候选池——doc 下标并集去重（inPool）、
+   * 无来源配额；新入池项按统一加权公式出初始分（零新增计算）。事件 L1/L2、典故、L3 锚点三处共用，
+   * 新增桥路传参即可；组 chunk 顺序（事件内序）即入池顺序。
+   */
+  private poolGroupChunks(
+    groups: readonly { chunkIds: string[] }[],
+    inPool: Set<number>,
+    combined: SearchHit[],
+    bm25Norm: Float64Array,
+    cosine: Float64Array | null,
+    tagHits: Set<number>,
+  ): void {
+    for (const g of groups) {
+      for (const chunkId of g.chunkIds) {
+        const d = this.docIndexOf.get(chunkId);
+        if (d === undefined || inPool.has(d)) continue;
+        inPool.add(d);
+        combined.push({ doc: d, score: this.unifiedScore(d, bm25Norm, cosine, tagHits) });
+      }
+    }
+  }
+
+  /**
+   * FEAT-A018 §3.3④ / §5.6：增强查询 = normalized + 命中组规范名（事件 eventName / 典故 allusionName，
+   * 多组命中取优先级最高组）+ matchedAlias；按增强查询重算全池 bm25Norm 分量（min-max 归一到池内命中），按原公式
+   * 0.6·cos + 0.3·bm25 + 0.1·tag 全池重排——唯一变化 = bm25Norm，cosine / tag 分量逐项不变
+   * （cosine 不重编码）。零新增 LLM。
+   */
+  private rescorePoolWithEnhancedQuery(
+    pool: SearchHit[],
+    topGroup: { canonicalName: string; matchedAlias: string },
+    normalized: string,
+    inPool: Set<number>,
+    cosine: Float64Array | null,
+    tagHits: Set<number>,
+  ): Map<number, number> {
+    const enhancedTokens = new Set(tokenize(`${normalized}${topGroup.canonicalName}${topGroup.matchedAlias}`));
+    const raw = new Map<number, number>();
+    for (const t of enhancedTokens) {
+      const posts = this.postings.get(t);
+      if (!posts) continue;
+      const df = this.df.get(t) ?? 0;
+      const idf = Math.log(1 + (this.n - df + 0.5) / (df + 0.5));
+      for (const p of posts) {
+        if (!inPool.has(p.doc)) continue;
+        const dl = this.docs[p.doc].len;
+        const contrib = idf * ((p.tf * (K1 + 1)) / (p.tf + K1 * (1 - B + B * (dl / this.avgLen))));
+        raw.set(p.doc, (raw.get(p.doc) ?? 0) + contrib);
+      }
+    }
+    let min = Infinity;
+    let max = -Infinity;
+    for (const v of raw.values()) {
+      if (v < min) min = v;
+      if (v > max) max = v;
+    }
+    const normBm25 = (d: number): number => {
+      const v = raw.get(d);
+      if (v === undefined) return 0;
+      return max > min ? (v - min) / (max - min) : 1;
+    };
+    const bm25NormOverride = new Map<number, number>();
+    for (const h of pool) {
+      const b = normBm25(h.doc);
+      h.score = this.weightedScore(b, cosine ? cosine[h.doc] : null, tagHits.has(h.doc));
+      bm25NormOverride.set(h.doc, b);
+    }
+    return bm25NormOverride;
+  }
+
+  /**
+   * FEAT-A030：规则重排后取 top50 作 cross-encoder 输入，对**非保证区**候选按 query 相关性重排，
+   * 原地改写 combined 前段顺序（出参与诊断 candidates 同序，可读证）；保证区置顶段（死亡意图 ∪ L3 锚点）
+   * 保持 A018 §3.3② 承诺「进保证区、不参与池重排」，不参与重排。
+   *
+   * 重排不可用（未接 / 权重缺失 / 推理失败）时保持规则序、不抛异常（不 mock、不伪造分数）。
+   * 返回检索重排诊断（test-2031 提测反馈补可观测），并按契约输出一行中文日志。
+   */
+  private async rerankWindow(
+    pool: SearchHit[],
+    pinDocs: Set<number>,
+    query: string,
+    timing: RetrievalDiagnosticsTiming,
+  ): Promise<RetrievalRerankDiagnostics> {
+    const t0 = performance.now();
+    const windowSize = rerankWindowSize();
+    const window = pool.slice(0, windowSize);
+    const head = window.filter((h) => pinDocs.has(h.doc));
+    const tail = window.filter((h) => !pinDocs.has(h.doc));
+    const diag: RetrievalRerankDiagnostics = {
+      enabled: this.rerankScorer !== null,
+      window: windowSize,
+      considered: tail.length,
+      skippedPinned: head.length,
+      applied: false,
+      reason: null,
+    };
+    if (!this.rerankScorer || pool.length === 0 || tail.length === 0) {
+      diag.reason = !this.rerankScorer ? '未接入重排打分器' : '窗口内无参与候选';
+      timing.rerank = null;
+      this.logRerank(diag, null);
+      return diag;
+    }
+    let scores: number[] | null;
+    try {
+      scores = await this.rerankScorer(query, tail.map((h) => this.docs[h.doc].text));
+    } catch (error) {
+      console.error('[sango] 重排打分异常（旁路，退回规则序）:', error);
+      diag.reason = '重排打分异常';
+      timing.rerank = performance.now() - t0;
+      this.logRerank(diag, timing.rerank);
+      return diag;
+    }
+    if (!scores || scores.length !== tail.length) {
+      diag.reason = '重排分数非法';
+      timing.rerank = performance.now() - t0;
+      this.logRerank(diag, timing.rerank);
+      return diag;
+    }
+    const list = scores;
+    const ranked = tail
+      .map((h, i) => ({ h, s: list[i] }))
+      .sort((a, b) => b.s - a.s) // 稳定排序：同分保持规则序
+      .map((x) => x.h);
+    const merged = [...head, ...ranked, ...pool.slice(windowSize)];
+    for (let i = 0; i < merged.length; i++) pool[i] = merged[i];
+    diag.applied = true;
+    timing.rerank = performance.now() - t0;
+    this.logRerank(diag, timing.rerank);
+    return diag;
+  }
+
+  /** 每请求一行中文日志（可观测：重排阶段 / 窗口 / 参与 / 降级原因；耗时=— 表示重排段未执行）。 */
+  private logRerank(diag: RetrievalRerankDiagnostics, elapsedMs: number | null): void {
+    const elapsed = elapsedMs === null ? '—' : `${elapsedMs.toFixed(1)}ms`;
+    const result = diag.applied ? '已按重排分改写池序' : `跳过（原因：${diag.reason}）`;
+    console.error(
+      `[sango] 检索重排（阶段：规则序并池之后、保证区不参与）：窗口=${diag.window} 参与=${diag.considered} 跳过置顶=${diag.skippedPinned} 耗时=${elapsed} 结果=${result}`,
+    );
+  }
+
+  /** 空结果早退 / 无命中路径的重排诊断默认值（重排段未执行：considered=0 / skippedPinned=0 / applied=false）。 */
+  private emptyRerankDiagnostics(): RetrievalRerankDiagnostics {
+    const enabled = this.rerankScorer !== null;
+    return {
+      enabled,
+      window: rerankWindowSize(),
+      considered: 0,
+      skippedPinned: 0,
+      applied: false,
+      reason: enabled ? '窗口内无参与候选' : '未接入重排打分器',
+    };
+  }
+
+  /** FEAT-A018：空事件路（表降级 / 未命中）时的最小 eventHit（degraded / normVersion 仍可读，groups 空）。 */
+  private emptyEventHit(): RetrievalEventHitDiagnostics {
+    return { degraded: eventsDegraded(), normVersion: eventsNormVersion(), groupCount: 0, groups: [] };
+  }
+
+  /**
+   * FEAT-A018 §5.2：命中事件组 → eventHit 明细。
+   * placedChunkIds = 实际进出参条目的事件组 chunk：L3 锚点小位点组按事件内序（语料序）；L1/L2 按重排后出参序
+   * （placedCount = placedChunkIds.length）。
+   */
+  private buildEventHit(
+    groups: MatchedEventGroup[],
+    hits: SearchHit[],
+    l3Segments: Map<string, number[]>,
+  ): RetrievalEventHitDiagnostics {
+    const rankOf = new Map<number, number>();
+    for (let i = 0; i < hits.length; i++) {
+      if (!rankOf.has(hits[i].doc)) rankOf.set(hits[i].doc, i);
+    }
+    return {
+      degraded: eventsDegraded(),
+      normVersion: eventsNormVersion(),
+      groupCount: groups.length,
+      groups: groups.map((g) => {
+        let placedDocs: number[];
+        if (g.type === 'L3') {
+          // L3 锚点组按事件内序（l3Segments 已按语料序）；仅保留进了出参的段
+          placedDocs = (l3Segments.get(g.eventId) ?? []).filter((d) => rankOf.has(d));
+        } else {
+          // L1/L2 按重排后出参序
+          placedDocs = this.chunkIdsToDocs(g.chunkIds)
+            .filter((d) => rankOf.has(d))
+            .sort((a, b) => (rankOf.get(a) as number) - (rankOf.get(b) as number));
+        }
+        const placedChunkIds = placedDocs.map((d) => this.docs[d].chunk_id);
+        return {
+          eventId: g.eventId,
+          eventName: g.eventName,
+          matchedAlias: g.matchedAlias,
+          type: g.type,
+          groupSize: g.groupSize,
+          placedCount: placedChunkIds.length,
+          placedChunkIds,
+        };
+      }),
+    };
+  }
+
+  /**
+   * FEAT-A018 §5.3：命中事件组相关 chunk 的文档下标集合（candidates[].sources 'event' 判定用）：
+   * L1/L2 = 组 chunk 引用；L3 = 锚点 ±N 小位点组（实际置顶段）。
+   */
+  private eventDocSetOf(groups: MatchedEventGroup[], l3Segments: Map<string, number[]>): Set<number> {
+    const docs = new Set<number>();
+    for (const g of groups) {
+      for (const d of this.chunkIdsToDocs(g.chunkIds)) docs.add(d);
+      if (g.type === 'L3') {
+        for (const d of l3Segments.get(g.eventId) ?? []) docs.add(d);
+      }
+    }
+    return docs;
+  }
+
+  /** FEAT-A018：空典故路（表降级 / 未命中）时的最小 allusionHit（degraded / normVersion 仍可读，groups 空）。 */
+  private emptyAllusionHit(): RetrievalAllusionHitDiagnostics {
+    return {
+      degraded: allusionsDegraded(),
+      normVersion: allusionsNormVersion(),
+      groupCount: 0,
+      groups: [],
+    };
+  }
+
+  /**
+   * FEAT-A018 §5.6：命中典故组 → allusionHit 明细（镜像 eventHit §5.2，典故无 L3）。
+   * placedChunkIds = 实际进出参条目的典故组 chunk，按重排后出参序（placedCount = placedChunkIds.length）。
+   */
+  private buildAllusionHit(
+    groups: MatchedAllusionGroup[],
+    hits: SearchHit[],
+  ): RetrievalAllusionHitDiagnostics {
+    const rankOf = new Map<number, number>();
+    for (let i = 0; i < hits.length; i++) {
+      if (!rankOf.has(hits[i].doc)) rankOf.set(hits[i].doc, i);
+    }
+    return {
+      degraded: allusionsDegraded(),
+      normVersion: allusionsNormVersion(),
+      groupCount: groups.length,
+      groups: groups.map((g) => {
+        const placedDocs = this.chunkIdsToDocs(g.chunkIds)
+          .filter((d) => rankOf.has(d))
+          .sort((a, b) => (rankOf.get(a) as number) - (rankOf.get(b) as number));
+        const placedChunkIds = placedDocs.map((d) => this.docs[d].chunk_id);
+        return {
+          allusionId: g.allusionId,
+          allusionName: g.allusionName,
+          matchedAlias: g.matchedAlias,
+          groupSize: g.groupSize,
+          placedCount: placedChunkIds.length,
+          placedChunkIds,
+        };
+      }),
+    };
+  }
+
+  /**
+   * FEAT-A018 §5.3：命中典故组相关 chunk 的文档下标集合（candidates[].sources 'allusion' 判定用）：
+   * 组 chunk 引用（典故无 L3 锚点扩展，镜像事件 L1/L2 口径）。
+   */
+  private allusionDocSetOf(groups: MatchedAllusionGroup[]): Set<number> {
+    const docs = new Set<number>();
+    for (const g of groups) {
+      for (const d of this.chunkIdsToDocs(g.chunkIds)) docs.add(d);
+    }
+    return docs;
+  }
+
+  /**
+   * 保证区排序策略：置顶命中（调用方传入 pinDocs = 死亡意图 ∪ 登场意图 ∪ L3 锚点段）整体靠前，
+   * 保证区内按段序策略、其余候选按加权分降序。段序语义当前仅由死亡意图派生（segPick：死因/凶手/地点/
+   * 时间/年龄/确认类取靠前段、事后追述类取靠后段、遗言类不打段序按加权分；登场 / L3 无段序语义，
+   * 走默认靠前段 = 语料序），新增带段序语义的意图在此扩展；非置顶请求 pinDocs 为空集，
+   * 退化为纯分数降序（与历史实现逐字节一致）。
+   */
+  private sortGuaranteedZone(pool: SearchHit[], pinDocs: Set<number>, segPick: 'earlier' | 'later' | 'none'): void {
+    pool.sort((a, b) => {
+      const ad = pinDocs.has(a.doc) ? 1 : 0;
+      const bd = pinDocs.has(b.doc) ? 1 : 0;
+      if (ad !== bd) return bd - ad;
+      if (ad === 1 && pinDocs.size > 1 && a.doc !== b.doc && segPick !== 'none') {
+        return segPick === 'later' ? b.doc - a.doc : a.doc - b.doc;
+      }
+      return b.score - a.score;
     });
   }
 
@@ -718,13 +1422,22 @@ export class SangoIndex {
         }
       : null;
     const combinedDocs = new Set(ctx.combined.map((h) => h.doc));
-    const pinnedChunkIds = [...ctx.deathHits]
+    const deathPinnedChunkIds = [...ctx.deathHits]
       .filter((d) => combinedDocs.has(d))
-      .map((d) => this.docs[d].chunkId);
+      .map((d) => this.docs[d].chunk_id);
+    const birthPinnedChunkIds = [...ctx.birthHits]
+      .filter((d) => combinedDocs.has(d))
+      .map((d) => this.docs[d].chunk_id);
     return {
       truncated: false,
       truncatedCount: 0,
-      query: { raw: ctx.raw, normalized: ctx.normalized, rewrites: ctx.rewrites, tokens: ctx.tokens },
+      query: {
+        raw: ctx.raw,
+        normalized: ctx.normalized,
+        rewrites: ctx.rewrites,
+        expansionHits: ctx.expansionHits,
+        tokens: ctx.tokens,
+      },
       env: {
         vectorScheme: degraded ? null : this.vecScheme === VEC_SCHEME_MODEL ? 'bge-m3' : null,
         degradedBm25Only: degraded,
@@ -738,19 +1451,27 @@ export class SangoIndex {
         lexicalHits: ctx.lexicalHits.size,
         vectorTop50: ctx.vectorTop.length,
         labelHits: ctx.tagHits.size,
-        mergedCandidates: ctx.combined.length,
+        mergedCandidates: ctx.threeWayCandidates,
         topN: ctx.hits.length,
         injected: null,
         cited: null,
       },
       timing: { ...ctx.timing },
+      rerank: ctx.rerank,
       candidates,
       nextRank,
       deathIntent: {
         detected: ctx.deathIntent !== null,
-        pinned: pinnedChunkIds.length > 0,
-        chunkIds: pinnedChunkIds,
+        pinned: deathPinnedChunkIds.length > 0,
+        chunkIds: deathPinnedChunkIds,
       },
+      birthIntent: {
+        detected: ctx.birthIntent,
+        pinned: birthPinnedChunkIds.length > 0,
+        chunkIds: birthPinnedChunkIds,
+      },
+      eventHit: ctx.eventHit,
+      allusionHit: ctx.allusionHit,
     };
   }
 
@@ -767,14 +1488,19 @@ export class SangoIndex {
     if (ctx.lexicalHits.has(d)) sources.push('lexical');
     if (vectorTopSet.has(d)) sources.push('vector');
     if (ctx.tagHits.has(d)) sources.push('label');
+    // FEAT-A018 §5.3：可选来源 'event' = 候选同时属某命中事件组（便于漏斗核对；非事件命中请求恒不加，与现状逐字节一致）。
+    if (ctx.eventDocSet.has(d)) sources.push('event');
+    // FEAT-A018 §5.3：可选来源 'allusion' = 候选同时属某命中典故组（镜像 'event'；非典故命中请求恒不加）。
+    if (ctx.allusionDocSet.has(d)) sources.push('allusion');
     // hitLabels：命中该 chunk 的标签原始文本（保序、去重）。判定口径与 tagPostings 构建 / tagHits 严格一致：
-    // 标签经同口径 normalize + tokenize，与 query 词元中长度 ≥ 2 的词元求交（单字词元不参与，同标签路由）。
+    // 复用 tagTokensOf（标签原文剥壳 token ∪ 命中键规范形 token，接口 §2.4），与 query 中长度 ≥ 2 的词元
+    // 求交（单字词元不参与，同标签路由）。
     // 跨主条目词经共享实体标签多挂命中后，同一标签词可能出现在多个主条目标签命中里，判定仍以原始标签文本为准。
     const hitLabels: string[] = [];
     if (ctx.tagHits.has(d)) {
       const qTokens = new Set(ctx.tokens.filter((t) => t.length >= 2));
       for (const tag of this.tagTextsByDoc[d] ?? []) {
-        const tagTokens = new Set(tokenize(entityNormalize(tag)));
+        const tagTokens = this.tagTokensOf(tag);
         let hit = false;
         for (const t of tagTokens) {
           if (qTokens.has(t)) {
@@ -787,11 +1513,12 @@ export class SangoIndex {
     }
     return {
       rank,
-      chunkId: doc.chunkId,
+      chunkId: doc.chunk_id,
       chapter: doc.chapter,
       title: doc.title,
       bm25: ctx.lexicalHits.has(d) ? round3(ctx.bm25[d]) : null,
-      bm25Norm: ctx.lexicalHits.has(d) ? ctx.bm25Norm[d] : null,
+      // 事件命中请求下并池重排的候选回传增强查询归一值（复算恒等式）；其余维持三路口径（未命中词法为 null）。
+      bm25Norm: ctx.bm25NormOverride?.get(d) ?? (ctx.lexicalHits.has(d) ? ctx.bm25Norm[d] : null),
       cosine: ctx.cosine ? ctx.cosine[d] : null,
       labelHit: ctx.tagHits.has(d),
       hitLabels,
@@ -802,23 +1529,25 @@ export class SangoIndex {
     };
   }
   /**
-   * 索引文档 → 出参条目：只保留契约字段（`id` / `text` / `chapter` / `title` / `type` /
-   * `segFrom` / `segTo` / `quoteBalanced` / `quotes`），丢弃索引内部结构（tokens / tf / len）；
+   * 索引文档 → 出参条目：语料 `chunks[]` 字段逐条展开 + 回级 `chapter` / `title`，
+   * 丢弃索引内部结构（tokens / tf / len）；
    * `chapter` / `title` 随条目逐条展开（召回可跨回，编排侧只能逐条渲染出处，且跨进程读不到语料目录）。
-   * `quotes` 按 bug-00010 契约瘦身：只回 `{ offset, len }`，引语文本由调用方按
-   * `text.slice(offset - 1, offset - 1 + len + 2)` 还原（= “ + 引语本体 + ”）。文本不做任何拼接。
    */
   private toEntry(d: Doc): SearchEntry {
+    return { ...this.chunkOut(d), chapter: d.chapter, title: d.title };
+  }
+
+  /** 语料字段出参：检索条目与整回原文共用同一字段集。 */
+  private chunkOut(d: Doc): CorpusChunk {
     return {
-      id: d.chunkId,
-      text: d.text,
-      chapter: d.chapter,
-      title: d.title,
+      chunk_id: d.chunk_id,
+      parent_id: d.parent_id,
+      seq_in_parent: d.seq_in_parent,
       type: d.type,
-      segFrom: d.segFrom,
-      segTo: d.segTo,
-      quoteBalanced: d.quoteBalanced,
-      quotes: d.quotes.map((q) => ({ offset: q.offset, len: q.text.length })),
+      role: d.role,
+      text: d.text,
+      char_count: d.char_count,
+      ...(d.group_id === undefined ? {} : { group_id: d.group_id }),
     };
   }
 
@@ -845,7 +1574,8 @@ export class SangoIndex {
   }
 
   private topKByCosine(cosine: Float64Array, k: number): number[] {
-    const idx = Array.from({ length: this.n }, (_, i) => i);
+    const idx: number[] = [];
+    for (let i = 0; i < this.n; i++) if (!this.nonRetrievable.has(i)) idx.push(i);
     idx.sort((a, b) => cosine[b] - cosine[a]);
     return idx.slice(0, k);
   }
@@ -866,13 +1596,7 @@ export class SangoIndex {
       title,
       prev: this.adjacentChapter(chapter - 1),
       next: this.adjacentChapter(chapter + 1),
-      chunks: chapterDocs.map((d) => ({
-        chunkId: d.chunkId,
-        text: d.text,
-        type: d.type,
-        segFrom: d.segFrom,
-        segTo: d.segTo,
-      })),
+      chunks: chapterDocs.map((d) => this.chunkOut(d)),
     };
   }
 

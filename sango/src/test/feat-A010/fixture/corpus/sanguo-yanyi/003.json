@@ -4,13 +4,13 @@
   "title": "议温明董卓叱丁原 馈金珠李肃说吕布",
   "chunks": [
     {
-      "id": "sanguo-yanyi:0003:c0001",
+      "chunk_id": "sanguo-yanyi:0003:p0001:c01",
+      "parent_id": "sanguo-yanyi:0003:p0001",
+      "seq_in_parent": 1,
+      "type": "prose",
+      "role": "body",
       "text": "吕布字奉先，勇而无谋，见利忘义。",
-      "type": "narration",
-      "segFrom": 1,
-      "segTo": 1,
-      "quoteBalanced": true,
-      "quotes": []
+      "char_count": 16
     }
   ]
 }

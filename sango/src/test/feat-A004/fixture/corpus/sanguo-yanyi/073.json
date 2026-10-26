@@ -4,34 +4,40 @@
   "title": "玄德进位汉中王　云长攻拔襄阳郡",
   "chunks": [
     {
-      "id": "sanguo-yanyi:0073:c0001",
+      "chunk_id": "sanguo-yanyi:0073:p0001:c01",
+      "parent_id": "sanguo-yanyi:0073:p0001",
+      "seq_in_parent": 1,
+      "type": "prose",
+      "role": "body",
       "text": "关羽镇守荆州。关羽闻知曹操退兵，关羽遂引兵取襄阳。关羽此来，曹操大惊。",
-      "type": "narration",
-      "segFrom": 1,
-      "segTo": 1,
-      "quoteBalanced": true,
-      "quotes": []
+      "char_count": 35
     },
     {
-      "id": "sanguo-yanyi:0073:c0002",
+      "chunk_id": "sanguo-yanyi:0073:p0005:c01",
+      "parent_id": "sanguo-yanyi:0073:p0005",
+      "seq_in_parent": 1,
+      "type": "prose",
+      "role": "body",
       "text": "瑾曰：“特来求结两家之好……请君侯思之。”云长勃然大怒曰：“吾虎女安肯嫁犬子乎！……”",
-      "type": "narration",
-      "segFrom": 5,
-      "segTo": 5,
-      "quoteBalanced": true,
-      "quotes": [
-        { "qid": "Q1", "text": "特来求结两家之好……请君侯思之。", "offset": 4, "speaker": "瑾" },
-        { "qid": "Q2", "text": "吾虎女安肯嫁犬子乎！……", "offset": 30, "speaker": "云长" }
-      ]
+      "char_count": 43
     },
     {
-      "id": "sanguo-yanyi:0073:c0003",
-      "text": "后人有诗赞曰：赤壁楼船扫地空，片帆先渡大江东。",
+      "chunk_id": "sanguo-yanyi:0073:p0006:c01",
+      "parent_id": "sanguo-yanyi:0073:p0006",
+      "seq_in_parent": 1,
       "type": "verse",
-      "segFrom": 6,
-      "segTo": 8,
-      "quoteBalanced": false,
-      "quotes": []
+      "role": "lead",
+      "text": "后人有诗赞曰：",
+      "char_count": 7
+    },
+    {
+      "chunk_id": "sanguo-yanyi:0073:p0006:c02",
+      "parent_id": "sanguo-yanyi:0073:p0006",
+      "seq_in_parent": 2,
+      "type": "verse",
+      "role": "body",
+      "text": "赤壁楼船扫地空，片帆先渡大江东。",
+      "char_count": 16
     }
   ]
 }

@@ -30,9 +30,7 @@
 | `query` | string | 是 | 检索关键词或句子，最小长度 1 |
 | `limit` | number | 否 | 返回条数，默认 5，最大 MAX_LIMIT |
 
-**输出**：结构化条目数组（`id` / `text` / `type` / `segFrom` / `segTo` / `quoteBalanced` / `quotes[]`，含回级 `chapter` / `title` 展开），**不返回拼接文本块、不含出处头**；出处与引用由总台服务端渲染，段号为内部字段、不下发展示。
-
-> **`quotes[]` 出参形态（bug-00010，2026-09-21）**：出参只回 `{ offset, len }`（引语文本由 `text` 切片还原：`text.slice(offset - 1, offset - 1 + len + 2)` = `“` + 引语 + `”`）。语料 JSON 仍是 `{ qid, text, offset, speaker }`（不重建）——**出参与语料 schema 已分叉**，改契约须对账 `docs/sango-corpus-spec.md` §5 与 `mcp-orchestrator/api/feat-A004-sango-classics-rag.md`「输出（命中）」。
+**输出**：结构化条目数组（`id` / `text` / `type` / `segFrom` / `segTo`，含回级 `chapter` / `title` 展开），**不返回拼接文本块、不含出处头**；出处与引用由总台服务端渲染，段号为内部字段、不下发展示。
 
 ---
 
@@ -41,7 +39,7 @@
 | 输入 | 返回 |
 |---|---|
 | 温酒斩华雄原文怎么写的 | 第 5 回相关段落 + 回目 |
-| 关羽拒绝孙权联姻怎么说的 | 第 73 回相关原文 + 引语 |
+| 关羽拒绝孙权联姻怎么说的 | 第 73 回相关原文 + 回目 |
 | 这句话出自哪一回 | 回目 |
 | 关羽和张飞什么关系 | 原文中的关系描述 |
 | 关羽过五关斩六将都是谁 | 原文中的六将列表 |

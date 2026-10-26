@@ -1,20 +1,23 @@
 /**
- * feat-A004 C4 活文档：sango-index 适配 chunks[]（schema v2）+ 出参结构化（去出处头）。
+ * feat-A004 C4 活文档：sango-index 按 schema v2 语料加载（chunks[]）+ 出参直出语料字段（去出处头）。
  *
  * 夹具：fixture/entity-table.json（FEAT-A016 单表小样本：曹操 P001 改写键 孟德 / 片段侧 阿瞒，
  * 关羽 P002 改写键 云长 / 片段侧 关公；bannedRewriteKeys=[关公]）；fixture/corpus/sanguo-yanyi/*.json
- * 为 schema v2（chunks[]），字段口径与接口文档
- * 「输出（命中）」及 docs/sango-corpus-spec.md §5 逐字一致；用夹具而非真实语料，是因为磁盘上的
- * 真实语料此刻仍是旧格式（segments[]），待语料重建（C5）后再补跑端到端验证。
- * 夹具另含 corpus/tags/event.json：c0001/c0002 打「人物之死-关羽之死」（c0002 另带
- * 「政治事件-关羽托孤」供遗言类问法测试），c0003 打「人物之死-魏延之死|政治事件-关羽入川」
+ * 为 schema v2（chunks[]，5 块：第 1 回 1 块 / 第 73 回 4 块，含 1 个引题块），字段口径与
+ * data/corpus/README.md「检索出参」逐字一致；用夹具而非真实语料，是为固定块序与标签位点，
+ * 端到端验证走真实语料。
+ * 夹具另含 corpus/tags/event.json：p0001:c01 / p0005:c01 打「人物之死-关羽之死」（p0005:c01 另带
+ * 「政治事件-关羽托孤」供遗言类问法测试），p0006:c02 打「人物之死-魏延之死|政治事件-关羽入川」
  * （他人死亡标签 + 提及关羽，验证强命中按人名词典而非文档粒度匹配）。
  * 意图分类见 search/intent.ts。
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { CHUNK_ROLES, CHUNK_TYPES, assertChunkKind } from '../../chunk-kind.ts';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { NO_HIT_TEXT, SangoIndex } from '../../search/sango-index.ts';
 import { matchDeathIntent } from '../../search/intent.ts';
@@ -24,7 +27,7 @@ import { tokenize } from '../../utils/text.ts';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const FIXTURE_DIR = path.join(__dirname, 'fixture');
 
-/** 夹具索引：4 个 chunk（第 1 回 1 个 / 第 73 回 3 个），无向量文件（降级纯 BM25）。 */
+/** 夹具索引：5 个 chunk（第 1 回 1 个 / 第 73 回 4 个，含 1 个引题块），无向量文件（降级纯 BM25）。 */
 function loadFixtureIndex(): SangoIndex {
   const index = new SangoIndex(FIXTURE_DIR);
   index.load();
@@ -55,23 +58,23 @@ function captureTool(index: SangoIndex): {
 
 test('① 语料按 chunks[] 加载：chunk 数与回级字段（chapter / title）可供服务端渲染出处', () => {
   const index = loadFixtureIndex();
-  assert.equal(index.n, 4);
-  const doc = index.docs.find((d) => d.chunkId === 'sanguo-yanyi:0073:c0002');
-  assert.ok(doc, '应加载到第 73 回第 2 个 chunk');
+  assert.equal(index.n, 5);
+  const doc = index.docs.find((d) => d.chunk_id === 'sanguo-yanyi:0073:p0005:c01');
+  assert.ok(doc, '应加载到第 73 回 p0005 段的块');
   assert.equal(doc.chapter, 73);
   assert.equal(doc.title, '玄德进位汉中王　云长攻拔襄阳郡');
-  assert.equal(doc.segFrom, 5);
-  assert.equal(doc.segTo, 5);
+  assert.equal(doc.parent_id, 'sanguo-yanyi:0073:p0005');
+  assert.equal(doc.seq_in_parent, 1);
 });
 
-test('② 出参条目字段与接口文档逐字一致：id / text / chapter / title / type / segFrom / segTo / quoteBalanced / quotes', async () => {
+test('② 出参条目字段与接口文档逐字一致：chunk_id / parent_id / seq_in_parent / type / role / char_count / text + 回级 chapter / title（字段全集）', async () => {
   const index = loadFixtureIndex();
   const { entries } = await index.search('关羽', 5);
   assert.ok(entries.length > 0);
   for (const entry of entries) {
     assert.deepEqual(
       Object.keys(entry).sort(),
-      ['chapter', 'id', 'quoteBalanced', 'quotes', 'segFrom', 'segTo', 'text', 'title', 'type'],
+      ['chapter', 'char_count', 'chunk_id', 'parent_id', 'role', 'seq_in_parent', 'text', 'title', 'type'],
     );
   }
 });
@@ -94,47 +97,32 @@ test('③ 条目文本内无出处头、无回目、无段号、无类型、无�
 test('④ 按相关度降序返回，limit 生效', async () => {
   const index = loadFixtureIndex();
   const { entries: all } = await index.search('关羽', 5);
-  assert.equal(all.length, 3, '第 73 回中词法命中 2 个 chunk（云长经别名归一化）+ 标签路命中 1 个（关羽入川）');
-  assert.equal(all[0].id, 'sanguo-yanyi:0073:c0001', '相关度更高者在前');
+  assert.equal(all.length, 3, '第 73 回中词法命中 2 个 chunk（云长经索引侧双写覆盖出 关羽 token）+ 标签路命中 1 个（关羽入川）');
+  assert.equal(all[0].chunk_id, 'sanguo-yanyi:0073:p0001:c01', '相关度更高者在前');
   assert.equal((await index.search('关羽', 1)).entries.length, 1);
 });
 
-test('⑤ quotes[] 字段（offset / len）与契约一致，切片口径可从 text 还原引语', async () => {
+test('⑤ 出参字段全集恒定：仅为检索条目七字段，无冗余字段', async () => {
   const index = loadFixtureIndex();
   const entry = (await index.search('瑾曰', 1)).entries[0];
-  assert.equal(entry.id, 'sanguo-yanyi:0073:c0002');
-  assert.deepEqual(entry.quotes.map((q) => q.offset), [4, 30]);
-  assert.deepEqual(entry.quotes.map((q) => q.len), [16, 12]);
-  assert.deepEqual(
-    entry.quotes.map((q) => Object.keys(q).sort()),
-    [['len', 'offset'], ['len', 'offset']],
-    '出参引语只回 offset / len（不含 qid / text / speaker）',
-  );
-  assert.deepEqual(
-    entry.quotes.map((q) => entry.text.slice(q.offset - 1, q.offset - 1 + q.len + 2)),
-    ['“特来求结两家之好……请君侯思之。”', '“吾虎女安肯嫁犬子乎！……”'],
-    'text.slice(offset - 1, offset - 1 + len + 2) 应等于 “引语本体”',
-  );
-  for (const quote of entry.quotes) {
-    const sliced = entry.text.slice(quote.offset - 1, quote.offset - 1 + quote.len + 2);
-    assert.equal(
-      sliced.length,
-      quote.len + 2,
-      '切片长度应为引语本体字数 + 两侧引号',
-    );
-    assert.ok(sliced.startsWith('“') && sliced.endsWith('”'), `切片应含成对引号：${sliced}`);
-  }
+  assert.equal(entry.chunk_id, 'sanguo-yanyi:0073:p0005:c01');
+  assert.deepEqual(Object.keys(entry).sort(), ['chapter', 'char_count', 'chunk_id', 'parent_id', 'role', 'seq_in_parent', 'text', 'title', 'type']);
 });
 
-test('⑥ 跨段 chunk：segFrom != segTo，type / quoteBalanced / quotes 原样承载', async () => {
+test('⑥ 引题块不进检索候选 + 同段内块序 seq_in_parent：verse 正文块直出类型 / 块序（字段全集恒定）', async () => {
   const index = loadFixtureIndex();
   const entry = (await index.search('赤壁楼船', 1)).entries[0];
-  assert.equal(entry.id, 'sanguo-yanyi:0073:c0003');
-  assert.equal(entry.segFrom, 6);
-  assert.equal(entry.segTo, 8);
+  assert.equal(entry.chunk_id, 'sanguo-yanyi:0073:p0006:c02', '命中同段内第 2 块');
+  assert.equal(entry.parent_id, 'sanguo-yanyi:0073:p0006');
+  assert.equal(entry.seq_in_parent, 2);
   assert.equal(entry.type, 'verse');
-  assert.equal(entry.quoteBalanced, false);
-  assert.deepEqual(entry.quotes, []);
+  assert.deepEqual(Object.keys(entry).sort(), ['chapter', 'char_count', 'chunk_id', 'parent_id', 'role', 'seq_in_parent', 'text', 'title', 'type']);
+  // 同段引题块（p0006:c01「后人有诗赞曰：」role=lead）照常出块加载进 docs，但不进检索候选（README 口径）
+  const lead = index.docs.find((d) => d.chunk_id === 'sanguo-yanyi:0073:p0006:c01');
+  assert.ok(lead, '引题块应加载进 docs（照常出块）');
+  assert.equal(lead.role, 'lead');
+  const hits = (await index.search('后人有诗赞曰', 5)).entries;
+  assert.ok(!hits.some((e) => e.chunk_id === 'sanguo-yanyi:0073:p0006:c01'), '引题块不得进检索候选');
 });
 
 test('⑦ 无命中：检索层返回空数组，由工具层转固定话术「未召回任何原文段落」', async () => {
@@ -151,11 +139,8 @@ test('⑧ 工具出参：命中为 JSON 序列化条目数组，无命中为固�
   const entries = JSON.parse(hit.content[0].text) as Array<Record<string, unknown>>;
   assert.ok(Array.isArray(entries), '命中应为结构化条目数组');
   assert.equal(entries.length, 1);
-  assert.equal(entries[0].id, 'sanguo-yanyi:0073:c0002');
-  assert.deepEqual(entries[0].quotes, [
-    { offset: 4, len: 16 },
-    { offset: 30, len: 12 },
-  ]);
+  assert.equal(entries[0].chunk_id, 'sanguo-yanyi:0073:p0005:c01');
+  assert.deepEqual(Object.keys(entries[0]).sort(), ['chapter', 'char_count', 'chunk_id', 'parent_id', 'role', 'seq_in_parent', 'text', 'title', 'type']);
   const miss = await callTool({ source: 'sanguo-yanyi', query: '鹅鹅鹅曲项向天歌', limit: 5 });
   assert.equal(miss.content[0].text, NO_HIT_TEXT);
 });
@@ -228,38 +213,38 @@ test('⑬ 死亡意图强命中：死亡类问法命中死亡标签 chunk 置顶
   const { entries: death } = await index.search('关羽是怎么死的', 5);
   assert.ok(death.length >= 2);
   assert.deepEqual(
-    death.slice(0, 2).map((e) => e.id),
-    ['sanguo-yanyi:0073:c0001', 'sanguo-yanyi:0073:c0002'],
+    death.slice(0, 2).map((e) => e.chunk_id),
+    ['sanguo-yanyi:0073:p0001:c01', 'sanguo-yanyi:0073:p0005:c01'],
     '关羽死亡标签 chunk 置顶且按文档序（死因类取靠前段）',
   );
   assert.ok(
-    !death.slice(0, 2).some((e) => e.id === 'sanguo-yanyi:0073:c0003'),
+    !death.slice(0, 2).some((e) => e.chunk_id === 'sanguo-yanyi:0073:p0006:c02'),
     '他人死亡标签（人物之死-魏延之死）不得混入关羽死亡强命中',
   );
-  assert.equal(death[0].id, (await index.search('关羽', 5)).entries[0].id, '死因类强命中不改变非死亡问法的首选（同为 c0001）');
+  assert.equal(death[0].chunk_id, (await index.search('关羽', 5)).entries[0].chunk_id, '死因类强命中不改变非死亡问法的首选（同为 0073:p0001:c01）');
 });
 
 test('⑭ 事后类问法同名死亡标签多 chunk：按文档序取靠后段优先（死因段在前、追述/续事段在后）', async () => {
   const index = loadFixtureIndex();
   const { entries } = await index.search('关羽死后怎样', 5);
   assert.ok(entries.length > 0);
-  assert.equal(entries[0].id, 'sanguo-yanyi:0073:c0002', '「死后怎样」应优先返回 c0002（更靠后的续事段）');
+  assert.equal(entries[0].chunk_id, 'sanguo-yanyi:0073:p0005:c01', '「死后怎样」应优先返回 0073:p0005:c01（更靠后的续事段）');
 });
 
 test('⑮ 死亡强命中按人名词典匹配：他人死亡标签（魏延之死）不劫持关羽问法，反之亦然', async () => {
   const index = loadFixtureIndex();
   const { entries: wei } = await index.search('魏延怎么死的', 3);
-  assert.equal(wei[0].id, 'sanguo-yanyi:0073:c0003', '魏延死亡问法应命中魏延之死标签 chunk');
+  assert.equal(wei[0].chunk_id, 'sanguo-yanyi:0073:p0006:c02', '魏延死亡问法应命中魏延之死标签 chunk');
   const { entries: guan } = await index.search('关羽是怎么死的', 3);
-  assert.ok(!guan.slice(0, 2).some((e) => e.id === 'sanguo-yanyi:0073:c0003'), '关羽问法不应命中魏延之死 chunk');
+  assert.ok(!guan.slice(0, 2).some((e) => e.chunk_id === 'sanguo-yanyi:0073:p0006:c02'), '关羽问法不应命中魏延之死 chunk');
 });
 
 test('⑯ 临终遗言类问法：优先命中该人物的托孤/遗言标签段，无遗言段时退回死亡段', async () => {
   const index = loadFixtureIndex();
   const { entries: guan } = await index.search('关羽临终说了什么', 3);
-  assert.equal(guan[0].id, 'sanguo-yanyi:0073:c0002', '遗言问法应命中「关羽托孤」段（c0002）而非纯死亡段（c0001）');
+  assert.equal(guan[0].chunk_id, 'sanguo-yanyi:0073:p0005:c01', '遗言问法应命中「关羽托孤」段（0073:p0005:c01）而非纯死亡段（0073:p0001:c01）');
   const { entries: wei } = await index.search('魏延临终说了什么', 3);
-  assert.equal(wei[0].id, 'sanguo-yanyi:0073:c0003', '无遗言标签的人物退回死亡段（魏延之死）');
+  assert.equal(wei[0].chunk_id, 'sanguo-yanyi:0073:p0006:c02', '无遗言标签的人物退回死亡段（魏延之死）');
 });
 
 test('⑰ 索引剥壳（feat-A014）：tagPostings 只入库剥离类型信息后的文本（人物之死-关羽之死 → 关羽，政治事件-关羽托孤 → 关羽托孤）', () => {
@@ -270,7 +255,7 @@ test('⑰ 索引剥壳（feat-A014）：tagPostings 只入库剥离类型信息�
     tagTextsByDoc: string[][];
   };
   // 类型信息 bigram 一律不进 tagPostings：人物 / 物之 / 之死 / 之生 / 登场 / 政治 / 治事 / 事件
-  const docOfTest = new Map(index.docs.map((d, i) => [d.chunkId, i]));
+  const docOfTest = new Map(index.docs.map((d, i) => [d.chunk_id, i]));
   for (const bigram of ['人物', '物之', '之死', '之生', '登场', '政治', '治事', '事件']) {
     assert.equal(internals.tagPostings.get(bigram) ?? 0, 0, `类型 bigram「${bigram}」不应进 tagPostings`);
   }
@@ -281,7 +266,7 @@ test('⑰ 索引剥壳（feat-A014）：tagPostings 只入库剥离类型信息�
   // 「关羽」来自 c0001 关羽之死 / c0002 关羽之死+关羽托孤 / c0003 关羽入川 → 3 个文档
   assert.equal(internals.tagPostings.get('关羽')?.length, 3, '剥壳后「关羽」应命中 3 个标签文档');
   // 原始标签文本原样保留（hitLabels 回读基础，剥壳只作用于倒排）
-  const c0002 = docOfTest.get('sanguo-yanyi:0073:c0002') as number;
+  const c0002 = docOfTest.get('sanguo-yanyi:0073:p0005:c01') as number;
   assert.deepEqual(
     internals.tagTextsByDoc[c0002],
     ['人物之死-关羽之死', '政治事件-关羽托孤'],
@@ -292,7 +277,7 @@ test('⑰ 索引剥壳（feat-A014）：tagPostings 只入库剥离类型信息�
 test('⑱ 剥壳后 hitLabels 仍回读原始标签文本（含类型信息原文），labelHit 标签路命中不因剥壳变化', async () => {
   const index = loadFixtureIndex();
   const { diagnostics } = await index.search('关羽', 5, { diagnostics: true });
-  const cand = diagnostics?.candidates.find((c: { chunkId: string }) => c.chunkId === 'sanguo-yanyi:0073:c0002');
+  const cand = diagnostics?.candidates.find((c: { chunkId: string }) => c.chunkId === 'sanguo-yanyi:0073:p0005:c01');
   assert.ok(cand, 'c0002 应在候选诊断中');
   assert.equal(cand.labelHit, true, 'c0002 标签路命中（关羽托孤）');
   assert.deepEqual(
@@ -304,39 +289,86 @@ test('⑱ 剥壳后 hitLabels 仍回读原始标签文本（含类型信息原�
 
 test('⑲ 死亡年龄类问法（death_age）：死亡段与遗言/托孤段一并置顶，limit=10 内均可及', async () => {
   const index = loadFixtureIndex();
-  // fixture 等价 0085:c0011（死亡段，人物之死-关羽之死）+ 0085:c0013（遗言/遗诏段，关羽托孤）：
-  // 问句「刘备死的时候多少岁」在真实语料中死亡段 0085:c0011 须进 top10，此处以夹具的关羽死亡段验证同口径。
+  // fixture 同口径映射真实语料：死亡段（人物之死-关羽之死）+ 遗言/托孤段（关羽托孤）一并置顶，
+  // 死亡年龄类问法（真实语料如「刘备死的时候多少岁」对应 0085 回）两段均须进 top10，此处以夹具验证同口径。
   const { entries } = await index.search('关羽死的时候多少岁', 10);
-  assert.equal(entries[0].id, 'sanguo-yanyi:0073:c0001', '死亡段 0073:c0001 置顶第一');
-  assert.equal(entries[1].id, 'sanguo-yanyi:0073:c0002', '遗言/托孤段 0073:c0002 同组置顶（年龄事实段与死亡段一并可及）');
-  assert.ok(entries.slice(0, 10).some((e) => e.id === 'sanguo-yanyi:0073:c0001'), 'limit=10 内死亡段可及');
+  assert.equal(entries[0].chunk_id, 'sanguo-yanyi:0073:p0001:c01', '死亡段 0073:p0001:c01 置顶第一');
+  assert.equal(entries[1].chunk_id, 'sanguo-yanyi:0073:p0005:c01', '遗言/托孤段 0073:p0005:c01 同组置顶（年龄事实段与死亡段一并可及）');
+  assert.ok(entries.slice(0, 10).some((e) => e.chunk_id === 'sanguo-yanyi:0073:p0001:c01'), 'limit=10 内死亡段可及');
 });
 
-test('⑳ A016 双侧替换：rewriteKeys 在 query 侧 embed 前生效（孟德 → 曹操），fragmentOnly 不参与 query 改写（关公 保持原文）', async () => {
+test('⑳ A016 检索侧不改写 + 索引侧双写：孟德 原文入检索、expansionHits 报告 孟德→曹操；fragmentOnly 同样只双写不改写', async () => {
   const index = loadFixtureIndex();
   const { diagnostics } = await index.search('孟德', 5, { diagnostics: true });
   assert.ok(diagnostics);
   assert.equal(diagnostics.query.raw, '孟德');
-  assert.equal(diagnostics.query.normalized, '曹操', 'rewriteKeys 替换：孟德 → 曹操（人物行级）');
+  assert.equal(diagnostics.query.normalized, '孟德', '检索侧不改写：query 原文入检索（接口 §2.2）');
+  assert.deepEqual(diagnostics.query.rewrites, [], 'rewrites 恒 []');
+  assert.deepEqual(
+    diagnostics.query.expansionHits,
+    [{ from: '孟德', to: '曹操' }],
+    'expansionHits = 原文命中 rewriteKeys → 规范形（索引侧已双写覆盖）',
+  );
   const noDiag = await index.search('关公', 5);
-  assert.ok(noDiag.entries.length > 0, 'fragmentOnly 词（关公）原文检索仍可命中 073:c0002（云长段原文无 关公，命中来自词法共现/标签路）');
+  assert.ok(noDiag.entries.length > 0, 'fragmentOnly 词（关公）原文检索仍可命中 073:p0005:c01（命中来自词法共现/标签路）');
   const identity = await index.search('阿瞒', 5, { diagnostics: true });
-  assert.equal(identity.diagnostics?.query.normalized, '阿瞒', 'fragmentOnly（阿瞒）不参与 query 改写');
+  assert.equal(identity.diagnostics?.query.normalized, '阿瞒', '检索侧不改写：fragmentOnly 原文照入');
+  assert.deepEqual(
+    identity.diagnostics?.query.expansionHits,
+    [{ from: '阿瞒', to: '曹操' }],
+    'fragmentOnly 也进 expansionHits 报告（只报告不改写）',
+  );
 });
 
-test('㉑ A016 片段侧双写（fragmentOnly）：原文命中追加写入规范形 token，df 略升、dl 不重算', async () => {
+test('㉑ A016 索引侧双写（rewriteKeys 与 fragmentOnly 同口径）：原文命中追加规范形 token，df 略升、dl 不重算', async () => {
   const index = loadFixtureIndex();
   const internals = index as unknown as { postings: Map<string, Array<{ doc: number; tf: number }>> };
-  const doc0 = index.docs.find((d) => d.chunkId === 'sanguo-yanyi:0001:c0001');
-  assert.ok(doc0, '第 1 回 c0001 已加载');
-  // 001 文本「曹操字孟德，小字阿瞒。曹操少有才名，曹操任侠放荡。阿瞒者，操之小字也。」归一化后：
-  // 原文 曹操 x3 + 孟德替换 1 = 4，阿瞒 2 处逐处双写追加 2 = tf 6（接口 §2.3 逐处；once-per-doc 则为 5）。
-  // doc.len 仍为原文归一化 token 数（含双写前），双写只增倒排、不改 dl（接口 §2.3）。
+  const doc0 = index.docs.find((d) => d.chunk_id === 'sanguo-yanyi:0001:p0004:c01');
+  assert.ok(doc0, '第 1 回 p0004:c01 已加载');
+  // 001 原文「曹操字孟德，小字阿瞒。曹操少有才名，曹操任侠放荡。阿瞒者，操之小字也。」：
+  // 原文 曹操 x3 + 孟德（rewriteKey）双写 1 处 + 阿瞒（fragmentOnly）双写 2 处 = tf 6（接口 §2.3 逐处；
+  // once-per-doc 则为 5）。规范形 曹操 的 df 因双写略升。
+  // doc.len 仍为原文 token 数（双写只增倒排条目、不改 dl，接口 §2.3）。
   const c001 = internals.postings.get('曹操')?.find((p) => p.doc === index.docs.indexOf(doc0));
-  assert.ok(c001, '\u201c曹操\u201d 应在 c0001 的 postings 中');
-  assert.equal(c001.tf, 6, '原文 3 + 孟德替换 1 + 阿瞒双写 2 处 = 6（逐处双写生效；once-per-doc 则为 5）');
-  const normText = '曹操字曹操，小字阿瞒。曹操少有才名，曹操任侠放荡。阿瞒者，操之小字也。';
-  assert.equal(doc0.len, tokenize(normText).length, 'doc.len = 原文归一化 token 数（双写不重算 dl）');
+  assert.ok(c001, '\u201c曹操\u201d 应在 p0004:c01 的 postings 中');
+  assert.equal(c001.tf, 6, '原文 曹操 x3 + 孟德双写 1 + 阿瞒双写 2 = 6（逐处双写生效；once-per-doc 则为 5）');
+  const rawText = '曹操字孟德，小字阿瞒。曹操少有才名，曹操任侠放荡。阿瞒者，操之小字也。';
+  assert.equal(doc0.len, tokenize(rawText).length, 'doc.len = 原文 token 数（双写不重算 dl）');
   const { entries } = await index.search('曹操', 5);
   assert.deepEqual(entries.map((e) => e.chapter).sort(), [1, 73], '曹操 跨回召回不受双写影响（第 1 回 + 第 73 回）');
+});
+
+test('㉒ 取值单一来源：出参 type / role 只落在 CHUNK_TYPES / CHUNK_ROLES 内（枚举源 src/chunk-kind.ts）', async () => {
+  const index = loadFixtureIndex();
+  const { entries } = await index.search('关羽', 5);
+  assert.ok(entries.length > 0);
+  for (const entry of entries) {
+    assert.ok((CHUNK_TYPES as readonly string[]).includes(entry.type), `type 应落枚举内：${entry.type}`);
+    assert.ok((CHUNK_ROLES as readonly string[]).includes(entry.role), `role 应落枚举内：${entry.role}`);
+  }
+});
+
+test('㉓ 表外取值终止启动：语料 type 不在枚举内时 load() 抛错（契约变化不静默透传）', () => {
+  assert.throws(() => assertChunkKind('小说', 'body', 'sanguo-yanyi:0001:p0001:c01'), /取值非法/);
+  assert.throws(() => assertChunkKind('prose', '旁白', 'sanguo-yanyi:0001:p0001:c01'), /取值非法/);
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'sango-bad-kind-'));
+  try {
+    fs.mkdirSync(path.join(dir, 'corpus', 'sanguo-yanyi'), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, 'corpus', 'sanguo-yanyi', '001.json'),
+      JSON.stringify({
+        source: 'sanguo-yanyi',
+        chapter: 1,
+        title: '宴桃园豪杰三结义 斩黄巾英雄首立功',
+        chunks: [
+          { chunk_id: 'sanguo-yanyi:0001:p0001:c01', parent_id: 'sanguo-yanyi:0001:p0001', seq_in_parent: 1, type: '小说', role: 'body', text: '甲', char_count: 1 },
+        ],
+      }),
+      'utf8',
+    );
+    const bad = new SangoIndex(dir);
+    assert.throws(() => bad.load(), /取值非法/, '表外取值须终止启动');
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
 });

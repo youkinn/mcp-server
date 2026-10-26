@@ -1,7 +1,9 @@
 /**
  * FEAT-A016 检索侧回测证据脚本（验收 3 / 5；零 LLM = 检索侧评测，非批量 LLM 调用）。
  *
- * 验收 3：换说法 query（右目）与规范形 query（右眼）各自 search top10 证据段集合相同。
+ * 验收 3（09-29 bug-00046 口径修订，接口 §6）：检索侧不改写 query；换说法「右目」与规范形「右眼」两问的
+ *   top10 均须命中同一证据段（第 18 回拔矢啖睛段 0018:c0014），且 top10 交集 ≥ 9/10。旧「top10 集合完全
+ *   相等」不再适用：两问 token 集天然不同，等价写法由索引侧双写覆盖（top10Same 保留为参考读数）。
  * 验收 5：「五关斩六将」与「过五关斩六将」均能在 top10 召回第 27 回同一段落（证据段同一锚）。
  * 基线6：bug-00037「刘备登基后，张飞被封为什么」无标签机制下不召回 0081:c0002（检索侧基线记录，
  *         拒答由编排层护栏承接，见 mcp-orchestrator ㉕ 负例回归）。
@@ -41,11 +43,23 @@ async function main() {
   const r3b = await top10(index, q3b);
   const setA = new Set(r3a.ids);
   const setB = new Set(r3b.ids);
+  /** 验收 3 证据段：第 18 回「拔矢啖睛」段（夏侯惇右目/右眼问句的答案段）。 */
+  const EVIDENCE_C3 = 'sanguo-yanyi:0018:c0014';
+  const shared3 = r3a.ids.filter((x) => setB.has(x));
   const acc3 = {
     queryA: q3a,
     queryB: q3b,
+    // 检索侧不改写（09-29 定案）：检索用文本 = 原文；normalize 仅供缓存侧 / 诊断（此处留作参考）
+    retrievalTextA: q3a,
+    retrievalTextB: q3b,
     normalizedA: normalize(q3a),
     normalizedB: normalize(q3b),
+    evidenceChunk: EVIDENCE_C3,
+    evidenceInTop10A: r3a.ids.includes(EVIDENCE_C3),
+    evidenceInTop10B: r3b.ids.includes(EVIDENCE_C3),
+    sharedCount: shared3.length,
+    shared: shared3,
+    // 旧口径参考值（集合完全相等）——新口径下不再作为通过判据
     top10Same: setA.size === setB.size && [...setA].every((x) => setB.has(x)),
     onlyInA: r3a.ids.filter((x) => !setB.has(x)),
     onlyInB: r3b.ids.filter((x) => !setA.has(x)),
@@ -71,7 +85,7 @@ async function main() {
     top10B: r5b.detail,
   };
 
-  const ok3 = acc3.top10Same;
+  const ok3 = acc3.evidenceInTop10A && acc3.evidenceInTop10B && acc3.sharedCount >= 9;
   // 基线6（bug-00037 终态记录，非通过项）：「刘备登基后，张飞被封为什么」在无标签机制下原文问法
   // top10 不召回 0081:c0002——实测去标签后（含登基→登宝位/章武元年/即皇帝位全部归一化变体）答案段
   // 连 top50 都进不去，检索侧无「不引入噪声」的解法；该类问句由编排层护栏「零支撑/错位支撑 → 拒答」
@@ -89,7 +103,10 @@ async function main() {
   const evidence = { normVersion: normVersion(), rows: rowsCount(), rewriteKeys: rewriteKeyCount(), acceptance3: acc3, acceptance5: acc5, baseline6 };
   mkdirSync(path.dirname(OUT_FILE), { recursive: true });
   writeFileSync(OUT_FILE, JSON.stringify(evidence, null, 2), "utf8");
-  console.log(`[a016-acceptance] 验收3 top10集合相同=${ok3}（normalized: ${acc3.normalizedA} == ${acc3.normalizedB}）`);
+  console.log(
+    `[a016-acceptance] 验收3 证据段 ${EVIDENCE_C3} 两侧 top10 命中=${acc3.evidenceInTop10A}/${acc3.evidenceInTop10B}，` +
+      `top10 交集=${acc3.sharedCount}/10（旧口径集合相等=${acc3.top10Same} 仅参考）ok=${ok3}`,
+  );
   console.log(`[a016-acceptance] 验收5 第27回同一锚=${JSON.stringify(sameCh27)} ok=${ok5}`);
   console.log(`[a016-acceptance] 基线6 0081:c0002 in top10=${baseline6.inTop10}（期望 false：检索侧不召回，拒答由编排层护栏承接）`);
   console.log(`[a016-acceptance] 证据落盘：${OUT_FILE}`);

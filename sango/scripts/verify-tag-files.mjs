@@ -2,13 +2,12 @@
 /**
  * feat-A014 标签体系数据侧静态校验（零 LLM）。
  *
- * 对 sango/data/corpus/tags/{event,story,duel}.json 做全量静态断言：
+ * 对 sango/data/corpus/tags/{event,duel}.json 做全量静态断言：
  *   - chunkId 必须存在于语料（死键 = 0）
  *   - event.json 只含 人物之生-XX登场 / 人物之死-XX之死 两类，多标签 | 分隔且不重复
  *   - 同一人物只记首次登场（无重复登场标签）
  *   - 登场/之死/单挑人名须用 alias 规范名（alias.json 覆盖到的人，须等于 build_alias.py
  *     PERSONS 表登记的规范名；未覆盖者不校验）
- *   - story.json 典故名无前缀、无解释、无句号/标点（豁免「既生瑜，何生亮」）
  *   - duel.json 格式须为 武将单挑-武将A-武将B，A、B 不同人
  *
  * 只断言数据文件本身，不做检索侧断言。
@@ -30,11 +29,8 @@ const ENTITY_TABLE_FILE = path.join(path.resolve(HERE, '..', 'data'), 'entity-ta
 const BIRTH_RE = /^人物之生-(.+)登场$/;
 const DEATH_RE = /^人物之死-(.+)之死$/;
 const DUEL_RE = /^武将单挑-([^-]+)-([^-]+)$/;
-const STORY_PUNCT_RE = /[，。、；：？！“”‘’「」『』《》〈〉【】（）…·—–-]/;
-const STORY_EXEMPT = new Set(['既生瑜，何生亮']);
-const EVENT_COUNT_EXPECT = { birth: 135, death: 336, total: 471, entries: 354 };
-const STORY_ENTRIES_EXPECT = 334;
-const DUEL_ENTRIES_EXPECT = 39;
+const EVENT_COUNT_EXPECT = { birth: 141, death: 334, total: 475, entries: 344 };
+const DUEL_ENTRIES_EXPECT = 35;
 
 let failures = 0;
 let checks = 0;
@@ -59,7 +55,7 @@ function loadCorpus() {
   const files = fs.readdirSync(CORPUS_DIR).filter((f) => f.endsWith('.json'));
   for (const f of files) {
     const doc = JSON.parse(fs.readFileSync(path.join(CORPUS_DIR, f), 'utf8'));
-    for (const ch of doc.chunks) chunks.set(ch.id, ch.text);
+    for (const ch of doc.chunks) chunks.set(ch.chunk_id, ch.text);
   }
   return chunks;
 }
@@ -140,34 +136,6 @@ section('event.json');
     `生 ${EVENT_COUNT_EXPECT.birth} / 死 ${EVENT_COUNT_EXPECT.death} / 总 ${EVENT_COUNT_EXPECT.total}（实际 ${birth} / ${death} / ${birth + death}）`,
   );
   assert(badNames.length === 0, `登场/之死人名均为 alias 规范名` + (badNames.length ? `（命中：${badNames.join('、')}）` : '（未命中别名）'));
-}
-
-section('story.json');
-{
-  const data = JSON.parse(fs.readFileSync(path.join(TAG_DIR, 'story.json'), 'utf8'));
-  const keys = Object.keys(data);
-  const names = new Set();
-
-  assert(keys.length === STORY_ENTRIES_EXPECT, `条目数 = ${STORY_ENTRIES_EXPECT}（实际 ${keys.length}）`);
-  for (const key of keys) {
-    assert(corpus.has(key), `chunkId 在语料中：${key}`);
-    const tags = data[key].split('|');
-    assert(new Set(tags).size === tags.length, `chunk 内无重复典故名：${key}`);
-    for (const name of tags) {
-      names.add(name);
-      assert(name.length > 0, `典故名非空：${key}`);
-      assert(!/^(典故|成语|俗语)-/.test(name), `典故名无前缀：${key} => ${name}`);
-      assert(
-        STORY_EXEMPT.has(name) || !STORY_PUNCT_RE.test(name),
-        `典故名无标点（豁免「既生瑜，何生亮」）：${key} => ${name}`,
-      );
-      assert(
-        !/^人物之(生|死)-/.test(name) && !/^武将单挑-/.test(name),
-        `典故名不混入事件/单挑格式：${key} => ${name}`,
-      );
-    }
-  }
-  assert(names.size > 0, `唯一典故名 ${names.size} 个（正值）`);
 }
 
 section('duel.json');

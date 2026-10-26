@@ -1,0 +1,25 @@
+{
+ "source": "sanguo-yanyi",
+ "chapter": 2,
+ "title": "第二回 试设计",
+ "chunks": [
+  {
+   "chunk_id": "sanguo-yanyi:0002:p0001:c01",
+   "parent_id": "sanguo-yanyi:0002:p0001",
+   "seq_in_parent": 1,
+   "type": "prose",
+   "role": "body",
+   "text": "戊己庚辛；辛壬癸甲。",
+   "char_count": 10
+  },
+  {
+   "chunk_id": "sanguo-yanyi:0002:p0001:c02",
+   "parent_id": "sanguo-yanyi:0002:p0001",
+   "seq_in_parent": 2,
+   "type": "prose",
+   "role": "body",
+   "text": "乾坤造化，日月长明。",
+   "char_count": 10
+  }
+ ]
+}

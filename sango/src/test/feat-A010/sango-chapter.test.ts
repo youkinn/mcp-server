@@ -51,7 +51,7 @@ function parsePayload(result: ToolResult): ChapterPayload {
   return JSON.parse(result.content[0].text) as ChapterPayload;
 }
 
-test('① 正常回：chapter / title / prev / next / chunks 字段齐全，chunkId 按契约名输出（语料 id → chunkId）', async () => {
+test('① 正常回：chapter / title / prev / next / chunks 字段齐全，chunk 直出语料字段（schema v2）', async () => {
   const index = loadFixtureIndex();
   const { callTool } = captureTool(index);
 
@@ -62,11 +62,12 @@ test('① 正常回：chapter / title / prev / next / chunks 字段齐全，chun
   assert.deepEqual(payload.next, { chapter: 3, title: '议温明董卓叱丁原 馈金珠李肃说吕布' });
   assert.equal(payload.chunks.length, 2);
   const chunk = payload.chunks[0];
-  assert.deepEqual(Object.keys(chunk).sort(), ['chunkId', 'segFrom', 'segTo', 'text', 'type']);
-  assert.equal(chunk.chunkId, 'sanguo-yanyi:0002:c0001');
-  assert.equal(chunk.type, 'narration');
-  assert.equal(chunk.segFrom, 1);
-  assert.equal(chunk.segTo, 1);
+  assert.deepEqual(Object.keys(chunk).sort(), ['char_count', 'chunk_id', 'parent_id', 'role', 'seq_in_parent', 'text', 'type']);
+  assert.equal(chunk.chunk_id, 'sanguo-yanyi:0002:p0001:c01');
+  assert.equal(chunk.parent_id, 'sanguo-yanyi:0002:p0001');
+  assert.equal(chunk.seq_in_parent, 1);
+  assert.equal(chunk.type, 'prose');
+  assert.equal(chunk.role, 'body');
 });
 
 test('② 第 1 回 prev=null（上一回按钮禁用口径），next 为第 2 回', async () => {

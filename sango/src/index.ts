@@ -8,9 +8,11 @@
  * 日志只写 stderr；stdout 走 MCP 协议（stdio）。
  */
 import { createRequire } from 'node:module';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { SangoIndex } from './search/sango-index.ts';
+import { DEFAULT_DATA_DIR, SangoIndex, resolveRerankScorer } from './search/sango-index.ts';
 import { registerSangoNovelChapter } from './tools/sango-novel-chapter.ts';
 import { registerSangoNovelSearch } from './tools/sango-novel-search.ts';
 import { registerSangoQueryEmbed } from './tools/sango-query-embed.ts';
@@ -19,7 +21,32 @@ import { startBenchmarkServer } from './benchmark/server.ts';
 const require = createRequire(import.meta.url);
 const { version } = require('../package.json') as { version: string };
 
-const index = new SangoIndex();
+// 自助开关唯一加载点：进程内读本地 .env（按脚本位置解析到 sango 根，不依赖调用方 cwd / CLI 参数）；
+// .env 缺失（如生产部署）容错跳过，行为保持默认（off）。
+const envFile = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '.env');
+try {
+  process.loadEnvFile(envFile);
+} catch {
+  // .env 不存在或不可读 → 忽略，走默认
+}
+
+// FEAT-A030：cross-encoder 重排自助开关（sango/.env，--env-file-if-exists 加载）。
+// 默认 off：行为与无重排基线逐字节一致；on 才接入（权重缺失自动退回规则序，不抛错）。
+// 口径：on 只代表「接入重排」，不等于 A030 验收通过（定点不倒车 / 拒答#5 仍待复评）；改 .env 后需重启生效。
+const rerankMode = process.env.SANGO_RERANKER;
+let index: SangoIndex;
+if (rerankMode === 'on') {
+  const rerankScorer = resolveRerankScorer();
+  index = new SangoIndex(DEFAULT_DATA_DIR, rerankScorer ? { rerankScorer } : {});
+  console.error(
+    rerankScorer
+      ? '[sango] 重排开关：on，已接入 cross-encoder 重排（窗口/目录/推理档位见 .env 注释与 reranker.ts）'
+      : '[sango] 重排开关：on，但权重缺失未接入（onnx / tokenizer 权重不可用，退回规则序）',
+  );
+} else {
+  index = new SangoIndex(DEFAULT_DATA_DIR);
+  console.error('[sango] 重排开关：off（未设或非 on），未接入，行为与默认一致');
+}
 
 const server = new McpServer({ name: 'sango', version });
 
